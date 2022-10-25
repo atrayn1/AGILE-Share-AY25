@@ -23,8 +23,14 @@ df = pd.read_csv(
   "data/test_location_data_gh.csv"
 )
 
-st.title("AGILE")
-st.subheader("Advertising and Geolocation Information Logical Extractor")
+#Title container
+title_c = st.container()
+title_left, title_center = title_c.columns([1, 3])
+title_center.title("AGILE")
+title_center.subheader("Advertising and Geolocation Information Logical Extractor")
+
+#Logo Image
+title_left.image("images/logo.png") 
 
 st.write("Dataset Sample")
 st.write(df.head())
