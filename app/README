@@ -1,0 +1,15 @@
+DEPENDENCIES:
+    streamlit
+    proximitypyhash
+    pygeohash
+    pandas
+    matplotlib
+    Bokeh
+    streamlit-folium
+
+OVERVIEW:
+    Demo UI for the AGILE Program
+
+RUN:
+    streamlit run app.py
+
