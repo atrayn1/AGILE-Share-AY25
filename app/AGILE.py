@@ -108,6 +108,14 @@ with sidebar:
         time_filter = st.container()
         with time_filter:
             st.subheader("Time Filtering")
+            time_form = st.form(key="time_filter")
+            with time_form:
+                start_date = st.date_input("Start Date")
+                end_date = st.date_input("End Date")
+                submitted = st.form_submit_button("Query")
+
+                if submitted:
+                    pass #TODO
 
     #Analysis Expander
     with analysis_ex:
