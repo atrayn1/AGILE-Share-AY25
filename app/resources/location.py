@@ -13,8 +13,6 @@ import folium
 #Creates a map component and adds it to the given container
 def create_map(data, lat, long, container):
     if len(data.index) > 0:
-        #Now we display geohashes for test purposes
-        container.write(data)
 
         with container:
             m = folium.Map(location=[lat, long], zoom_start=16)
@@ -24,6 +22,9 @@ def create_map(data, lat, long, container):
             data.apply(lambda row: folium.Marker([row["latitude"], row["longitude"]], popup="Timestamp: " + row['datetime'] + "AdID: " + row["advertiser_id"]).add_to(m), axis=1)
             #components.html(plotAll(parsed_df, lat, long, 23, 'satellite'), height = 600, width = 1000)
             st_data = folium_static(m, width=725)
+
+            #Now we display geohashes for test purposes
+            container.write(data)
 
     else:
         container.write("No Data Points Available")
