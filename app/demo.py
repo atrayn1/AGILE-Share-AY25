@@ -55,6 +55,6 @@ radius = query_c.text_input("Radius")
 #Button calls geolocation query on click
 query_c.button("Query", on_click=create_location_query, args=[df, lat, long, radius, query_c], key=0)
 
-#AdId query
+#AdId query ##DEPRECATED WONT WORK
 ad_id = query_adid_c.text_input("Advertiser ID")
 query_adid_c.button("Query", on_click=create_adid_query, args=[df, ad_id, query_adid_c], key=1)

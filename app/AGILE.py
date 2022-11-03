@@ -18,8 +18,13 @@ import resources.adid as adid
 #Global Vars
 #Honestly right now this is just for the data so all containers have access to the Data value (which when intiialized
 # will be a dataframe)
-data = None
-uploaded = False
+
+#Some session state variables that need to be maintained between reloads
+if 'data' not in st.session_state:
+    st.session_state.data = None
+
+if 'uploaded' not in st.session_state:
+    st.session_state.uploaded = False
 
 ###MAIN APP UI SETUP###
 ###THIS IS FOR FORMATTING ONLY###
@@ -43,6 +48,9 @@ sidebar.title("Data Options")
 
 #Data Upload container (This is only for dev purposes)
 data_upload_c = sidebar.container()
+filtering_ex = sidebar.expander("Data Filtering")
+analysis_ex = sidebar.expander("Data Analysis")
+reset_ex = sidebar.expander("Reset Data")
 
 #The data Prievew
 preview_c = st.container()
@@ -61,13 +69,10 @@ results_c.subheader("Analysis")
 with sidebar:
     with data_upload_c:
         raw_data = st.file_uploader("Upload Data File")
-        #If a file has been uploaded
-        if raw_data:
-            data = pd.read_csv(raw_data, sep=",")
-            uploaded = True
-
-    filtering_ex = st.expander("Data Filtering")
-    analysis_ex = st.expander("Data Analysis")
+        #If a file has not yet been uploaded (this allows multiple form requests in unison)
+        if raw_data and not st.session_state.uploaded:
+            st.session_state.data = pd.read_csv(raw_data, sep=",")
+            st.session_state.uploaded = True
 
     #Filtering Expander
     with filtering_ex:
@@ -81,9 +86,25 @@ with sidebar:
 
                 #What occurs when the form is submitted
                 if submitted:
-                    adid.create_adid_query(data, ad_id, results_c)
+                    st.session_state.data = adid.query_adid(ad_id, st.session_state.data) #Filter the data
+                    adid.create_adid_map(st.session_state.data, results_c)
 
-        st.subheader("Location Filtering")
+        location_filter_c = st.container()
+        with location_filter_c:
+            st.subheader("Location Filtering")
+            location_form = st.form(key="location_filter")
+            with location_form:
+                #We need lat, long, radius
+                lat = st.text_input("Latitude")
+                long = st.text_input("Longitude")
+                radius = st.text_input("Radius")
+                submitted = st.form_submit_button("Query")
+
+                #When the form is submitted
+                if submitted:
+                    st.session_state.data = loc.query_location(lat, long, radius, st.session_state.data)
+                    loc.create_map(st.session_state.data, lat, long, results_c)
+
         st.subheader("Time Filtering")
 
     #Analysis Expander
@@ -92,9 +113,21 @@ with sidebar:
         st.subheader("Next Event Prediction?")
         st.subheader("Outlier Prediction?")
         st.subheader("Open source??")
+    
+    with reset_ex:
+        reset_c = st.container()
+        with reset_c:
+            st.subheader("Reset")
+            reset_form = st.form(key="reset")
+            with reset_form:
+                submitted = st.form_submit_button("RESET")
+
+                #This will reset the state variable resetting the data to uploaded state
+                if submitted:
+                    st.session_state.data = pd.read_csv(raw_data, sep=",")
 
 #Preview container
 with preview_c:
     #If Data means if they have uploaded a file
-    if uploaded:
-        st.dataframe(data.head())
+    if st.session_state.uploaded:
+        st.dataframe(st.session_state.data.head())

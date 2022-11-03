@@ -22,7 +22,10 @@ def query_adid(adid, df):
     return parsed_df
 
 #AdId query
-def create_adid_query(df, ad_id, container):
-  data = query_adid(ad_id, df)
-  #uses the first data point as the center lat and long
-  loc.create_map(data, data.iloc[0]['latitude'], data.iloc[0]['longitude'], container)
+def create_adid_map(df, container):
+    #uses the first data point as the center lat and long
+    if len(df.index) > 0:
+        loc.create_map(df, df.iloc[0]['latitude'], df.iloc[0]['longitude'], container)
+    else:
+        container.write("No Data Points Available")
+
