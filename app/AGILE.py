@@ -105,7 +105,9 @@ with sidebar:
                     st.session_state.data = loc.query_location(lat, long, radius, st.session_state.data)
                     loc.create_map(st.session_state.data, lat, long, results_c)
 
-        st.subheader("Time Filtering")
+        time_filter = st.container()
+        with time_filter:
+            st.subheader("Time Filtering")
 
     #Analysis Expander
     with analysis_ex:
