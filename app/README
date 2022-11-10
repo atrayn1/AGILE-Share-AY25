@@ -6,6 +6,7 @@ DEPENDENCIES:
     matplotlib
     Bokeh
     streamlit-folium
+    overpy
 
 OVERVIEW:
     Demo UI for the AGILE Program
