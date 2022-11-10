@@ -6,9 +6,13 @@ USNA Capstone 2023 work for the Mad Men 2 team (IC470).
 
 ## Team
 MIDN 1/C Samuel Chanow
+
 MIDN 1/C Ernest Son
+
 MIDN 1/C Katie Dessauer
-MIDN 1/C Nicolas ROwan
+
+MIDN 1/C Nicolas Rowan
+
 
 ### File Strcuture
 app/ contains all of the web application code and data
