@@ -11,5 +11,5 @@ OVERVIEW:
     Demo UI for the AGILE Program
 
 RUN:
-    streamlit run app.py
+    streamlit run AGILE.py
 
