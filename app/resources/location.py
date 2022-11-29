@@ -12,7 +12,8 @@ import folium
 
 #Creates a map component and adds it to the given container
 def create_map(data, lat, long, container):
-    if len(data.index) > 0:
+    #Picked 10000 as our data limit fro now, this can be changed
+    if (len(data.index) > 0) and (len(data.index) <= 10000):
 
         with container:
             m = folium.Map(location=[lat, long], zoom_start=16)
@@ -25,7 +26,8 @@ def create_map(data, lat, long, container):
 
             #Now we display geohashes for test purposes
             container.write(data)
-
+    elif len(data.index) > 10000:
+        container.write("Too much data to display. Change query to see filtered data.")
     else:
         container.write("No Data Points Available")
 
