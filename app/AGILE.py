@@ -14,6 +14,7 @@ import folium
 #Our function imports
 import resources.location as loc 
 import resources.adid as adid
+import resources.date as date
 
 #Global Vars
 #Honestly right now this is just for the data so all containers have access to the Data value (which when intiialized
@@ -111,11 +112,14 @@ with sidebar:
             time_form = st.form(key="time_filter")
             with time_form:
                 start_date = st.date_input("Start Date")
+                start_time = st.time_input("Time:", key="starttime")
                 end_date = st.date_input("End Date")
+                end_time = st.time_input("Time:", key="endtime")
                 submitted = st.form_submit_button("Query")
 
                 if submitted:
-                    pass #TODO
+                    st.session_state.data = date.query_date(start_date, start_time, end_date, end_time, st.session_state.data)
+                    date.create_date_map(st.session_state.data, results_c)
 
     #Analysis Expander
     with analysis_ex:
