@@ -21,7 +21,10 @@ def overpassNearbyQuery(latitude, longitude, range):
 #Return all th named Overpass Nodes within a range from that polygon
 #Need to be LISTS of latitude and Longitude
 #Range is in Meters
-def overpassBoundingBoxNearbyQuery(latitudes, longitudes, range):
+#Needs a list of dates so that the polyline is created chronologically
+#UPDATE: Function now takes a dataframe 
+    ###THIS DATAFRAME MUST CONTAIN 'latitude' 'longitude' 'datetime'
+def overpassPolyLineNearbyQuery(data, range):
     #custom polygon boundary. Boundaries specified as 
     # (poly:lat1 long1 lat2 long2............latN longN lat1 long1). 
     # Coordinates (lat, long) at the beginning and at the end of the 
@@ -30,6 +33,14 @@ def overpassBoundingBoxNearbyQuery(latitudes, longitudes, range):
 
     #To build the polygon I am thinking of looping through the list frontways and then backways.
     #Effectively creating a long line
+
+    #TODO WE NEED TO PROBABABLE take in the DF AND SORT BY TIME SO IT IS AN ACCURATE POLYLINE###
+    #data['dates'] = pd.to_datetime(data['datetime'])
+    data.loc[:, ('dates')] = pd.to_datetime(data['datetime']) #No setting with copy error
+    data.sort_values(by="dates")
+
+    latitudes = data['latitude'].tolist()
+    longitudes = data['longitude'].tolist()
 
     #Assuming the points are being passed in as a list
     api = overpy.Overpass()
@@ -62,12 +73,13 @@ def filterNodeList(results):
     #Build the Dataframe with the names,lats,and longs
     nodes = pd.DataFrame()
     nodes['name'] = [node.tags.get("name", "n/a") for node in results]
-    nodes['latitude'] = [node.lat for node in results] 
-    nodes['longitude'] = [node.lon for node in results]
+    nodes['latitude'] = [float(node.lat) for node in results] 
+    nodes['longitude'] = [float(node.lon) for node in results]
 
     #Filter out the n/a rows
     nodes = nodes[nodes['name'] != "n/a"]
 
+    print(type(nodes))
     return nodes
 
 #df = pd.read_csv(
@@ -78,6 +90,8 @@ def filterNodeList(results):
 #res = overpassNearbyQuery(df['latitude'][0], df['longitude'][0], 1000)
 #print(res)
 
+
+#TEST CODE ON A POLYLINE
 #Fuction that querys a dataframe and filters based on AdId
 #def query_adid(adid, df):
 #    if adid == '':
@@ -89,5 +103,5 @@ def filterNodeList(results):
 
 #Test Code Polygon Query
 #filtered_df = query_adid(df['advertiser_id'][0], df)
-#res = overpassBoundingBoxNearbyQuery(filtered_df['latitude'].tolist(), filtered_df['longitude'].tolist(), 10)
+#res = overpassPolyLineNearbyQuery(filtered_df, 10)
 #print(res)
