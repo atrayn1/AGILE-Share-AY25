@@ -29,14 +29,21 @@ app/resources/ contains functions for the web application
 ```console
 foo@bar:../AGILE/app$ streamlit run agile.py
 ```
+## DONE
+
+- Resolve addresses from lat/long coordinates
 
 ## TODO
 
-- Resolve addresses from lat/long coordinates
-- Get points of interest for a specific data point
-  -  to effectively and efficiently identify clusters
-- Distinguish frequently visited points of interest
-- Distinguish dwell addresses from points of interest
-- Distinguish workplace addresses from points of interest
+- Effectively and efficiently identify clusters
+- Get areas of interest for a specific data point
+- Name areas of interest by reverse geocoding
+  - centroid?
 
+## FUTURE
+
+- Distinguish frequently visited areas of interest
+- Distinguish dwell addresses from areas of interest
+- Distinguish workplace addresses from areas of interest
+- Identify journeys and end-of-journeys
 
