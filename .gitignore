@@ -132,4 +132,4 @@ dmypy.json
 .pyre/
 
 # Mac OS X is trash
-# .DS_Store
+.DS_Store
