@@ -10,5 +10,6 @@ pip intsall matplotlib
 pip install Bokeh
 pip install streamlit-folium
 pip install overpy
+pip install geopy
 
 echo "DONE"
