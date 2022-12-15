@@ -10,7 +10,7 @@ MIDN 1/C Ernest Son
 
 MIDN 1/C Katie Dessauer
 
-### File Strcuture
+### File Structure
 
 app/ contains all of the web application code and data
 
