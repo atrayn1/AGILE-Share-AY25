@@ -11,5 +11,6 @@ pip install Bokeh
 pip install streamlit-folium
 pip install overpy
 pip install geopy
+pip install scikit-learn
 
 echo "DONE"
