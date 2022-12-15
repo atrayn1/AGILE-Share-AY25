@@ -22,6 +22,7 @@ app/resources/ contains functions for the web application
 - Bokeh
 - streamlit-folium
 - overpy
+- geopy
 
 ### How do I run the demo?
 
