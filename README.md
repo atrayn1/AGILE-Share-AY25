@@ -29,16 +29,18 @@ app/resources/ contains functions for the web application
 ```console
 foo@bar:../AGILE/app$ streamlit run agile.py
 ```
+
 ## DONE
 
 - Resolve addresses from lat/long coordinates
 
 ## TODO
 
-- Effectively and efficiently identify clusters
 - Get areas of interest for a specific data point
-- Name areas of interest by reverse geocoding
+  - Effectively and efficiently identify clusters of data points
+- Name areas of interest via reverse geocoding
   - centroid?
+- Integrate an "areas of interest" query into webapp demo
 
 ## FUTURE
 
