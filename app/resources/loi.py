@@ -2,6 +2,7 @@
 # The algorithm for returning locations of interest
 
 import pandas as pd
+import pygeohash as gh
 
 # Location of Interest Algorithm
 # Prototype
@@ -12,18 +13,18 @@ import pandas as pd
 def LOI(data):
 
     # Now that we have locations sorted by time we can use iteration to view an
-    # ADIDs
-    # Movement Chronologically
+    # ADIDs movement Chronologically
 
-    # Probably the two biggest things that mark a locatio nof interest
+    # Probably the two biggest things that mark a location of interest
     # 1) Extended stay in one location
     # 2) Repeated visits over extended period of time to one location
 
     # For this algorithm's efficiency we may have to lean very heavily on
     # geohashing
+
     # Using specific precision geohashing would allow us to more easily see if a
-    # point moves from one general area
-    # To another general area wihtout manual lat long calculations
+    # point moves from one general area to another general area without manual
+    # lat/long calculations
 
     ###########################
     #  Algorithm Begins here  #
@@ -33,23 +34,27 @@ def LOI(data):
     data.loc[:, ('dates')] = pd.to_datetime(data['datetime']) # No setting with copy error
     data.sort_values(by="dates")
 
+    #TODO
     # Ensure the dataframe has a geohash column, otherwise we will geohash it
     # ourselves with a default range
-    #TODO
+    if 'geohash' not in data.columns:
+        data["geohash"] = df.apply(
+                lambda d : gh.encode(d.latitude, d.longitude, precision=10), axis=1
+                )
+        # geohash ourselves
 
-    # With the Geohashes this seems straight forward
+    # With the geohashes this seems straight forward:
     # For every unique geohash we will repeat the search process
-    # Again we are looking for two things, staying in one geohash for a long
-    # time, or repeatedly coming back to a geohash
-    # Over long periods of time
+    # We are looking for two things, staying in one geohash for a long time, or
+    # repeatedly coming back to a geohash over long periods of time
 
     # For long dwells ths will be iterative so O(n) but I think we can upper
-    # bound it there
-    # And I really do not think it will get any better than that
+    # bound it there and I really do not think it will get any better than that
     # Actually we may be able to scrt this using Pandas Map but it may get janky
+
     # df.values converts to a 2d numpy array which for us may actually be the
     # best choice
-    # At least for proof of concept
+    # ...at least for proof of concept
 
     # So at this point the dataframe needs to be exactly formated the same so
     # column indices are consistent
