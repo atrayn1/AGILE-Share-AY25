@@ -37,6 +37,7 @@ def LOI(data):
     data.sort_values(by="dates")
 
     # We should probably ensure that our geohashing is of sufficient precision anyways
+    # We don't want to be too precise or else every data point will have its own geohash
     data["geohash"] = df.apply(lambda d : gh.encode(d.latitude, d.longitude, precision=4), axis=1)
 
     # Ensure the dataframe has a geohash column, otherwise we will geohash it
@@ -96,16 +97,23 @@ def LOI(data):
         # Now that we have broken out of the loop we compare the time from
         # start_index to index
 
-        # TODO
         # Convert strings to datetime objects or integers or something
         start_time = dt.strptime(data_values[start_index, 1], '%Y-%m-%d %H:%M:%S') 
         end_time = dt.strptime(data_values[index, 1], '%Y-%m-%d %H:%M:%S')
         time_difference = end_time - start_time
-        print('start:', start_index, 'start_index:', index)
-        print('time difference:', time_difference)
+        #print('start:', start_index, 'start_index:', index)
+        #print('time difference:', time_difference.total_seconds())
 
+        # TODO
         # If this is above a certain threshhold we mark it or throw it into a
         # new filtered dataframe
+
+        # we could pretty-print data points at a location of interest with a
+        # different color for the demo
+
+        # 3600 seconds in an hour
+        if time_difference.total_seconds() > 3600:
+            print(data_values[start_index, 0], 'sus')
 
 # testing
 df = pd.read_csv("../data/one_id.csv")
