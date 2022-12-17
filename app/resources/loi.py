@@ -1,4 +1,5 @@
 # Sam Chanow
+# Ernest Son
 # The algorithm for returning locations of interest
 
 import pandas as pd
@@ -36,7 +37,7 @@ def LOI(data):
     data.sort_values(by="dates")
 
     # We should probably ensure that our geohashing is of sufficient precision anyways
-    data["geohash"] = df.apply(lambda d : gh.encode(d.latitude, d.longitude, precision=10), axis=1)
+    data["geohash"] = df.apply(lambda d : gh.encode(d.latitude, d.longitude, precision=4), axis=1)
 
     # Ensure the dataframe has a geohash column, otherwise we will geohash it
     # ourselves with a default range
@@ -64,12 +65,13 @@ def LOI(data):
     # column indices are consistent
 
     data_values = data[['geohash', 'datetime']].values
+    data_size = len(data_values)
 
     # Trying to keep O(n)
-    for index in range(0, len(data_values)):
+    for index in range(0, data_size):
 
         # Do not do anything on the first point
-        if (index == 0):
+        if index == 0:
             continue
         
         # Now here is the meat and potatoes
@@ -79,12 +81,15 @@ def LOI(data):
 
         # Do While Loop emulation
         while True:
+            # we reached the end of the array
+            if index == data_size - 1:
+                break
+
+            # If the geohashes are not equal
             c_geohash = data_values[index, 0]
             n_geohash = data_values[index+1, 0]
-            # If the geohashes are not the same or we have reached the end of
-            # the array
-            if (c_geohash != n_geohash) or (index - 1 == len(data_values)):
-                break; # Exit the while Loop
+            if c_geohash != n_geohash:
+                break # Exit the while Loop
             
             index += 1 # Go to the next row
 
@@ -96,7 +101,8 @@ def LOI(data):
         start_time = dt.strptime(data_values[start_index, 1], '%Y-%m-%d %H:%M:%S') 
         end_time = dt.strptime(data_values[index, 1], '%Y-%m-%d %H:%M:%S')
         time_difference = end_time - start_time
-        print(time_difference)
+        print('start:', start_index, 'start_index:', index)
+        print('time difference:', time_difference)
 
         # If this is above a certain threshhold we mark it or throw it into a
         # new filtered dataframe
