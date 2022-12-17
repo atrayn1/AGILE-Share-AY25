@@ -4,8 +4,9 @@
 import overpy
 import pandas as pd
 
-#Give a single latitude and longitude and range
-#Return the named Overpass Nodes within the range from the point
+'''
+# Give a single latitude and longitude and range
+# Return the named Overpass Nodes within the range from the point
 def overpassNearbyQuery(latitude, longitude, range):
     api = overpy.Overpass()
     #Build the query
@@ -15,43 +16,47 @@ def overpassNearbyQuery(latitude, longitude, range):
     result = api.query(query)
 
     return filterNodeList(results=result)
+'''
 
-#Given a list of latitude and longitudes and a range
-#Build a polygon that encompasses those points
-#Return all th named Overpass Nodes within a range from that polygon
-#Need to be LISTS of latitude and Longitude
-#Range is in Meters
-#Needs a list of dates so that the polyline is created chronologically
-#UPDATE: Function now takes a dataframe 
-    ###THIS DATAFRAME MUST CONTAIN 'latitude' 'longitude' 'datetime'
+# Given a list of latitude and longitudes and a range
+# Build a polygon that encompasses those points
+# Return all the named Overpass Nodes within a range from that polygon
+# Need to be LISTS of latitude and Longitude
+# Range is in Meters
+# Needs a list of dates so that the polyline is created chronologically
+
+# UPDATE: Function now takes a dataframe 
+# THIS DATAFRAME MUST CONTAIN 'latitude' 'longitude' 'datetime'
+
 def overpassPolyLineNearbyQuery(data, range):
-    #custom polygon boundary. Boundaries specified as 
+    # custom polygon boundary. Boundaries specified as 
     # (poly:lat1 long1 lat2 long2............latN longN lat1 long1). 
     # Coordinates (lat, long) at the beginning and at the end of the 
     # poly are the same signifying that it is a closed polygon. 
     # If there is a mismatch here, query fails with an error message.
 
-    #To build the polygon I am thinking of looping through the list frontways and then backways.
-    #Effectively creating a long line
+    # To build the polygon I am thinking of looping through the list frontways and then backways.
+    # Effectively creating a long line
 
-    #TODO WE NEED TO PROBABABLE take in the DF AND SORT BY TIME SO IT IS AN ACCURATE POLYLINE###
+    # TODO
+    # WE NEED TO PROBABLY take in the DF AND SORT BY TIME SO IT IS AN ACCURATE POLYLINE###
     #data['dates'] = pd.to_datetime(data['datetime'])
-    data.loc[:, ('dates')] = pd.to_datetime(data['datetime']) #No setting with copy error
+    data.loc[:, ('dates')] = pd.to_datetime(data['datetime']) # No setting with copy error
     data.sort_values(by="dates")
 
     latitudes = data['latitude'].tolist()
     longitudes = data['longitude'].tolist()
 
-    #Assuming the points are being passed in as a list
+    # Assuming the points are being passed in as a list
     api = overpy.Overpass()
 
-    #Create a list of location pairs (as alist themselevs)
+    # Create a list of location pairs (as alist themselevs)
     points = [[str(pair[0]), str(pair[1])] for pair in zip(latitudes, longitudes)]
 
-    #Reverse the list and then concat them together
-    #points_r = list(reversed(points))
-    #polygon = points + points_r
-    #Deconstruct the polygon pairs so that they can be joined easily for the string query
+    # Reverse the list and then concat them together
+    # points_r = list(reversed(points))
+    # polygon = points + points_r
+    # Deconstruct the polygon pairs so that they can be joined easily for the string query
     polyline_list = sum(points, [])
 
     #build the query
