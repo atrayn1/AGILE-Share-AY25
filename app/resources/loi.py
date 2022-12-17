@@ -3,6 +3,7 @@
 
 import pandas as pd
 import pygeohash as gh
+from datetime import datetime as dt
 
 # Location of Interest Algorithm
 # Prototype
@@ -34,16 +35,18 @@ def LOI(data):
     data.loc[:, ('dates')] = pd.to_datetime(data['datetime']) # No setting with copy error
     data.sort_values(by="dates")
 
-    # TODO
     # We should probably ensure that our geohashing is of sufficient precision anyways
+    data["geohash"] = df.apply(lambda d : gh.encode(d.latitude, d.longitude, precision=10), axis=1)
 
     # Ensure the dataframe has a geohash column, otherwise we will geohash it
     # ourselves with a default range
+    '''
     if 'geohash' not in data.columns:
         # geohash ourselves
         data["geohash"] = df.apply(
                 lambda d : gh.encode(d.latitude, d.longitude, precision=10), axis=1
                 )
+    '''
 
     # With the geohashes this seems straight forward:
     # For every unique geohash we will repeat the search process
@@ -54,19 +57,16 @@ def LOI(data):
     # bound it there and I really do not think it will get any better than that
     # Actually we may be able to scrt this using Pandas Map but it may get janky
 
-    # df.values converts to a 2d numpy array which for us may actually be the
-    # best choice
-    # ...at least for proof of concept
+    # df.values can produce a 2d numpy array which for us may actually be the
+    # best choice ... at least for a proof of concept
 
     # So at this point the dataframe needs to be exactly formated the same so
     # column indices are consistent
 
-    # TODO
-    data_v = data[['geohash', 'datetime']].values
-    print(data_v)
+    data_values = data[['geohash', 'datetime']].values
 
     # Trying to keep O(n)
-    for index in range(0, len(data_v)):
+    for index in range(0, len(data_values)):
 
         # Do not do anything on the first point
         if (index == 0):
@@ -79,19 +79,25 @@ def LOI(data):
 
         # Do While Loop emulation
         while True:
-            c_geohash = data_v[index, 0]
-            n_geohash = data_v[index+1, 0]
-            #print(c_geohash)
-            #print(n_geohash)
+            c_geohash = data_values[index, 0]
+            n_geohash = data_values[index+1, 0]
             # If the geohashes are not the same or we have reached the end of
             # the array
-            if (c_geohash != n_geohash) or (index - 1 == len(data_v)):
+            if (c_geohash != n_geohash) or (index - 1 == len(data_values)):
                 break; # Exit the while Loop
             
             index += 1 # Go to the next row
 
-        # Now that we have broken out of the loop we comare the time from
+        # Now that we have broken out of the loop we compare the time from
         # start_index to index
+
+        # TODO
+        # Convert strings to datetime objects or integers or something
+        start_time = dt.strptime(data_values[start_index, 1], '%Y-%m-%d %H:%M:%S') 
+        end_time = dt.strptime(data_values[index, 1], '%Y-%m-%d %H:%M:%S')
+        time_difference = end_time - start_time
+        print(time_difference)
+
         # If this is above a certain threshhold we mark it or throw it into a
         # new filtered dataframe
 
