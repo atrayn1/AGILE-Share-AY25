@@ -15,6 +15,7 @@ import folium
 import resources.location as loc 
 import resources.adid as adid
 import resources.date as date
+import resources.overpassQuery as opq
 
 #Global Vars
 #Honestly right now this is just for the data so all containers have access to the Data value (which when intiialized
@@ -123,6 +124,23 @@ with sidebar:
 
     #Analysis Expander
     with analysis_ex:
+        overpass_analysis = st.container()
+        with overpass_analysis:
+            st.subheader("Overpass Query") #This will be an Overpass API integration
+            overpass_form = st.form(key="overpass_adid")
+
+            with overpass_form:
+                ad_id = st.text_input("Advertiser ID")
+                radius = st.text_input("Radius")
+                submitted = st.form_submit_button("Query")
+
+                #What occurs when the form is submitted
+                if submitted:
+                    st.session_state.data = adid.query_adid(ad_id, st.session_state.data) #Filter the data
+                    res = opq.overpassPolyLineNearbyQuery(adid.query_adid(ad_id, st.session_state.data), radius)
+                    results_c.write(res)
+
+
         st.subheader("KMeans?")
         st.subheader("Next Event Prediction?")
         st.subheader("Outlier Prediction?")
