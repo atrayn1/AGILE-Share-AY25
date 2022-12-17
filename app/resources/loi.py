@@ -34,21 +34,23 @@ def LOI(data):
     data.loc[:, ('dates')] = pd.to_datetime(data['datetime']) # No setting with copy error
     data.sort_values(by="dates")
 
-    #TODO
+    # TODO
+    # We should probably ensure that our geohashing is of sufficient precision anyways
+
     # Ensure the dataframe has a geohash column, otherwise we will geohash it
     # ourselves with a default range
     if 'geohash' not in data.columns:
+        # geohash ourselves
         data["geohash"] = df.apply(
                 lambda d : gh.encode(d.latitude, d.longitude, precision=10), axis=1
                 )
-        # geohash ourselves
 
     # With the geohashes this seems straight forward:
     # For every unique geohash we will repeat the search process
     # We are looking for two things, staying in one geohash for a long time, or
     # repeatedly coming back to a geohash over long periods of time
 
-    # For long dwells ths will be iterative so O(n) but I think we can upper
+    # For long dwells this will be iterative so O(n) but I think we can upper
     # bound it there and I really do not think it will get any better than that
     # Actually we may be able to scrt this using Pandas Map but it may get janky
 
@@ -58,8 +60,10 @@ def LOI(data):
 
     # So at this point the dataframe needs to be exactly formated the same so
     # column indices are consistent
-    #TODO
-    data_v = data.values
+
+    # TODO
+    data_v = data[['geohash', 'datetime']].values
+    print(data_v)
 
     # Trying to keep O(n)
     for index in range(0, len(data_v)):
@@ -75,8 +79,10 @@ def LOI(data):
 
         # Do While Loop emulation
         while True:
-            c_geohash = data_v[index, 9]
-            n_geohash = data_v[index+1, 9]
+            c_geohash = data_v[index, 0]
+            n_geohash = data_v[index+1, 0]
+            #print(c_geohash)
+            #print(n_geohash)
             # If the geohashes are not the same or we have reached the end of
             # the array
             if (c_geohash != n_geohash) or (index - 1 == len(data_v)):
@@ -88,3 +94,7 @@ def LOI(data):
         # start_index to index
         # If this is above a certain threshhold we mark it or throw it into a
         # new filtered dataframe
+
+# testing
+df = pd.read_csv("../data/one_id.csv")
+LOI(df)
