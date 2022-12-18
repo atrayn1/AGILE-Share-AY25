@@ -4,14 +4,14 @@
 
 ### Team
 
-Samuel Chanow
-Ernest Son
-Katie Dessauer
+- Samuel Chanow
+- Ernest Son
+- Katie Dessauer
 
 ### File Structure
 
-app/ contains all of the web application code and data
-app/resources/ contains functions for the web application
+- app/ contains all of the web application code and data
+- app/resources/ contains functions for the web application
 
 ### Dependencies
 - streamlit
