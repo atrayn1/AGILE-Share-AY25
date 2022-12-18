@@ -45,7 +45,7 @@ def LOI(data):
 
     # We should probably ensure that our geohashing is of sufficient precision anyways
     # We don't want to be too precise or else every data point will have its own geohash
-    data["geohash"] = df.apply(lambda d : gh.encode(d.latitude, d.longitude, precision=4), axis=1)
+    data["geohash"] = data.apply(lambda d : gh.encode(d.latitude, d.longitude, precision=4), axis=1)
 
     # Ensure the dataframe has a geohash column, otherwise we will geohash it
     # ourselves with a default range
@@ -119,7 +119,7 @@ def LOI(data):
         # different color for the demo
 
         # 3600 seconds in an hour
-        if time_difference.total_seconds() > 3600:
+        if time_difference.total_seconds() > 3600 * 10:
             print(data_values[start_index], 'sus')
             #print(len(data_values[start_index]))
             d_sus = pd.DataFrame(columns=['geohash', 'datetime', 'latitude', 'longitude', 'advertiser_id'])#, columns=['geohash', 'datetime', 'latitude', 'longitude', 'advertiser_id'])
@@ -150,7 +150,7 @@ def LOI(data):
             start_time = dt.strptime(geohash_dict[data_values[index, 0]], '%Y-%m-%d %H:%M:%S') 
             end_time = dt.strptime(data_values[index, 1], '%Y-%m-%d %H:%M:%S')
             time_difference = end_time - start_time
-            if time_difference.total_seconds() > 3600 * 12: #12 hours
+            if time_difference.total_seconds() > 3600 * 7: #7 hours
                 #add to data_out
                 print(data_values[start_index], 'sus big time')
                 #print(len(data_values[start_index]))
@@ -172,10 +172,10 @@ def LOI(data):
 
     
     #Remove duplicate geohashes so we limit the size of LOI list
-    return data_out.drop_duplicates(subset=['geohash'])
+    return data_out #.drop_duplicates(subset=['geohash'])
 
 # testing
-df = pd.read_csv("../data/_54aa7153-1546-ce0d-5dc9-aa9e8e371f00_weeklong_gh.csv")
-loi_dataframe = LOI(df)
+#df = pd.read_csv("../data/_54aa7153-1546-ce0d-5dc9-aa9e8e371f00_weeklong_gh.csv")
+#loi_dataframe = LOI(df)
 
-print(loi_dataframe)
+#print(loi_dataframe.columns)

@@ -16,6 +16,7 @@ import resources.location as loc
 import resources.adid as adid
 import resources.date as date
 import resources.overpassQuery as opq
+import resources.loi as loi
 
 #Global Vars
 #Honestly right now this is just for the data so all containers have access to the Data value (which when intiialized
@@ -139,6 +140,23 @@ with sidebar:
                     st.session_state.data = adid.query_adid(ad_id, st.session_state.data) #Filter the data
                     res = opq.overpassPolyLineNearbyQuery(adid.query_adid(ad_id, st.session_state.data), radius)
                     results_c.write(res)
+
+        loi_analysis = st.container()
+        with loi_analysis:
+            st.subheader("Location of Interest")
+            loi_form = st.form(key="loi_form")
+
+            with loi_form:
+                ad_id = st.text_input("Advertiser ID")
+                submitted = st.form_submit_button("Query")
+
+                if submitted:
+                    #We need to filter by adid and then perfrom loi analysis
+                    #then we need to make a map
+                    data = adid.query_adid(ad_id, st.session_state.data)
+                    loi_data = loi.LOI(data)
+                    #Here we need to make a map and pass the optional parameter for these location points
+                    loc.create_map(data, data.iloc[0]['latitude'], data.iloc[0]['longitude'], results_c, loi_data=loi_data)
 
 
         st.subheader("KMeans?")
