@@ -5,8 +5,8 @@ import pandas as pd
 import pygeohash as gh
 
 df = pd.read_csv(
-  "../data/test_location_data.csv"
+  "../data/_54aa7153-1546-ce0d-5dc9-aa9e8e371f00_weeklong.csv"
 )
 
 df["geohash"] = df.apply(lambda d : gh.encode(d.latitude, d.longitude, precision=8), axis=1)
-df.to_csv("data/test_location_data_gh.csv")
+df.to_csv("../data/_54aa7153-1546-ce0d-5dc9-aa9e8e371f00_weeklong_gh.csv")

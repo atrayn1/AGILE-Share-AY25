@@ -21,7 +21,7 @@ def create_map(data, lat, long, container):
             #Add each data point to the plot
             #TODO Have function take in list of strings that should be included in marker
             #Take this info and change the marker description
-            data.apply(lambda row: folium.Marker([row["latitude"], row["longitude"]], popup="Timestamp: " + row['datetime'] + "AdID: " + row["advertiser_id"]).add_to(m), axis=1)
+            data.apply(lambda row: folium.Marker([row["latitude"], row["longitude"]], popup="Location: " + str(row['latitude']) + ", " + str(row['longitude']) + " Timestamp: " + row['datetime'] + "AdID: " + row["advertiser_id"]).add_to(m), axis=1)
             #components.html(plotAll(parsed_df, lat, long, 23, 'satellite'), height = 600, width = 1000)
             st_data = folium_static(m, width=725)
 

@@ -6,6 +6,10 @@ import pandas as pd
 import pygeohash as gh
 from datetime import datetime as dt
 
+def convert_numpy_row_to_df(data_values, index):
+    pass
+
+
 # Location of Interest Algorithm
 # Prototype
 # Input: Dataframe with Lat, Long, Geohash, Timestamp
@@ -31,6 +35,9 @@ def LOI(data):
     ###########################
     #  Algorithm Begins here  #
     ###########################
+
+    #This is the output dataframe, i.e. where we store suspicious geocodes
+    data_out = pd.DataFrame(columns=['geohash', 'datetime', 'latitude', 'longitude', 'advertiser_id'])
 
     # Sort by time
     data.loc[:, ('dates')] = pd.to_datetime(data['datetime']) # No setting with copy error
@@ -65,7 +72,7 @@ def LOI(data):
     # So at this point the dataframe needs to be exactly formated the same so
     # column indices are consistent
 
-    data_values = data[['geohash', 'datetime']].values
+    data_values = data[['geohash', 'datetime', 'latitude', 'longitude', 'advertiser_id']].values
     data_size = len(data_values)
 
     # Trying to keep O(n)
@@ -113,8 +120,62 @@ def LOI(data):
 
         # 3600 seconds in an hour
         if time_difference.total_seconds() > 3600:
-            print(data_values[start_index, 0], 'sus')
+            print(data_values[start_index], 'sus')
+            #print(len(data_values[start_index]))
+            d_sus = pd.DataFrame(columns=['geohash', 'datetime', 'latitude', 'longitude', 'advertiser_id'])#, columns=['geohash', 'datetime', 'latitude', 'longitude', 'advertiser_id'])
+            #d = dict((['geohash', 'datetime', 'latitude', 'longitude', 'advertiser_id'], data_values[start_index].flatten()))
+            #d_sus = pd.DataFrame(d)
+
+            #I know this is very wonky but the array shape was being weird
+            #This does technically work but lets find a better solution
+            d_sus['geohash'] = [data_values[start_index, 0]]
+            d_sus['datetime'] = [data_values[start_index, 1]]
+            d_sus['latitude'] = [data_values[start_index, 2]]
+            d_sus['longitude'] = [data_values[start_index, 3]]
+            d_sus['advertiser_id'] = [data_values[start_index, 4]]
+            
+            data_out = pd.concat([data_out, d_sus]) #Add this row to the out dataframe
+        
+    #HERE TODO we need to look for repeated visits i.e. visits on multiple days
+    #I am thinking we have a dictionary with the geohashes and when we see a geohash
+    #we add it as key of dictionary where value is the timestamp
+    #Then we can check time distances (more than 16 hours i.e. multiple visits) and still keep O(n)
+    #This will make it O(2n)
+    geohash_dict = dict()
+
+    for index in range(0, data_size):
+        if data_values[index, 0] in geohash_dict: #Is geohash key in dictionary
+            #compare time in dict to current time
+            #if time difference greater than 12 hours add to out dict
+            start_time = dt.strptime(geohash_dict[data_values[index, 0]], '%Y-%m-%d %H:%M:%S') 
+            end_time = dt.strptime(data_values[index, 1], '%Y-%m-%d %H:%M:%S')
+            time_difference = end_time - start_time
+            if time_difference.total_seconds() > 3600 * 12: #12 hours
+                #add to data_out
+                print(data_values[start_index], 'sus big time')
+                #print(len(data_values[start_index]))
+                d_sus = pd.DataFrame(columns=['geohash', 'datetime', 'latitude', 'longitude', 'advertiser_id'])#, columns=['geohash', 'datetime', 'latitude', 'longitude', 'advertiser_id'])
+                #d = dict((['geohash', 'datetime', 'latitude', 'longitude', 'advertiser_id'], data_values[start_index].flatten()))
+                #d_sus = pd.DataFrame(d)
+
+                #I know this is very wonky but the array shape was being weird
+                #This does technically work but lets find a better solution
+                d_sus['geohash'] = [data_values[index, 0]]
+                d_sus['datetime'] = [data_values[index, 1]]
+                d_sus['latitude'] = [data_values[index, 2]]
+                d_sus['longitude'] = [data_values[index, 3]]
+                d_sus['advertiser_id'] = [data_values[index, 4]]
+            
+                data_out = pd.concat([data_out, d_sus]) #Add this row to the out dataframe
+        
+        geohash_dict[data_values[index, 0]] = data_values[index, 1]
+
+    
+    #Remove duplicate geohashes so we limit the size of LOI list
+    return data_out.drop_duplicates(subset=['geohash'])
 
 # testing
-df = pd.read_csv("../data/one_id.csv")
-LOI(df)
+df = pd.read_csv("../data/_54aa7153-1546-ce0d-5dc9-aa9e8e371f00_weeklong_gh.csv")
+loi_dataframe = LOI(df)
+
+print(loi_dataframe)
