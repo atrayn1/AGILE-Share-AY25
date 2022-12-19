@@ -1,5 +1,7 @@
+# Ernest Son
+
 # clustering will indicate high-traffic areas, still maybe potentially useful
-# information, later down the line
+# information later down the line
 
 from sklearn.cluster import AgglomerativeClustering
 import matplotlib.pyplot as plt

@@ -1,10 +1,10 @@
 #Sam CHanow
 
-#Simple program that will take in multiple files and an ADID and output a new file filted to just that ADIDs points
+# Simple program that will take in multiple files and an ADID and output a new file filted to just that ADIDs points
 
 import pandas as pd
 
-#Global vars for filtering and getting data
+# Global vars for filtering and getting data
 file_list = ["../data/week_data/gps_2018-04-" + (str(n) if n > 9 else "0" + str(n)) + ".csv" for n in range(8, 16)]
 adid = "54aa7153-1546-ce0d-5dc9-aa9e8e371f00"
 
