@@ -48,16 +48,6 @@ def LOI(data):
     # be too precise or else every data point will have its own geohash.
     data["geohash"] = data.apply(lambda d : gh.encode(d.latitude, d.longitude, precision=4), axis=1)
 
-    # Ensure the dataframe has a geohash column, otherwise we will geohash it
-    # ourselves with a default range
-    '''
-    if 'geohash' not in data.columns:
-        # geohash ourselves
-        data["geohash"] = df.apply(
-                lambda d : gh.encode(d.latitude, d.longitude, precision=10), axis=1
-                )
-    '''
-
     # With the geohashes this seems straight forward:
     # For every unique geohash we will repeat the search process
     # We are looking for two things, staying in one geohash for a long time, or
@@ -124,11 +114,8 @@ def LOI(data):
         # index, or by some other metric that captures the relevance of all the
         # other data points
 
-        # 3600 seconds in an hour
-        #TODO check wierd time distance required for flagging everything
         if time_difference.total_seconds() > 3600 * 10:
             print(data_values[start_index], 'sus')
-            #'''
             #print(len(data_values[start_index]))
             d_sus = pd.DataFrame(columns=['geohash', 'datetime', 'latitude', 'longitude', 'advertiser_id'])#, columns=['geohash', 'datetime', 'latitude', 'longitude', 'advertiser_id'])
             #d = dict((['geohash', 'datetime', 'latitude', 'longitude', 'advertiser_id'], data_values[start_index].flatten()))
