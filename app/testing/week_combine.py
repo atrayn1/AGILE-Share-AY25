@@ -6,7 +6,7 @@ import pandas as pd
 
 #Global vars for filtering and getting data
 file_list = ["../data/week_data/gps_2018-04-" + (str(n) if n > 9 else "0" + str(n)) + ".csv" for n in range(8, 16)]
-adid = "54aa7153-1546-ce0d-5dc9-aa9e8e371f00"
+adid = "07e28697-2930-a575-6c51-2267182152f8"
 
 out_data = pd.DataFrame(columns=["advertiser_id", "datetime", "latitude", "longitude", "horizontal_accuracy", "carrier", "model", "wifi_ssid", "wifi_bssid"])
 

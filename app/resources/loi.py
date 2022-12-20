@@ -46,6 +46,7 @@ def LOI(data):
 
     # We should probably ensure that our geohashing is of sufficient precision anyways
     # We don't want to be too precise or else every data point will have its own geohash
+    #FOR PRECISION DEFAULT IS 4 doing some other tests
     data["geohash"] = data.apply(lambda d : gh.encode(d.latitude, d.longitude, precision=4), axis=1)
 
     # Ensure the dataframe has a geohash column, otherwise we will geohash it
@@ -125,7 +126,7 @@ def LOI(data):
             print(data_values[start_index], 'sus')
             #'''
             #print(len(data_values[start_index]))
-            #d_sus = pd.DataFrame(columns=['geohash', 'datetime', 'latitude', 'longitude', 'advertiser_id'])#, columns=['geohash', 'datetime', 'latitude', 'longitude', 'advertiser_id'])
+            d_sus = pd.DataFrame(columns=['geohash', 'datetime', 'latitude', 'longitude', 'advertiser_id'])#, columns=['geohash', 'datetime', 'latitude', 'longitude', 'advertiser_id'])
             #d = dict((['geohash', 'datetime', 'latitude', 'longitude', 'advertiser_id'], data_values[start_index].flatten()))
             #d_sus = pd.DataFrame(d)
 
