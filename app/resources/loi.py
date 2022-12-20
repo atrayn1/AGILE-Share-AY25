@@ -65,6 +65,7 @@ def LOI(data):
 
     relevant_features = ['geohash', 'datetime', 'latitude', 'longitude', 'advertiser_id']
     data_values = data[relevant_features].values
+    latlongs = data[['latitude', 'longitude']].values
     data_size = len(data_values)
 
     # 1) Extended stay in one location
@@ -78,7 +79,7 @@ def LOI(data):
         
         # Now here is the meat and potatoes
         # We are looking for relationships between rows specifically:
-            # Same Geohash over long period of time
+        # Same Geohash over long period of time
         start_index = index #Keep track of where we started
 
         # Do-While-Loop emulation
@@ -91,7 +92,9 @@ def LOI(data):
             n_geohash = data_values[index+1, 0]
             if c_geohash != n_geohash:
                 break # Exit the while Loop
-            index += 1 # Go to the next row
+            # Go to the next row
+            index += 1
+
 
         # Now that we have broken out of the loop we compare the timestamps of
         # start_index and index, if we exceed some specific threshold we add the
@@ -103,19 +106,23 @@ def LOI(data):
         end_time = dt.strptime(data_values[end_index, 1], '%Y-%m-%d %H:%M:%S')
         time_difference = end_time - start_time
 
-
         # TODO
         # check weird time distance required to be able to flag everything
 
-        # TODO
-        # not related to the time thing but we're only adding the start_index
-        # datapoint to our final dataframe, it would be more robust to add the
-        # centroid resulting from all the data points between start_index and
-        # index, or by some other metric that captures the relevance of all the
-        # other data points
+        if time_difference.total_seconds() > 3600 * 4:
 
-        if time_difference.total_seconds() > 3600 * 10:
-            print(data_values[start_index], 'sus')
+            # We're only adding the start_index datapoint to our final
+            # dataframe... it would be more robust to add the centroid resulting
+            # from all the data points between start_index and index, or by some
+            # other metric that captures the relevance of the other data points
+            X = latlongs[start_index:end_index]
+            length = X.shape[0]
+            sum_x = np.sum(X[:,0])
+            sum_y = np.sum(X[:,1])
+            centroid_x, centroid_y = sum_x / length, sum_y / length
+            average_delta = (end_time - start_time) / 2
+            average_time = start_time + average_delta
+
             #print(len(data_values[start_index]))
             d_sus = pd.DataFrame(columns=['geohash', 'datetime', 'latitude', 'longitude', 'advertiser_id'])#, columns=['geohash', 'datetime', 'latitude', 'longitude', 'advertiser_id'])
             #d = dict((['geohash', 'datetime', 'latitude', 'longitude', 'advertiser_id'], data_values[start_index].flatten()))
@@ -124,9 +131,12 @@ def LOI(data):
             # I know this is very wonky but the array shape was being weird
             # This does technically work but lets find a better solution
             d_sus['geohash'] = [data_values[start_index, 0]]
-            d_sus['datetime'] = [data_values[start_index, 1]]
-            d_sus['latitude'] = [data_values[start_index, 2]]
-            d_sus['longitude'] = [data_values[start_index, 3]]
+            d_sus['datetime'] = [average_time]
+            d_sus['latitude'] = [centroid_x]
+            d_sus['longitude'] = [centroid_y]
+            #d_sus['datetime'] = [data_values[start_index, 1]]
+            #d_sus['latitude'] = [data_values[start_index, 2]]
+            #d_sus['longitude'] = [data_values[start_index, 3]]
             d_sus['advertiser_id'] = [data_values[start_index, 4]]
 
             # Possibly a better solution
@@ -138,11 +148,10 @@ def LOI(data):
     print('unique geohashes:', data_out['geohash'].unique())
     print()
 
-        
     # TODO
     # 2) Repeated visits over extended period of time to one location
 
-    # we need to look for repeated visits i.e. visits on multiple days
+    # We need to look for repeated visits i.e. visits on multiple days
     # I am thinking we have a dictionary with the geohashes and when we see a geohash
     # we add it as key of dictionary where value is the timestamp
     # Then we can check time distances (more than 16 hours i.e. multiple visits) and still keep O(n)
@@ -150,15 +159,15 @@ def LOI(data):
     geohash_dict = dict()
 
     for index in range(0, data_size):
-        if data_values[index, 0] in geohash_dict: #Is geohash key in dictionary?
-            #compare time in dict to current time
-            #if time difference greater than 12 hours add to out dict
+        # Is the geohash key in the dictionary?
+        if data_values[index, 0] in geohash_dict:
+            # Compare time in dict to current time
+            # If time difference is >4 hours, add to final output dataframe
             start_time = dt.strptime(geohash_dict[data_values[index, 0]], '%Y-%m-%d %H:%M:%S') 
             end_time = dt.strptime(data_values[index, 1], '%Y-%m-%d %H:%M:%S')
             time_difference = end_time - start_time
             # 4 hours
             if time_difference.total_seconds() > 3600 * 4:
-                #print(data_values[start_index], 'sus big time')
                 d_sus = pd.DataFrame(columns=['geohash', 'datetime', 'latitude', 'longitude', 'advertiser_id'])#, columns=['geohash', 'datetime', 'latitude', 'longitude', 'advertiser_id'])
                 d_sus['geohash'] = [data_values[index, 0]]
                 d_sus['datetime'] = [data_values[index, 1]]
