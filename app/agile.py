@@ -147,14 +147,19 @@ with sidebar:
             loi_form = st.form(key="loi_form")
 
             with loi_form:
+
+                #loi_data = None #Not set yet but needed for callback
+                #data = adid.query_adid(ad_id, st.session_state.data)
+
                 ad_id = st.text_input("Advertiser ID")
+                prec = st.slider("Precision", min_value=1, max_value=12, value=4)
                 submitted = st.form_submit_button("Query")
 
                 if submitted:
                     #We need to filter by adid and then perfrom loi analysis
                     #then we need to make a map
                     data = adid.query_adid(ad_id, st.session_state.data)
-                    loi_data = loi.LOI(data)
+                    loi_data = loi.LOI(data, precision=prec)
                     #Here we need to make a map and pass the optional parameter for these location points
                     loc.create_map(data, data.iloc[0]['latitude'], data.iloc[0]['longitude'], results_c, loi_data=loi_data)
 

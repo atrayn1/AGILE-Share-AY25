@@ -17,7 +17,7 @@ def convert_numpy_row_to_df(data_values, index):
 # Assuming that that all of the points in the dataframe relate to the same ADID
 # I.E. the dataframe has already been filtered
 # Return: A filtered dataframe with the Locations of Interest
-def LOI(data):
+def LOI(data, precision):
 
     # Now that we have locations sorted by time we can use iteration to view an
     # ADIDs movement Chronologically
@@ -46,7 +46,7 @@ def LOI(data):
 
     # We ensure that our geohashing is of sufficient precision. We don't want to
     # be too precise or else every data point will have its own geohash.
-    data["geohash"] = data.apply(lambda d : gh.encode(d.latitude, d.longitude, precision=4), axis=1)
+    data["geohash"] = data.apply(lambda d : gh.encode(d.latitude, d.longitude, precision=precision), axis=1)
 
     # Ensure the dataframe has a geohash column, otherwise we will geohash it
     # ourselves with a default range
@@ -190,5 +190,5 @@ def LOI(data):
     return data_out#.drop_duplicates(subset=['geohash'])
 
 # testing
-df = pd.read_csv("../data/_54aa7153-1546-ce0d-5dc9-aa9e8e371f00_weeklong_gh.csv")
-loi_dataframe = LOI(df)
+#df = pd.read_csv("../data/_54aa7153-1546-ce0d-5dc9-aa9e8e371f00_weeklong_gh.csv")
+#loi_dataframe = LOI(df)
