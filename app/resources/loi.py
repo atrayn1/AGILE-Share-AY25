@@ -10,7 +10,6 @@ from datetime import datetime as dt
 def convert_numpy_row_to_df(data_values, index):
     pass
 
-
 # Location of Interest Algorithm
 # Prototype
 # Input: Dataframe with Lat, Long, Geohash, Timestamp
@@ -45,7 +44,7 @@ def LOI(data, precision) -> pd.DataFrame:
 
     # Sort by time
     data.loc[:, ('dates')] = pd.to_datetime(data['datetime']) # No setting with copy error
-    data.sort_values(by="dates", inplace=True) #Inplace fixes the time sorting error
+    data.sort_values(by="dates", inplace=True) # Inplace fixes the time sorting error
 
     # We ensure that our geohashing is of sufficient precision. We don't want to
     # be too precise or else every data point will have its own geohash.
@@ -82,11 +81,11 @@ def LOI(data, precision) -> pd.DataFrame:
         # Now here is the meat and potatoes
         # We are looking for relationships between rows specifically:
         # Same Geohash over long period of time
-        start_index = index #Keep track of where we started
+        start_index = index # Keep track of where we started
 
         # Do-While-Loop emulation
         while True:
-            # we reached the end of the array
+            # We reached the end of the array
             if index == data_size - 1:
                 break
             # If the geohashes are not equal
@@ -96,7 +95,6 @@ def LOI(data, precision) -> pd.DataFrame:
                 break # Exit the while Loop
             # Go to the next row
             index += 1
-
 
         # Now that we have broken out of the loop we compare the timestamps of
         # start_index and index, if we exceed some specific threshold we add the
@@ -111,7 +109,7 @@ def LOI(data, precision) -> pd.DataFrame:
         # TODO
         # check weird time distance required to be able to flag everything
 
-        if time_difference.total_seconds() > 3600 * 7:
+        if time_difference.total_seconds() > 3600 * 10:
 
             # We're only adding the start_index datapoint to our final
             # dataframe... it would be more robust to add the centroid resulting
@@ -122,7 +120,7 @@ def LOI(data, precision) -> pd.DataFrame:
             length = X.shape[0]
             sum_x = np.sum(X[:,0])
             sum_y = np.sum(X[:,1])
-            centroid_x, centroid_y = sum_x / length, sum_y / length
+            centroid_lat, centroid_long = sum_x / length, sum_y / length
             average_delta = (end_time - start_time) / 2
             average_time = start_time + average_delta
             '''
@@ -131,20 +129,22 @@ def LOI(data, precision) -> pd.DataFrame:
             # timestamp instead
             middle_index = (start_index + end_index) // 2
 
-            d_sus = pd.DataFrame(columns=relevant_features)
-
             # I know this is very wonky but the array shape was being weird
             # This does technically work but lets find a better solution
+            '''
+            d_sus = pd.DataFrame(columns=relevant_features)
             d_sus['geohash'] = [data_values[middle_index, 0]]
             d_sus['datetime'] = [data_values[middle_index, 1]]
             d_sus['latitude'] = [data_values[middle_index, 2]]
             d_sus['longitude'] = [data_values[middle_index, 3]]
             d_sus['advertiser_id'] = [data_values[middle_index, 4]]
+            '''
 
             # Possibly a better solution
-            #d_sus = pd.DataFrame(np.atleast_2d(data_values[start_index]), columns=relevant_features)
-            
-            data_out = pd.concat([data_out, d_sus]) #Add this row to the out dataframe
+            d_sus = pd.DataFrame(np.atleast_2d(data_values[middle_index]), columns=relevant_features)
+            data_out = pd.concat([data_out, d_sus], ignore_index=True)
+
+    # DEBUG
     print('extended stays:')
     print(data_out.nunique())
     print('unique geohashes:', data_out['geohash'].unique())
@@ -169,17 +169,21 @@ def LOI(data, precision) -> pd.DataFrame:
             end_time = dt.strptime(data_values[index, 1], '%Y-%m-%d %H:%M:%S')
             time_difference = end_time - start_time
             # 4 hours
-            if time_difference.total_seconds() > 3600 * 4:
+            if time_difference.total_seconds() > 3600 * 5:
+                '''
                 d_sus = pd.DataFrame(columns=relevant_features)
                 d_sus['geohash'] = [data_values[index, 0]]
                 d_sus['datetime'] = [data_values[index, 1]]
                 d_sus['latitude'] = [data_values[index, 2]]
                 d_sus['longitude'] = [data_values[index, 3]]
                 d_sus['advertiser_id'] = [data_values[index, 4]]
-                data_out = pd.concat([data_out, d_sus])
+                '''
+                d_sus = pd.DataFrame(np.atleast_2d(data_values[index]), columns=relevant_features)
+                data_out = pd.concat([data_out, d_sus], ignore_index=True)
         
         geohash_dict[data_values[index, 0]] = data_values[index, 1]
 
+    # DEBUG
     print('repeated visits:')
     print(data_out.nunique())
     print('unique geohashes:', data_out['geohash'].unique())
@@ -189,4 +193,4 @@ def LOI(data, precision) -> pd.DataFrame:
 
 # testing
 #df = pd.read_csv("../data/_54aa7153-1546-ce0d-5dc9-aa9e8e371f00_weeklong_gh.csv")
-#loi_dataframe = LOI(df)
+#loi_dataframe = LOI(df, 10)
