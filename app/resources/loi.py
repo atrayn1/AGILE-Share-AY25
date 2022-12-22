@@ -17,7 +17,7 @@ def convert_numpy_row_to_df(data_values, index):
 # Assuming that that all of the points in the dataframe relate to the same ADID
 # I.E. the dataframe has already been filtered
 # Return: A filtered dataframe with the Locations of Interest
-def LOI(data, precision):
+def LOI(data, precision) -> pd.DataFrame:
 
     # Now that we have locations sorted by time we can use iteration to view an
     # ADIDs movement Chronologically
