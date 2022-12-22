@@ -115,6 +115,7 @@ def LOI(data, precision):
             # dataframe... it would be more robust to add the centroid resulting
             # from all the data points between start_index and index, or by some
             # other metric that captures the relevance of the other data points
+            '''
             X = latlongs[start_index:end_index]
             length = X.shape[0]
             sum_x = np.sum(X[:,0])
@@ -122,6 +123,11 @@ def LOI(data, precision):
             centroid_x, centroid_y = sum_x / length, sum_y / length
             average_delta = (end_time - start_time) / 2
             average_time = start_time + average_delta
+            '''
+
+            # the centroid idea sucked, let's do a median data point based on
+            # timestamp instead
+            middle_index = (start_index + end_index) // 2
 
             #print(len(data_values[start_index]))
             d_sus = pd.DataFrame(columns=['geohash', 'datetime', 'latitude', 'longitude', 'advertiser_id'])#, columns=['geohash', 'datetime', 'latitude', 'longitude', 'advertiser_id'])
@@ -130,14 +136,11 @@ def LOI(data, precision):
 
             # I know this is very wonky but the array shape was being weird
             # This does technically work but lets find a better solution
-            d_sus['geohash'] = [data_values[start_index, 0]]
-            d_sus['datetime'] = [average_time]
-            d_sus['latitude'] = [centroid_x]
-            d_sus['longitude'] = [centroid_y]
-            #d_sus['datetime'] = [data_values[start_index, 1]]
-            #d_sus['latitude'] = [data_values[start_index, 2]]
-            #d_sus['longitude'] = [data_values[start_index, 3]]
-            d_sus['advertiser_id'] = [data_values[start_index, 4]]
+            d_sus['geohash'] = [data_values[middle_index, 0]]
+            d_sus['datetime'] = [data_values[middle_index, 1]]
+            d_sus['latitude'] = [data_values[middle_index, 2]]
+            d_sus['longitude'] = [data_values[middle_index, 3]]
+            d_sus['advertiser_id'] = [data_values[middle_index, 4]]
 
             # Possibly a better solution
             #d_sus = pd.DataFrame(np.atleast_2d(data_values[start_index]), columns=relevant_features)
