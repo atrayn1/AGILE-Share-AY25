@@ -5,6 +5,7 @@
 from english_words import english_words_set
 import random
 import pandas as pd
+from reportlab.pdfgen.canvas import Canvas
 
 class Profile:
 
@@ -12,7 +13,7 @@ class Profile:
     #Some fake values
     def __init__(self, AdId) -> None:
         self.adid = AdId
-        self.name = self.name_gen()
+        self.name = self.__name_gen()
         self.lois = self.__loi_gen()
         self.coloc = self.__coloc_gen()
     
@@ -22,7 +23,7 @@ class Profile:
         return random.choice(english) + "-" + random.choice(english)
     
     #generate the locations of interest for this ADID
-    def __loi_gen(self) -> pd.Dataframe:
+    def __loi_gen(self) -> pd.DataFrame:
         pass
 
     #Generate the colocating AdId Dataframe for this AdID
@@ -30,7 +31,10 @@ class Profile:
         pass
     
     #Generate report file for this profile
-    def generate_report(self, filename) -> None:
-        pass
-#sam = Profile()
-#print(sam.name)
+    def generate_report(self) -> None:
+        report = Canvas(self.name + "_report.pdf")
+        report.drawString(72, 72, self.name)
+        report.save()
+
+sam = Profile("SAM")
+sam.generate_report()
