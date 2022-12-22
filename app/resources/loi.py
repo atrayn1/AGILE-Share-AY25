@@ -42,7 +42,7 @@ def LOI(data, precision):
 
     # Sort by time
     data.loc[:, ('dates')] = pd.to_datetime(data['datetime']) # No setting with copy error
-    data.sort_values(by="dates")
+    data.sort_values(by="dates", inplace=True) #Inplace fixes the time sorting error
 
     # We ensure that our geohashing is of sufficient precision. We don't want to
     # be too precise or else every data point will have its own geohash.
