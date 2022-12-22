@@ -75,6 +75,8 @@ with sidebar:
         #If a file has not yet been uploaded (this allows multiple form requests in unison)
         if raw_data and not st.session_state.uploaded:
             st.session_state.data = pd.read_csv(raw_data, sep=",")
+            #Added default geohasher on upload
+            st.session_state.data["geohash"] = st.session_state.data.apply(lambda d : gh.encode(d.latitude, d.longitude, precision=4), axis=1)
             st.session_state.uploaded = True
 
     #Filtering Expander
