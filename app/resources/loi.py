@@ -37,8 +37,11 @@ def LOI(data, precision) -> pd.DataFrame:
     #  Algorithm Begins here  #
     ###########################
 
+    # These are the features we care about in the input dataframe
+    relevant_features = ['geohash', 'datetime', 'latitude', 'longitude', 'advertiser_id']
+
     # This is the output dataframe, i.e. where we store suspicious geocodes
-    data_out = pd.DataFrame(columns=['geohash', 'datetime', 'latitude', 'longitude', 'advertiser_id'])
+    data_out = pd.DataFrame(columns=relevant_features)
 
     # Sort by time
     data.loc[:, ('dates')] = pd.to_datetime(data['datetime']) # No setting with copy error
@@ -63,9 +66,8 @@ def LOI(data, precision) -> pd.DataFrame:
     # So at this point the dataframe needs to be exactly formatted the same so
     # column indices are consistent
 
-    relevant_features = ['geohash', 'datetime', 'latitude', 'longitude', 'advertiser_id']
     data_values = data[relevant_features].values
-    latlongs = data[['latitude', 'longitude']].values
+    #latlongs = data[['latitude', 'longitude']].values
     data_size = len(data_values)
 
     # 1) Extended stay in one location
@@ -129,10 +131,7 @@ def LOI(data, precision) -> pd.DataFrame:
             # timestamp instead
             middle_index = (start_index + end_index) // 2
 
-            #print(len(data_values[start_index]))
-            d_sus = pd.DataFrame(columns=['geohash', 'datetime', 'latitude', 'longitude', 'advertiser_id'])#, columns=['geohash', 'datetime', 'latitude', 'longitude', 'advertiser_id'])
-            #d = dict((['geohash', 'datetime', 'latitude', 'longitude', 'advertiser_id'], data_values[start_index].flatten()))
-            #d_sus = pd.DataFrame(d)
+            d_sus = pd.DataFrame(columns=relevant_features)
 
             # I know this is very wonky but the array shape was being weird
             # This does technically work but lets find a better solution
@@ -171,7 +170,7 @@ def LOI(data, precision) -> pd.DataFrame:
             time_difference = end_time - start_time
             # 4 hours
             if time_difference.total_seconds() > 3600 * 4:
-                d_sus = pd.DataFrame(columns=['geohash', 'datetime', 'latitude', 'longitude', 'advertiser_id'])#, columns=['geohash', 'datetime', 'latitude', 'longitude', 'advertiser_id'])
+                d_sus = pd.DataFrame(columns=relevant_features)
                 d_sus['geohash'] = [data_values[index, 0]]
                 d_sus['datetime'] = [data_values[index, 1]]
                 d_sus['latitude'] = [data_values[index, 2]]
