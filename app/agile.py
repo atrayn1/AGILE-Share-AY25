@@ -18,11 +18,11 @@ import resources.date as date
 import resources.overpassQuery as opq
 import resources.loi as loi
 
-#Global Vars
-#Honestly right now this is just for the data so all containers have access to the Data value (which when intiialized
-# will be a dataframe)
+# Global Vars
+# Honestly right now this is just for the data so all containers have access to
+# the Data value (which when initialized will be a dataframe)
 
-#Some session state variables that need to be maintained between reloads
+# Some session state variables that need to be maintained between reloads
 if 'data' not in st.session_state:
     st.session_state.data = None
 
@@ -34,41 +34,39 @@ if 'uploaded' not in st.session_state:
 ###ACTIONS SHOULD OCCUR BELOW THIS SECTION###
 ###THIS IS EFFECTIVELY A STATIC "DEFAULT" PAGE###
 
-#Title container
+# Title container
 title_c = st.container()
 
-#Title Columns
+# Title Columns
 title_left, title_center = title_c.columns([1, 3])
 
 title_center.title("AGILE")
 title_center.subheader("Advertising and Geolocation Information Logical Extractor")
-#Logo Image
+# Logo Image
 title_left.image("images/logo.png") 
 
-#Main page sidebar
+# Main page sidebar
 sidebar = st.sidebar
 sidebar.title("Data Options")
 
-#Data Upload container (This is only for dev purposes)
+# Data Upload container (This is only for dev purposes)
 data_upload_c = sidebar.container()
 reset_ex = sidebar.container()
 filtering_ex = sidebar.expander("Data Filtering")
 analysis_ex = sidebar.expander("Data Analysis")
 
-#The data Prievew
+# The data preview
 preview_c = st.container()
 preview_c.subheader("Data Preview")
     
 
-#The data analysis/filtering resulst container
+# The data analysis/filtering results container
 results_c = st.container()
 results_c.subheader("Analysis")
 
 
 ###ACTIONS FOR THE UI###
 ###THIS IS THE DYANMIC SECTION OF THE WEB APP###
-
-
 with sidebar:
 
     # Upload data
@@ -85,11 +83,10 @@ with sidebar:
     with reset_ex:
         reset_c = st.container()
         with reset_c:
-            #st.subheader("Reset")
             reset_form = st.form(key="reset")
             with reset_form:
                 submitted = st.form_submit_button("RESET DATA")
-                #This will reset the state variable resetting the data to uploaded state
+                # This will reset the state variable resetting the data to uploaded state
                 if submitted:
                     st.session_state.data = pd.read_csv(raw_data, sep=",")
 
@@ -113,7 +110,7 @@ with sidebar:
             st.subheader("Location Filtering")
             location_form = st.form(key="location_filter")
             with location_form:
-                #We need lat, long, radius
+                # We need lat, long, and radius
                 lat = st.text_input("Latitude")
                 long = st.text_input("Longitude")
                 radius = st.text_input("Radius")
@@ -142,14 +139,14 @@ with sidebar:
         # Overpass API polyline
         overpass_analysis = st.container()
         with overpass_analysis:
-            st.subheader("Overpass Query") #This will be an Overpass API integration
+            st.subheader("Overpass Query") # This will be an Overpass API integration
             overpass_form = st.form(key="overpass_adid")
             with overpass_form:
                 ad_id = st.text_input("Advertiser ID")
                 radius = st.text_input("Radius")
                 submitted = st.form_submit_button("Query")
                 if submitted:
-                    st.session_state.data = adid.query_adid(ad_id, st.session_state.data) #Filter the data
+                    st.session_state.data = adid.query_adid(ad_id, st.session_state.data) # Filter the data
                     res = opq.overpassPolyLineNearbyQuery(adid.query_adid(ad_id, st.session_state.data), radius)
                     results_c.write(res)
 
@@ -164,7 +161,7 @@ with sidebar:
                 ad_id = st.text_input("Advertiser ID")
                 prec = st.slider("Precision", min_value=1, max_value=12, value=10)
                 exth = st.slider("Extended Stay Duration", min_value=1, max_value=24, value=7)
-                reph = st.slider("Time Between Repeat Visits", min_value=1, max_value=24, value=5)
+                reph = st.slider("Time Between Repeat Visits", min_value=1, max_value=72, value=24)
                 submitted = st.form_submit_button("Query")
                 if submitted:
                     #We need to filter by adid and then perfrom loi analysis
@@ -181,6 +178,6 @@ with sidebar:
 
 # Preview container
 with preview_c:
-    #If Data means if they have uploaded a file
+    # If Data means if they have uploaded a file
     if st.session_state.uploaded:
         st.dataframe(st.session_state.data.head())
