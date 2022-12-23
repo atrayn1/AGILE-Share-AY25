@@ -19,7 +19,10 @@ class Profile:
         self.lois = self.__loi_gen()
         self.coloc = self.__coloc_gen()
         self.pol = self.__pol_gen()
+        self.overpass = self.__overpass_gen()
 
+    def __overpass_gen(self) -> pd.DataFrame:
+        return pd.DataFrame(columns=['geohash', 'datetime', 'latitude', 'longitude', 'advertiser_id']) #Just for testing
     # __ means private (thanks python absolute dogshit)
     def __name_gen(self) -> str:
         english = list(english_words_set)
@@ -28,17 +31,17 @@ class Profile:
     # generate the locations of interest for this adID
     # TODO import loi.py
     def __loi_gen(self) -> pd.DataFrame:
-        pass
+        return pd.DataFrame(columns=['geohash', 'datetime', 'latitude', 'longitude', 'advertiser_id']) #Just for testing
 
     # generate the colocating adId Dataframe for this adID
     def __coloc_gen(self) -> pd.DataFrame:
-        pass
+        return pd.DataFrame(columns=['geohash', 'datetime', 'latitude', 'longitude', 'advertiser_id']) #Just for testing
 
     # generate a pattern of life for this adID
     # probably not gonna be a pandas dataframe but the idea is that we have a
     # member that we can use for comparisons with other instances
     def __pol_gen(self) -> pd.DataFrame:
-        pass
+        return pd.DataFrame(columns=['geohash', 'datetime', 'latitude', 'longitude', 'advertiser_id']) #Just for testing
 
     # generate report file for this profile
     def generate_report(self) -> None:

@@ -65,6 +65,7 @@ class PDFPSReporte:
 
         self.firstPage()
         self.nextPagesHeader(True)
+        self.mainReportPage() #Contains the information for the majority of the report
         #self.remoteSessionTableMaker()
         self.nextPagesHeader(False)
         #self.inSiteSessionTableMaker()
@@ -75,6 +76,92 @@ class PDFPSReporte:
         # Build
         self.doc = SimpleDocTemplate(path, pagesize=LETTER)
         self.doc.multiBuild(self.elements, canvasmaker=FooterCanvas)
+    
+    def mainReportPage(self):
+
+        headerDet = ParagraphStyle('Resumen', fontSize=16, leading=14, justifyBreaks=1, alignment=TA_CENTER, justifyLastLine=1)
+        psDetalle = ParagraphStyle('Resumen', fontSize=9, leading=14, justifyBreaks=1, alignment=TA_LEFT, justifyLastLine=1)
+        text = "--User Details--"
+        titleBasicDetails = Paragraph(text, headerDet)
+        self.elements.append(titleBasicDetails)
+
+        spacer = Spacer(10, 22)
+        self.elements.append(spacer)
+
+        #TODO
+        # Real information goes here in between the two spacers
+        text = "Codename: " + self.profile.name + "<br/>" + \
+               "Advertising ID: " + self.profile.adid + "<br/>"
+        paraBasicDetails = Paragraph(text, psDetalle)
+        self.elements.append(paraBasicDetails)
+
+        spacer = Spacer(10, 22)
+        self.elements.append(spacer)
+
+        text = "--Overpass (Location Resolution) Results--"
+        titleBasicDetails = Paragraph(text, headerDet)
+        self.elements.append(titleBasicDetails)
+
+        spacer = Spacer(10, 22)
+        self.elements.append(spacer)
+
+        #TODO
+        # Real information goes here in between the two spacers
+        #We can figure out how to really format this later
+        text = self.profile.overpass.to_string()
+        paraBasicDetails = Paragraph(text, psDetalle)
+        self.elements.append(paraBasicDetails)
+
+        spacer = Spacer(10, 22)
+        self.elements.append(spacer)
+
+        text = "--Locations of Interest--"
+        titleBasicDetails = Paragraph(text, headerDet)
+        self.elements.append(titleBasicDetails)
+
+        spacer = Spacer(10, 22)
+        self.elements.append(spacer)
+
+        #TODO
+        # Real information goes here in between the two spacers
+        text = self.profile.lois.to_string()
+        paraBasicDetails = Paragraph(text, psDetalle)
+        self.elements.append(paraBasicDetails)
+
+        spacer = Spacer(10, 22)
+        self.elements.append(spacer)
+
+        text = "--Possible Co-Located Actors (by Advertising IDs)--"
+        titleBasicDetails = Paragraph(text, headerDet)
+        self.elements.append(titleBasicDetails)
+
+        spacer = Spacer(10, 22)
+        self.elements.append(spacer)
+
+        #TODO
+        # Real information goes here in between the two spacers
+        text = text = self.profile.coloc.to_string()
+        paraBasicDetails = Paragraph(text, psDetalle)
+        self.elements.append(paraBasicDetails)
+
+        spacer = Spacer(10, 22)
+        self.elements.append(spacer)
+
+        text = "--Pattern of Life--"
+        titleBasicDetails = Paragraph(text, headerDet)
+        self.elements.append(titleBasicDetails)
+
+        spacer = Spacer(10, 22)
+        self.elements.append(spacer)
+
+        #TODO
+        # Real information goes here in between the two spacers
+        text = text = self.profile.pol.to_string()
+        paraBasicDetails = Paragraph(text, psDetalle)
+        self.elements.append(paraBasicDetails)
+
+        #The last element to be appended is the page break
+        self.elements.append(PageBreak())
 
     def firstPage(self):
         img = Image('../images/logo.png', kind='proportional')
@@ -110,7 +197,7 @@ class PDFPSReporte:
     def nextPagesHeader(self, isSecondPage):
         if isSecondPage:
             psHeaderText = ParagraphStyle('Hed0', fontSize=16, alignment=TA_LEFT, borderWidth=3, textColor=self.colorOhkaGreen0)
-            text = 'REPORTE DE SESIONES'
+            text = 'User Activity Report'
             paragraphReportHeader = Paragraph(text, psHeaderText)
             self.elements.append(paragraphReportHeader)
 
