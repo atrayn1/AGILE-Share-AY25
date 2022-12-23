@@ -1,6 +1,6 @@
-#Main landing page for AGILE program
-#Sam Chanow
-#2022
+# Main landing page for AGILE program
+# Sam Chanow
+# 2022
 
 import streamlit as st
 import streamlit.components.v1 as components
@@ -11,7 +11,7 @@ from streamlit_folium import st_folium
 from streamlit_folium import folium_static
 import folium
 
-#Our function imports
+# Our function imports
 import resources.location as loc 
 import resources.adid as adid
 import resources.date as date

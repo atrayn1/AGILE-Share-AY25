@@ -100,7 +100,7 @@ def LOI(data, precision, extended_duration, repeated_duration) -> pd.DataFrame:
             index += 1
 
         # Now that we have broken out of the loop we compare the timestamps of
-        # start_index and index, if we exceed some specific threshold we add the
+        # start_index and end_index, if we exceed some specific threshold we add
         # relevant rows to the output dataframe
         end_index = index
 
@@ -108,10 +108,6 @@ def LOI(data, precision, extended_duration, repeated_duration) -> pd.DataFrame:
         start_time = dt.strptime(data_values[start_index, 1], '%Y-%m-%d %H:%M:%S') 
         end_time = dt.strptime(data_values[end_index, 1], '%Y-%m-%d %H:%M:%S')
         time_difference = end_time - start_time
-
-        # TODO
-        # check weird time distance required to be able to flag everything
-
         if time_difference.total_seconds() > 3600 * extended_duration:
 
             # We're only adding the start_index datapoint to our final
@@ -153,13 +149,12 @@ def LOI(data, precision, extended_duration, repeated_duration) -> pd.DataFrame:
     print('unique geohashes:', data_out['geohash'].unique())
     print()
 
-    # TODO
     # 2) Repeated visits over extended period of time to one location
 
     # We need to look for repeated visits i.e. visits on multiple days
     # I am thinking we have a dictionary with the geohashes and when we see a geohash
     # we add it as key of dictionary where value is the timestamp
-    # Then we can check time distances (more than 16 hours i.e. multiple visits) and still keep O(n)
+    # Then we can check time differences (more than 16 hours i.e. multiple visits) and still keep O(n)
     # This will make it O(2n)
     geohash_dict = dict()
 

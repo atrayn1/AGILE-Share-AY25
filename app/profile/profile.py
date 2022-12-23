@@ -1,7 +1,8 @@
-#Sam Chanow
-#Class File for Profile Class
-#Contains information about a specific "individual" advertising ID
-#This can contain stuff such as LOIs, timestamped data, etc
+# Sam Chanow
+# Ernest Son
+# Class File for Profile Class
+# Contains information about an individual advertising ID
+# This can contain stuff such as LOIs, timestamped data, etc
 from english_words import english_words_set
 import random
 import pandas as pd
@@ -9,28 +10,36 @@ from reportlab.pdfgen.canvas import Canvas
 
 class Profile:
 
-    #Constructor
+    # Constructor
     #Some fake values
-    def __init__(self, AdId) -> None:
-        self.adid = AdId
+    def __init__(self, adId) -> None:
+        self.adid = adId
         self.name = self.__name_gen()
         self.lois = self.__loi_gen()
         self.coloc = self.__coloc_gen()
-    
-    #__ means private (thanks python absolute dogshit)
+        self.pol = self.__pol_gen()
+
+    # __ means private (thanks python absolute dogshit)
     def __name_gen(self) -> str:
         english = list(english_words_set)
         return random.choice(english) + "-" + random.choice(english)
-    
-    #generate the locations of interest for this ADID
+
+    # generate the locations of interest for this adID
+    # TODO import loi.py
     def __loi_gen(self) -> pd.DataFrame:
         pass
 
-    #Generate the colocating AdId Dataframe for this AdID
+    # generate the colocating adId Dataframe for this adID
     def __coloc_gen(self) -> pd.DataFrame:
         pass
-    
-    #Generate report file for this profile
+
+    # generate a pattern of life for this adID
+    # probably not gonna be a pandas dataframe but the idea is that we have a
+    # member that we can use for comparisons with other instances
+    def __pol_gen(self) -> pd.DataFrame:
+        pass
+
+    # generate report file for this profile
     def generate_report(self) -> None:
         report = Canvas(self.name + "_report.pdf")
         report.drawString(72, 72, self.name)

@@ -1,7 +1,7 @@
-#This class is a modified form of the source code found at 
+# This class is a modified form of the source code found at 
 # https://github.com/jurasec/python-reportlab-example/blob/master/pdf_timesheet.py
-#It has been modified to fit the style of our report more effectively
-#Sam Chanow
+# It has been modified to fit the style of our report more effectively
+# Sam Chanow
 
 from reportlab.pdfgen import canvas
 from reportlab.platypus import (SimpleDocTemplate, Paragraph, PageBreak, Image, Spacer, Table, TableStyle)
