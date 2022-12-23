@@ -19,7 +19,7 @@ def convert_numpy_row_to_df(data_values, index):
 # Assuming that that all of the points in the dataframe relate to the same adID
 # I.E. the dataframe has already been filtered
 # Return: A filtered dataframe with the Locations of Interest
-def LOI(data, precision, extended_duration, repeated_duration) -> pd.DataFrame:
+def LOI(data, precision, extended_duration, repeated_duration, debug=False) -> pd.DataFrame:
 
     # Now that we have locations sorted by time we can use iteration to view an
     # ADIDs movement Chronologically
@@ -144,10 +144,11 @@ def LOI(data, precision, extended_duration, repeated_duration) -> pd.DataFrame:
             data_out = pd.concat([data_out, d_sus], ignore_index=True)
 
     # DEBUG
-    print('extended stays:')
-    print(data_out.nunique())
-    print('unique geohashes:', data_out['geohash'].unique())
-    print()
+    if debug:
+        print('extended stays:')
+        print(data_out.nunique())
+        print('unique geohashes:', data_out['geohash'].unique())
+        print()
 
     # 2) Repeated visits over extended period of time to one location
 
@@ -182,13 +183,15 @@ def LOI(data, precision, extended_duration, repeated_duration) -> pd.DataFrame:
         geohash_dict[data_values[index, 0]] = data_values[index, 1]
 
     # DEBUG
-    print('repeated visits:')
-    print(data_out.nunique())
-    print('unique geohashes:', data_out['geohash'].unique())
-    print()
+    if debug:
+        print('repeated visits:')
+        print(data_out.nunique())
+        print('unique geohashes:', data_out['geohash'].unique())
+        print()
+
     # Remove duplicate geohashes so we limit the size of LOI list
     return data_out#.drop_duplicates(subset=['geohash'])
 
 # testing
 #df = pd.read_csv("../data/_54aa7153-1546-ce0d-5dc9-aa9e8e371f00_weeklong_gh.csv")
-#loi_dataframe = LOI(df, 10, 8, 6)
+#loi_dataframe = LOI(data=df, precision=10, extended_duration=8, repeated_duration=6, debug=True)
