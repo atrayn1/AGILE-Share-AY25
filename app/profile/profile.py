@@ -7,6 +7,7 @@ from english_words import english_words_set
 import random
 import pandas as pd
 from reportlab.pdfgen.canvas import Canvas
+from report_template import PDFPSReporte
 
 class Profile:
 
@@ -41,9 +42,11 @@ class Profile:
 
     # generate report file for this profile
     def generate_report(self) -> None:
-        report = Canvas(self.name + "_report.pdf")
-        report.drawString(72, 72, self.name)
-        report.save()
+        #report = Canvas(self.name + "_report.pdf")
+        #report.drawString(72, 72, self.name)
+        #report.save()
+        #Pass this object to the report generator
+        report = PDFPSReporte('psreport.pdf', self)
 
 sam = Profile("SAM")
 sam.generate_report()

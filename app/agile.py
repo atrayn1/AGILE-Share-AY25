@@ -171,6 +171,10 @@ with sidebar:
                     #Here we need to make a map and pass the optional parameter for these location points
                     loc.create_map(data, data.iloc[0]['latitude'], data.iloc[0]['longitude'], results_c, loi_data=loi_data)
 
+                    #Write Locations of Interest to the results container
+                    results_c.write("Location of Interest Data")
+                    results_c.write(loi_data)
+
         #st.subheader("KMeans?")
         #st.subheader("Next Event Prediction?")
         #st.subheader("Outlier Prediction?")

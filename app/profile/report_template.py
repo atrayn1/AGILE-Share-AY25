@@ -10,7 +10,7 @@ from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.pagesizes import LETTER, inch
 from reportlab.graphics.shapes import Line, LineShape, Drawing
 from reportlab.lib.colors import Color
-from profile import Profile #Custom import
+#from profile import Profile #Custom import
 
 class FooterCanvas(canvas.Canvas):
 
@@ -405,6 +405,6 @@ class PDFPSReporte:
         self.elements.append(table)
 
 
-if __name__ == '__main__':
-    sam = Profile('7d54hgie90')
-    report = PDFPSReporte('psreport.pdf', sam)
+#if __name__ == '__main__':
+    #sam = Profile('7d54hgie90')
+    #report = PDFPSReporte('psreport.pdf', sam)
