@@ -12,11 +12,14 @@ def convert_numpy_row_to_df(data_values, index):
 
 # Location of Interest Algorithm
 # Prototype
-# Input: Dataframe with Lat, Long, Geohash, Timestamp
-# Assuming that that all of the points in the dataframe relate to the same ADID
+# Input: Dataframe w/ geohash, timestamp, latitude, longitude, and adID
+#        geohashing precision value
+#        length of an extended stay in hours
+#        length to check for repeated visits
+# Assuming that that all of the points in the dataframe relate to the same adID
 # I.E. the dataframe has already been filtered
 # Return: A filtered dataframe with the Locations of Interest
-def LOI(data, precision) -> pd.DataFrame:
+def LOI(data, precision, extended_duration, repeated_duration) -> pd.DataFrame:
 
     # Now that we have locations sorted by time we can use iteration to view an
     # ADIDs movement Chronologically
@@ -109,7 +112,7 @@ def LOI(data, precision) -> pd.DataFrame:
         # TODO
         # check weird time distance required to be able to flag everything
 
-        if time_difference.total_seconds() > 3600 * 10:
+        if time_difference.total_seconds() > 3600 * extended_duration:
 
             # We're only adding the start_index datapoint to our final
             # dataframe... it would be more robust to add the centroid resulting
@@ -169,7 +172,7 @@ def LOI(data, precision) -> pd.DataFrame:
             end_time = dt.strptime(data_values[index, 1], '%Y-%m-%d %H:%M:%S')
             time_difference = end_time - start_time
             # 4 hours
-            if time_difference.total_seconds() > 3600 * 5:
+            if time_difference.total_seconds() > 3600 * repeated_duration:
                 '''
                 d_sus = pd.DataFrame(columns=relevant_features)
                 d_sus['geohash'] = [data_values[index, 0]]
@@ -193,4 +196,4 @@ def LOI(data, precision) -> pd.DataFrame:
 
 # testing
 #df = pd.read_csv("../data/_54aa7153-1546-ce0d-5dc9-aa9e8e371f00_weeklong_gh.csv")
-#loi_dataframe = LOI(df, 10)
+#loi_dataframe = LOI(df, 10, 8, 6)
