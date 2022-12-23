@@ -11,7 +11,8 @@ from streamlit_folium import folium_static
 import folium
 
 #Creates a map component and adds it to the given container
-def create_map(data, lat, long, container):
+#loi_data is an optional parameter for printing lois as circle markers instead of the normal markers
+def create_map(data, lat, long, container, loi_data=pd.DataFrame()):
     #Picked 10000 as our data limit fro now, this can be changed
     if (len(data.index) > 0) and (len(data.index) <= 10000):
 
@@ -19,10 +20,14 @@ def create_map(data, lat, long, container):
             m = folium.Map(location=[lat, long], zoom_start=16)
 
             #Add each data point to the plot
-            #TODO Have function take in list of strings that should be included in marker
             #Take this info and change the marker description
-            data.apply(lambda row: folium.Marker([row["latitude"], row["longitude"]], popup="Timestamp: " + row['datetime'] + "AdID: " + row["advertiser_id"]).add_to(m), axis=1)
+            data.apply(lambda row: folium.Marker([row["latitude"], row["longitude"]], popup="Location: " + str(row['latitude']) + ", " + str(row['longitude']) + " Timestamp: " + row['datetime'] + "AdID: " + row["advertiser_id"]).add_to(m), axis=1)
             #components.html(plotAll(parsed_df, lat, long, 23, 'satellite'), height = 600, width = 1000)
+
+            #Add the LOI raster overlay to map
+            if len(loi_data) > 0:
+                loi_data.apply(lambda row: folium.CircleMarker([row["latitude"], row['longitude']], radius=30, popup="LOI").add_to(m), axis=1)
+
             st_data = folium_static(m, width=725)
 
             #Now we display geohashes for test purposes

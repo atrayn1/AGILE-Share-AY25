@@ -1,3 +1,4 @@
+# Ernest Son
 # testing reverse geohashing using Nominatim (OpenStreetMap)
 # pip3 install geopy
 from geopy.geocoders import Nominatim

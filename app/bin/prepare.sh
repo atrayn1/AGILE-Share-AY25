@@ -12,5 +12,8 @@ pip install streamlit-folium
 pip install overpy
 pip install geopy
 pip install scikit-learn
+pip install english-words
+pip install pyPdf
+pip install reportlab
 
 echo "DONE"
