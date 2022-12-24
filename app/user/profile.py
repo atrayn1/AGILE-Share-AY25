@@ -52,6 +52,5 @@ class Profile:
         #report = PDFPSReport('report.pdf', self)
         report = Report('report.pdf', self)
 
-ubl = Profile("ubl")
-ubl.generate_report()
+#A test scenario with a week long dataframe
 

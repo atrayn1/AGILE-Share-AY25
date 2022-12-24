@@ -40,7 +40,7 @@ class Report:
 
         #The logo
         self.pdf.ln(ch)
-        self.pdf.image("../images/logo.png", w=75, h=75, x=70, y=150)
+        self.pdf.image("../images/new_logo.png", w=75, h=100, x=70, y=150)
 
     def contentPage(self):
         self.pdf.add_page()
@@ -70,34 +70,49 @@ class Report:
         self.pdf.cell(w=0, h=ch, txt="Locations of Interest:", ln=1)
         self.pdf.set_font('Arial', '', 16)
         #self.pdf.cell(w=30, h=ch, txt=self.profile.lois.to_string(), ln=1)
+        self.displayDataframe(self.profile.lois)
 
         self.pdf.ln(ch)
         self.pdf.set_font('Arial', 'B', 16)
         self.pdf.cell(w=0, h=ch, txt="Co-located Devices:", ln=1)
         self.pdf.set_font('Arial', '', 16)
-        self.pdf.multi_cell(w=0, h=ch, txt="...sed do eiusmod tempor incididunt ut labore et dolore magna aliqua...")
+        self.displayDataframe(self.profile.coloc)
 
         self.pdf.ln(ch)
         self.pdf.set_font('Arial', 'B', 16)
         self.pdf.cell(w=0, h=ch, txt="Pattern of Life:", ln=1)
         self.pdf.set_font('Arial', '', 16)
-        self.pdf.multi_cell(w=0, h=ch, txt="...Ut enim ad minim veniam...")
+        self.pdf.multi_cell(w=0, h=ch, txt="TBD")
 
-        self.pdf.ln(ch)
 
-        # Table Header
-        self.pdf.set_font('Arial', 'B', 16)
-        self.pdf.cell(40, ch, 'Latitude', 1, 0, 'C')
-        self.pdf.cell(40, ch, 'Longitude', 1, 1, 'C')
-
-        # Table contents
-        self.pdf.set_font('Arial', '', 16)
-        #for i in range(0, len(data)):
-            #self.pdf.cell(40, ch, data['latitude'].iloc[i].astype(str), 1, 0, 'C')   
-            #self.pdf.cell(40, ch, data['longitude'].iloc[i].astype(str), 1, 1, 'C')
 
     def savePDF(self):
         self.pdf.output(self.path, 'F')
+
+    def displayDataframe(self, df):
+
+        self.pdf.set_font('Arial', 'B', 12)
+        for col in df.columns:
+            self.pdf.cell(30, 8, str(col), border=1, align='C')#, new_x=index*40)
+
+        self.pdf.set_font('Arial', '', 10)
+        for j,row in df.iterrows():
+            for datum in row.values:
+                self.pdf.cell(30, 8, str(datum), border=1,align='L')
+            self.pdf.ln(8)
+
+        #first print columns
+        #for index, col in enumerate(df.columns):
+        #    print(index, col)
+        #    self.pdf.cell(30, 8, str(col), 1, index)
+        
+        #self.pdf.ln()
+
+        #We print out each cell row by row
+        ##for index, row in df.iterrows():
+        #    for data in row.values:
+        #        pass
+
 
 # TESTING
 #df = pd.DataFrame({'geohash':['asdf','asdf','asdf'], 'datetime':['mon','tue','wed'], 'latitude':[69, 70, 71], 'longitude':[420, 421, 422], 'advertiser_id':['ubl', 'ubl', 'ubl']})

@@ -15,6 +15,7 @@ pip install scikit-learn
 pip install english-words
 #pip install pyPdf
 #pip install reportlab
-pip install fpdf
+#pip install fpdf
+pip install fpdf2
 
 echo "DONE"

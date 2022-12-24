@@ -17,6 +17,7 @@ import resources.adid as adid
 import resources.date as date
 import resources.overpassQuery as opq
 import resources.loi as loi
+from profile import Profile
 
 # Global Vars
 # Honestly right now this is just for the data so all containers have access to
