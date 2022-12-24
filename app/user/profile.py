@@ -20,6 +20,11 @@ class Profile:
         self.coloc = self.__coloc_gen()
         self.pol = self.__pol_gen()
         self.overpass = self.__overpass_gen()
+        #We need to somehow store this information in here so that it can be relayed on the report
+        #These are the default values
+        self.prec = 10
+        self.ext_duration = 7
+        self.rep_duration = 24
 
     def __overpass_gen(self) -> pd.DataFrame:
         return pd.DataFrame(columns=['geohash', 'datetime', 'latitude', 'longitude', 'advertiser_id']) # Just for testing

@@ -70,6 +70,10 @@ class Report:
         self.pdf.cell(w=0, h=ch, txt="Locations of Interest:", ln=1)
         self.pdf.set_font('Arial', '', 16)
         #self.pdf.cell(w=30, h=ch, txt=self.profile.lois.to_string(), ln=1)
+        self.pdf.set_font('Arial', '', 10)
+        self.pdf.multi_cell(w=0, h=ch, txt="All Locations of Interest were flagged for either repeated visits separated by more than " + str(self.profile.rep_duration) +
+            " hours, or extended stays at the location for over "+ str(self.profile.ext_duration) + " hours. Locations were determined with a geohash precision of " + str(self.profile.prec) + ".")
+        self.pdf.ln(ch)
         self.displayDataframe(self.profile.lois)
 
         self.pdf.ln(ch)
