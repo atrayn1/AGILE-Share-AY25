@@ -10,7 +10,7 @@ class PDF(FPDF):
         super().__init__()
     def header(self):
         self.set_font('Arial', '', 12)
-        self.cell(0, 8, 'AGILE', 0, 1, 'C')
+        self.cell(0, 8, 'A.G.I.L.E. User Activity Report', 0, 1, 'C')
     def footer(self):
         self.set_y(-15)
         self.set_font('Arial', '', 12)
@@ -18,63 +18,86 @@ class PDF(FPDF):
 
 # Generate PDF
 class Report:
-    def __init__(self, path, data):
-        pdf = PDF()
-        pdf.add_page()
-        pdf.set_font('Arial', 'B', 24)
-        pdf.cell(w=0, h=20, txt="adID goes here", ln=1)
+    def __init__(self, path, profile):
+        self.pdf = PDF()
+        self.path = path
+        self.profile = profile
+        self.titlePage()
+        self.contentPage()
+        self.savePDF()
+    
+    def titlePage(self):
+        # cell height
+        ch = 8
+        self.pdf.add_page()
+        self.pdf.set_font('Arial', 'B', 36)
 
+        #Name / Title of report
+
+        self.pdf.cell(w=0, h=100, txt=self.profile.name, align="C")
+        self.pdf.ln(ch)
+        self.pdf.cell(w=0, h=120, txt="Report on User Activity", align="C")
+
+        #The logo
+        self.pdf.ln(ch)
+        self.pdf.image("../images/logo.png", w=75, h=75, x=70, y=150)
+
+    def contentPage(self):
+        self.pdf.add_page()
         # cell height
         ch = 8
 
-        pdf.set_font('Arial', '', 16)
-        pdf.cell(w=30, h=ch, txt="Date: ", ln=0)
-        pdf.cell(w=30, h=ch, txt="12/23/2022", ln=1)
-        pdf.cell(w=30, h=ch, txt="Author: ", ln=0)
-        pdf.cell(w=30, h=ch, txt="Ernest Son", ln=1)
-        pdf.cell(w=30, h=ch, ln=0)
-        pdf.cell(w=30, h=ch, txt="Sam Chanow", ln=1)
+        #self.pdf.set_font('Arial', '', 16)
+        #self.pdf.cell(w=30, h=ch, txt="Date: ", ln=0)
+        #self.pdf.cell(w=30, h=ch, txt="12/23/2022", ln=1)
+        #self.pdf.cell(w=30, h=ch, txt="Author: ", ln=0)
+        #self.pdf.cell(w=30, h=ch, txt="Ernest Son", ln=1)
+        #self.pdf.cell(w=30, h=ch, ln=0)
+        #self.pdf.cell(w=30, h=ch, txt="Sam Chanow", ln=1)
 
-        pdf.ln(ch)
-        pdf.set_font('Arial', 'B', 16)
-        pdf.cell(w=0, h=ch, txt="Device Details:", ln=1)
-        pdf.set_font('Arial', '', 16)
-        pdf.multi_cell(w=0, h=ch, txt="Lorem ipsum dolor sit amet...")
+        self.pdf.ln(ch)
+        self.pdf.set_font('Arial', 'B', 16)
+        self.pdf.cell(w=0, h=ch, txt="Device Details:", ln=1)
+        self.pdf.set_font('Arial', '', 16)
+        #self.pdf.multi_cell(w=0, h=ch, txt="Lorem ipsum dolor sit amet...")
+        self.pdf.cell(w=30, h=ch, txt="Codename: " + self.profile.name, ln=1)
+        self.pdf.cell(w=30, h=ch, txt="AdID: " + self.profile.adid, ln=1)
 
-        #pdf.image('./example_image.png', x = 10, y = None, w = 100, h = 0, type = 'PNG', link = '')
+        #self.pdf.image('./example_image.png', x = 10, y = None, w = 100, h = 0, type = 'PNG', link = '')
 
-        pdf.ln(ch)
-        pdf.set_font('Arial', 'B', 16)
-        pdf.cell(w=0, h=ch, txt="Locations of Interest:", ln=1)
-        pdf.set_font('Arial', '', 16)
-        pdf.multi_cell(w=0, h=ch, txt="...consectetur adipiscing elit...")
+        self.pdf.ln(ch)
+        self.pdf.set_font('Arial', 'B', 16)
+        self.pdf.cell(w=0, h=ch, txt="Locations of Interest:", ln=1)
+        self.pdf.set_font('Arial', '', 16)
+        #self.pdf.cell(w=30, h=ch, txt=self.profile.lois.to_string(), ln=1)
 
-        pdf.ln(ch)
-        pdf.set_font('Arial', 'B', 16)
-        pdf.cell(w=0, h=ch, txt="Co-located Devices:", ln=1)
-        pdf.set_font('Arial', '', 16)
-        pdf.multi_cell(w=0, h=ch, txt="...sed do eiusmod tempor incididunt ut labore et dolore magna aliqua...")
+        self.pdf.ln(ch)
+        self.pdf.set_font('Arial', 'B', 16)
+        self.pdf.cell(w=0, h=ch, txt="Co-located Devices:", ln=1)
+        self.pdf.set_font('Arial', '', 16)
+        self.pdf.multi_cell(w=0, h=ch, txt="...sed do eiusmod tempor incididunt ut labore et dolore magna aliqua...")
 
-        pdf.ln(ch)
-        pdf.set_font('Arial', 'B', 16)
-        pdf.cell(w=0, h=ch, txt="Pattern of Life:", ln=1)
-        pdf.set_font('Arial', '', 16)
-        pdf.multi_cell(w=0, h=ch, txt="...Ut enim ad minim veniam...")
+        self.pdf.ln(ch)
+        self.pdf.set_font('Arial', 'B', 16)
+        self.pdf.cell(w=0, h=ch, txt="Pattern of Life:", ln=1)
+        self.pdf.set_font('Arial', '', 16)
+        self.pdf.multi_cell(w=0, h=ch, txt="...Ut enim ad minim veniam...")
 
-        pdf.ln(ch)
+        self.pdf.ln(ch)
 
         # Table Header
-        pdf.set_font('Arial', 'B', 16)
-        pdf.cell(40, ch, 'Latitude', 1, 0, 'C')
-        pdf.cell(40, ch, 'Longitude', 1, 1, 'C')
+        self.pdf.set_font('Arial', 'B', 16)
+        self.pdf.cell(40, ch, 'Latitude', 1, 0, 'C')
+        self.pdf.cell(40, ch, 'Longitude', 1, 1, 'C')
 
         # Table contents
-        pdf.set_font('Arial', '', 16)
-        for i in range(0, len(data)):
-            pdf.cell(40, ch, data['latitude'].iloc[i].astype(str), 1, 0, 'C')   
-            pdf.cell(40, ch, data['longitude'].iloc[i].astype(str), 1, 1, 'C')
+        self.pdf.set_font('Arial', '', 16)
+        #for i in range(0, len(data)):
+            #self.pdf.cell(40, ch, data['latitude'].iloc[i].astype(str), 1, 0, 'C')   
+            #self.pdf.cell(40, ch, data['longitude'].iloc[i].astype(str), 1, 1, 'C')
 
-        pdf.output(path, 'F')
+    def savePDF(self):
+        self.pdf.output(self.path, 'F')
 
 # TESTING
 #df = pd.DataFrame({'geohash':['asdf','asdf','asdf'], 'datetime':['mon','tue','wed'], 'latitude':[69, 70, 71], 'longitude':[420, 421, 422], 'advertiser_id':['ubl', 'ubl', 'ubl']})

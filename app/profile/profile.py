@@ -8,7 +8,6 @@
 from english_words import english_words_set
 import random
 import pandas as pd
-from reportlab.pdfgen.canvas import Canvas
 
 #from report_template import PDFPSReport
 from report import Report
@@ -49,9 +48,9 @@ class Profile:
 
     # generate report file for this profile
     def generate_report(self) -> None:
-        df = pd.DataFrame({'geohash':['asdf','asdf','asdf'], 'datetime':['mon','tue','wed'], 'latitude':[69, 70, 71], 'longitude':[420, 421, 422], 'advertiser_id':['ubl', 'ubl', 'ubl']})
+        #df = pd.DataFrame({'geohash':['asdf','asdf','asdf'], 'datetime':['mon','tue','wed'], 'latitude':[69, 70, 71], 'longitude':[420, 421, 422], 'advertiser_id':['ubl', 'ubl', 'ubl']})
         #report = PDFPSReport('report.pdf', self)
-        report = Report('report.pdf', df)
+        report = Report('report.pdf', self)
 
 ubl = Profile("ubl")
 ubl.generate_report()
