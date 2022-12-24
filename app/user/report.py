@@ -40,7 +40,7 @@ class Report:
 
         #The logo
         self.pdf.ln(ch)
-        self.pdf.image("../images/new_logo.png", w=75, h=100, x=70, y=150)
+        self.pdf.image("images/new_logo.png", w=75, h=100, x=70, y=150)
 
     def contentPage(self):
         self.pdf.add_page()
@@ -91,14 +91,17 @@ class Report:
 
     def displayDataframe(self, df):
 
+        df = df.drop(columns=['advertiser_id'])
+
         self.pdf.set_font('Arial', 'B', 12)
         for col in df.columns:
-            self.pdf.cell(30, 8, str(col), border=1, align='C')#, new_x=index*40)
+                self.pdf.cell(45, 8, str(col), border=1, align='C')#, new_x=index*40)
+        self.pdf.ln(8)
 
         self.pdf.set_font('Arial', '', 10)
         for j,row in df.iterrows():
             for datum in row.values:
-                self.pdf.cell(30, 8, str(datum), border=1,align='L')
+                self.pdf.cell(45, 8, str(datum), border=1,align='L')
             self.pdf.ln(8)
 
         #first print columns
@@ -117,4 +120,8 @@ class Report:
 # TESTING
 #df = pd.DataFrame({'geohash':['asdf','asdf','asdf'], 'datetime':['mon','tue','wed'], 'latitude':[69, 70, 71], 'longitude':[420, 421, 422], 'advertiser_id':['ubl', 'ubl', 'ubl']})
 #Report('test.pdf', df)
-
+# generate report file for this profile
+def generate_report(profile) -> None:
+    #df = pd.DataFrame({'geohash':['asdf','asdf','asdf'], 'datetime':['mon','tue','wed'], 'latitude':[69, 70, 71], 'longitude':[420, 421, 422], 'advertiser_id':['ubl', 'ubl', 'ubl']})
+    #report = PDFPSReport('report.pdf', self)
+    Report('report.pdf', profile)

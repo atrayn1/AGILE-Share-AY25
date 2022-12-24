@@ -9,9 +9,6 @@ from english_words import english_words_set
 import random
 import pandas as pd
 
-#from report_template import PDFPSReport
-from report import Report
-
 class Profile:
 
     # Constructor
@@ -45,12 +42,6 @@ class Profile:
     # member that we can use for comparisons with other instances
     def __pol_gen(self) -> pd.DataFrame:
         return pd.DataFrame(columns=['geohash', 'datetime', 'latitude', 'longitude', 'advertiser_id']) # Just for testing
-
-    # generate report file for this profile
-    def generate_report(self) -> None:
-        #df = pd.DataFrame({'geohash':['asdf','asdf','asdf'], 'datetime':['mon','tue','wed'], 'latitude':[69, 70, 71], 'longitude':[420, 421, 422], 'advertiser_id':['ubl', 'ubl', 'ubl']})
-        #report = PDFPSReport('report.pdf', self)
-        report = Report('report.pdf', self)
 
 #A test scenario with a week long dataframe
 
