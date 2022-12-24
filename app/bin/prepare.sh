@@ -13,7 +13,8 @@ pip install overpy
 pip install geopy
 pip install scikit-learn
 pip install english-words
-pip install pyPdf
-pip install reportlab
+#pip install pyPdf
+#pip install reportlab
+pip install fpdf
 
 echo "DONE"
