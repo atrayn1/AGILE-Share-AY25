@@ -1,7 +1,9 @@
 # This class is a modified form of the source code found at 
 # https://github.com/jurasec/python-reportlab-example/blob/master/pdf_timesheet.py
 # It has been modified to fit the style of our report more effectively
+
 # Sam Chanow
+# Ernest Son
 
 from reportlab.pdfgen import canvas
 from reportlab.platypus import (SimpleDocTemplate, Paragraph, PageBreak, Image, Spacer, Table, TableStyle)
@@ -10,7 +12,6 @@ from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.pagesizes import LETTER, inch
 from reportlab.graphics.shapes import Line, LineShape, Drawing
 from reportlab.lib.colors import Color
-#from profile import Profile #Custom import
 
 class FooterCanvas(canvas.Canvas):
 
@@ -46,7 +47,7 @@ class FooterCanvas(canvas.Canvas):
         self.drawString(LETTER[0]-x, 65, page)
         self.restoreState()
 
-class PDFPSReporte:
+class PDFPSReport:
 
     def __init__(self, path, prof):
         self.profile = prof
@@ -63,9 +64,10 @@ class PDFPSReporte:
         self.colorOhkaBlue1 = Color((122.0/255), (180.0/255), (225.0/255), 1)
         self.colorOhkaGreenLineas = Color((50.0/255), (140.0/255), (140.0/255), 1)
 
-        self.firstPage()
-        self.nextPagesHeader(True)
-        self.mainReportPage() #Contains the information for the majority of the report
+        #self.firstPage()
+        #self.nextPagesHeader(True)
+        # Contains the information for the majority of the report
+        self.mainReportPage()
         #self.remoteSessionTableMaker()
         self.nextPagesHeader(False)
         #self.inSiteSessionTableMaker()
@@ -81,14 +83,14 @@ class PDFPSReporte:
 
         headerDet = ParagraphStyle('Resumen', fontSize=16, leading=14, justifyBreaks=1, alignment=TA_CENTER, justifyLastLine=1)
         psDetalle = ParagraphStyle('Resumen', fontSize=9, leading=14, justifyBreaks=1, alignment=TA_LEFT, justifyLastLine=1)
-        text = "--User Details--"
+        text = "Device Details"
         titleBasicDetails = Paragraph(text, headerDet)
         self.elements.append(titleBasicDetails)
 
         spacer = Spacer(10, 22)
         self.elements.append(spacer)
 
-        #TODO
+        # TODO
         # Real information goes here in between the two spacers
         text = "Codename: " + self.profile.name + "<br/>" + \
                "Advertising ID: " + self.profile.adid + "<br/>"
@@ -98,16 +100,16 @@ class PDFPSReporte:
         spacer = Spacer(10, 22)
         self.elements.append(spacer)
 
-        text = "--Overpass (Location Resolution) Results--"
+        text = "Location Resolution Results"
         titleBasicDetails = Paragraph(text, headerDet)
         self.elements.append(titleBasicDetails)
 
         spacer = Spacer(10, 22)
         self.elements.append(spacer)
 
-        #TODO
+        # TODO
         # Real information goes here in between the two spacers
-        #We can figure out how to really format this later
+        # We can figure out how to really format this later
         text = self.profile.overpass.to_string()
         paraBasicDetails = Paragraph(text, psDetalle)
         self.elements.append(paraBasicDetails)
@@ -115,14 +117,14 @@ class PDFPSReporte:
         spacer = Spacer(10, 22)
         self.elements.append(spacer)
 
-        text = "--Locations of Interest--"
+        text = "Locations of Interest"
         titleBasicDetails = Paragraph(text, headerDet)
         self.elements.append(titleBasicDetails)
 
         spacer = Spacer(10, 22)
         self.elements.append(spacer)
 
-        #TODO
+        # TODO
         # Real information goes here in between the two spacers
         text = self.profile.lois.to_string()
         paraBasicDetails = Paragraph(text, psDetalle)
@@ -131,14 +133,14 @@ class PDFPSReporte:
         spacer = Spacer(10, 22)
         self.elements.append(spacer)
 
-        text = "--Possible Co-Located Actors (by Advertising IDs)--"
+        text = "Possible Co-Located Actors (by Advertising IDs)"
         titleBasicDetails = Paragraph(text, headerDet)
         self.elements.append(titleBasicDetails)
 
         spacer = Spacer(10, 22)
         self.elements.append(spacer)
 
-        #TODO
+        # TODO
         # Real information goes here in between the two spacers
         text = text = self.profile.coloc.to_string()
         paraBasicDetails = Paragraph(text, psDetalle)
@@ -147,22 +149,23 @@ class PDFPSReporte:
         spacer = Spacer(10, 22)
         self.elements.append(spacer)
 
-        text = "--Pattern of Life--"
+        text = "Pattern of Life"
         titleBasicDetails = Paragraph(text, headerDet)
         self.elements.append(titleBasicDetails)
 
         spacer = Spacer(10, 22)
         self.elements.append(spacer)
 
-        #TODO
+        # TODO
         # Real information goes here in between the two spacers
         text = text = self.profile.pol.to_string()
         paraBasicDetails = Paragraph(text, psDetalle)
         self.elements.append(paraBasicDetails)
 
-        #The last element to be appended is the page break
+        # The last element to be appended is the page break
         self.elements.append(PageBreak())
 
+    '''
     def firstPage(self):
         img = Image('../images/logo.png', kind='proportional')
         img.drawHeight = 0.75*inch
@@ -173,15 +176,15 @@ class PDFPSReporte:
         spacer = Spacer(30, 100)
         self.elements.append(spacer)
 
-        #img = Image('../images/logo.png')
-        #img.drawHeight = 2.5*inch
-        #img.drawWidth = 5.5*inch
-        #self.elements.append(img)
+        # img = Image('../images/logo.png')
+        # img.drawHeight = 2.5*inch
+        # img.drawWidth = 5.5*inch
+        # self.elements.append(img)
 
-        #Report Title
-        #TODO
+        # Report Title
+        # TODO
         psTitle = ParagraphStyle('Resumen', fontSize=40, leading=40, justifyBreaks=1, alignment=TA_CENTER)
-        titleText = "<h1>\'"  + self.profile.name + "\'</h1><br\> Report on User Activity <br\>"
+        titleText = "<h1>\'"  + self.profile.name + "\'</h1><br\> Report on Device Activity <br\>"
         titleParagraph = Paragraph(titleText, psTitle)
         self.elements.append(titleParagraph)  
 
@@ -193,11 +196,12 @@ class PDFPSReporte:
         paragraphReportSummary = Paragraph(text, psDetalle)
         self.elements.append(paragraphReportSummary)
         self.elements.append(PageBreak())
+    '''
 
     def nextPagesHeader(self, isSecondPage):
         if isSecondPage:
             psHeaderText = ParagraphStyle('Hed0', fontSize=16, alignment=TA_LEFT, borderWidth=3, textColor=self.colorOhkaGreen0)
-            text = 'User Activity Report'
+            text = 'Device Activity Report'
             paragraphReportHeader = Paragraph(text, psHeaderText)
             self.elements.append(paragraphReportHeader)
 
@@ -491,7 +495,3 @@ class PDFPSReporte:
         self.elements.append(spacer)
         self.elements.append(table)
 
-
-#if __name__ == '__main__':
-    #sam = Profile('7d54hgie90')
-    #report = PDFPSReporte('psreport.pdf', sam)
