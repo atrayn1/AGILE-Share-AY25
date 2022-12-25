@@ -1,5 +1,5 @@
-#Simple OverpassAPI Query wrappers for ease of use
-#Sam Chanow
+# Simple OverpassAPI Query wrappers for ease of use
+# Sam Chanow
 
 import overpy
 import pandas as pd
@@ -15,7 +15,7 @@ def overpassNearbyQuery(latitude, longitude, range):
     # fetch all ways and nodes
     result = api.query(query)
 
-    return filterNodeList(results=result)
+    return filter_node_list(results=result)
 '''
 
 # Given a list of latitude and longitudes and a range
@@ -28,7 +28,7 @@ def overpassNearbyQuery(latitude, longitude, range):
 # UPDATE: Function now takes a dataframe 
 # THIS DATAFRAME MUST CONTAIN 'latitude' 'longitude' 'datetime'
 
-def overpassPolyLineNearbyQuery(data, range):
+def polyline_nearby_query(data, range):
     # custom polygon boundary. Boundaries specified as 
     # (poly:lat1 long1 lat2 long2............latN longN lat1 long1). 
     # Coordinates (lat, long) at the beginning and at the end of the 
@@ -65,12 +65,12 @@ def overpassPolyLineNearbyQuery(data, range):
     #fetch the results
     result = api.query(query)
 
-    return filterNodeList(results=result)
+    return filter_node_list(results=result)
 
 
 #Given an overpass Query Result
 #Return a dataframe of all the named nodes and their lat/longs
-def filterNodeList(results):
+def filter_node_list(results):
 
     #Get the useful information (the nodes) and discard the rest
     results = results.nodes
@@ -108,5 +108,5 @@ def filterNodeList(results):
 
 #Test Code Polygon Query
 #filtered_df = query_adid(df['advertiser_id'][0], df)
-#res = overpassPolyLineNearbyQuery(filtered_df, 10)
+#res = polyline_nearby_query(filtered_df, 10)
 #print(res)

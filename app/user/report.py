@@ -1,5 +1,3 @@
-# fpdf is way easier to use than reportlab... we don't need fancy formatting for
-# an output report, presentation clarity is priority #1
 import pandas as pd
 from fpdf import FPDF
 
@@ -22,11 +20,11 @@ class Report:
         self.pdf = PDF()
         self.path = path
         self.profile = profile
-        self.titlePage()
-        self.contentPage()
-        self.savePDF()
+        self.title_page()
+        self.content_page()
+        self.save_pdf()
     
-    def titlePage(self):
+    def title_page(self):
         # cell height
         ch = 8
         self.pdf.add_page()
@@ -42,7 +40,7 @@ class Report:
         self.pdf.ln(ch)
         self.pdf.image("images/new_logo.png", w=75, h=100, x=70, y=150)
 
-    def contentPage(self):
+    def content_page(self):
         self.pdf.add_page()
         # cell height
         ch = 8
@@ -74,13 +72,13 @@ class Report:
         self.pdf.multi_cell(w=0, h=ch, txt="All Locations of Interest were flagged for either repeated visits separated by more than " + str(self.profile.rep_duration) +
             " hours, or extended stays at the location for over "+ str(self.profile.ext_duration) + " hours. Locations were determined with a geohash precision of " + str(self.profile.prec) + ".")
         self.pdf.ln(ch)
-        self.displayDataframe(self.profile.lois)
+        self.display_dataframe(self.profile.lois)
 
         self.pdf.ln(ch)
         self.pdf.set_font('Arial', 'B', 16)
         self.pdf.cell(w=0, h=ch, txt="Co-located Devices:", ln=1)
         self.pdf.set_font('Arial', '', 16)
-        self.displayDataframe(self.profile.coloc)
+        self.display_dataframe(self.profile.coloc)
 
         self.pdf.ln(ch)
         self.pdf.set_font('Arial', 'B', 16)
@@ -90,10 +88,10 @@ class Report:
 
 
 
-    def savePDF(self):
+    def save_pdf(self):
         self.pdf.output(self.path, 'F')
 
-    def displayDataframe(self, df):
+    def display_dataframe(self, df):
 
         df = df.drop(columns=['advertiser_id'])
 
@@ -128,4 +126,4 @@ class Report:
 def generate_report(profile) -> None:
     #df = pd.DataFrame({'geohash':['asdf','asdf','asdf'], 'datetime':['mon','tue','wed'], 'latitude':[69, 70, 71], 'longitude':[420, 421, 422], 'advertiser_id':['ubl', 'ubl', 'ubl']})
     #report = PDFPSReport('report.pdf', self)
-    Report('report.pdf', profile)
+    Report('user.pdf', profile)

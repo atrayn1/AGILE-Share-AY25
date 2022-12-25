@@ -15,7 +15,7 @@ import folium
 import resources.location as loc 
 import resources.adid as adid
 import resources.date as date
-import resources.overpassQuery as opq
+import resources.tag as tag
 import resources.loi as loi
 from profile import Profile
 
@@ -148,7 +148,7 @@ with sidebar:
                 submitted = st.form_submit_button("Query")
                 if submitted:
                     st.session_state.data = adid.query_adid(ad_id, st.session_state.data) # Filter the data
-                    res = opq.overpassPolyLineNearbyQuery(adid.query_adid(ad_id, st.session_state.data), radius)
+                    res = tag.polyline_nearby_query(adid.query_adid(ad_id, st.session_state.data), radius)
                     results_c.write(res)
 
         # Locations of interest
@@ -168,7 +168,7 @@ with sidebar:
                     #We need to filter by adid and then perfrom loi analysis
                     #then we need to make a map
                     data = adid.query_adid(ad_id, st.session_state.data)
-                    loi_data = loi.LOI(data, precision=prec, extended_duration=exth, repeated_duration=reph)
+                    loi_data = loi.locations_of_interest(data, precision=prec, extended_duration=exth, repeated_duration=reph)
                     #Here we need to make a map and pass the optional parameter for these location points
                     loc.create_map(data, data.iloc[0]['latitude'], data.iloc[0]['longitude'], results_c, loi_data=loi_data)
 
