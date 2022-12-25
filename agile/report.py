@@ -16,9 +16,8 @@ class PDF(FPDF):
 
 # Generate PDF
 class Report:
-    def __init__(self, path, profile):
+    def __init__(self, profile):
         self.pdf = PDF()
-        self.path = path
         self.profile = profile
         self.title_page()
         self.content_page()
@@ -79,7 +78,8 @@ class Report:
         self.pdf.multi_cell(w=0, h=ch, txt="TBD")
 
     def save_pdf(self):
-        self.pdf.output(self.path, 'F')
+        output_path = self.profile.name + '.pdf'
+        self.pdf.output(output_path, 'F')
 
     def display_dataframe(self, df):
 
@@ -95,16 +95,4 @@ class Report:
             for datum in row.values:
                 self.pdf.cell(45, 8, str(datum), border=1,align='L')
             self.pdf.ln(8)
-
-        #first print columns
-        #for index, col in enumerate(df.columns):
-        #    print(index, col)
-        #    self.pdf.cell(30, 8, str(col), 1, index)
-        
-        #self.pdf.ln()
-
-        #We print out each cell row by row
-        ##for index, row in df.iterrows():
-        #    for data in row.values:
-        #        pass
 

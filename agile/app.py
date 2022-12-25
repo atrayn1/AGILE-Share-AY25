@@ -187,7 +187,7 @@ with sidebar:
                         report_adID = loi_data['advertiser_id'][0]
                         device = Profile(report_adID)
                         device.lois = loi_data
-                        Report('test.pdf', device)
+                        Report(device)
 
 # Preview container
 with preview_c:

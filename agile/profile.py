@@ -17,7 +17,6 @@ from report import Report
 class Profile:
 
     # Constructor
-    #Some fake values
     def __init__(self, adID) -> None:
         self.adid = adID
         self.name = self.__name_gen()
@@ -57,5 +56,5 @@ df = pd.read_csv("../data/_54aa7153-1546-ce0d-5dc9-aa9e8e371f00_weeklong.csv")
 data = query_adid("54aa7153-1546-ce0d-5dc9-aa9e8e371f00", df)
 ubl = Profile("54aa7153-1546-ce0d-5dc9-aa9e8e371f00")
 ubl.lois = loi(data, 10, 7, 24)
-Report('test.pdf', ubl)
+Report(ubl)
 
