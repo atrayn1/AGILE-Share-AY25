@@ -11,11 +11,14 @@ from streamlit_folium import st_folium
 from streamlit_folium import folium_static
 import folium
 
-import filtering.location as loc 
-import filtering.adid as adid
-import filtering.date as date
-import utils.tag as tag
-import locations.loi as loi
+from filtering.location import query_location
+from filtering.location import create_map
+from filtering.date import query_date
+from filtering.date import create_date_map
+from filtering.adid import query_adid
+from filtering.adid import create_adid_map
+from locations.loi import locations_of_interest
+from utils.tag import polyline_nearby_query
 
 # Global Vars
 # Honestly right now this is just for the data so all containers have access to
@@ -101,8 +104,8 @@ with sidebar:
                 ad_id = st.text_input("Advertiser ID")
                 submitted = st.form_submit_button("Query")
                 if submitted:
-                    st.session_state.data = adid.query_adid(ad_id, st.session_state.data) #Filter the data
-                    adid.create_adid_map(st.session_state.data, results_c)
+                    st.session_state.data = query_adid(ad_id, st.session_state.data) #Filter the data
+                    create_adid_map(st.session_state.data, results_c)
         # Filter by lat/long
         location_filter_c = st.container()
         with location_filter_c:
@@ -115,8 +118,8 @@ with sidebar:
                 radius = st.text_input("Radius")
                 submitted = st.form_submit_button("Query")
                 if submitted:
-                    st.session_state.data = loc.query_location(lat, long, radius, st.session_state.data)
-                    loc.create_map(st.session_state.data, lat, long, results_c)
+                    st.session_state.data = query_location(lat, long, radius, st.session_state.data)
+                    create_map(st.session_state.data, lat, long, results_c)
         # Filter by timestamp
         time_filter = st.container()
         with time_filter:
@@ -129,8 +132,8 @@ with sidebar:
                 end_time = st.time_input("Time:", key="endtime")
                 submitted = st.form_submit_button("Query")
                 if submitted:
-                    st.session_state.data = date.query_date(start_date, start_time, end_date, end_time, st.session_state.data)
-                    date.create_date_map(st.session_state.data, results_c)
+                    st.session_state.data = query_date(start_date, start_time, end_date, end_time, st.session_state.data)
+                    create_date_map(st.session_state.data, results_c)
 
     # Data Analysis Expander
     with analysis_ex:
@@ -145,8 +148,8 @@ with sidebar:
                 radius = st.text_input("Radius")
                 submitted = st.form_submit_button("Query")
                 if submitted:
-                    st.session_state.data = adid.query_adid(ad_id, st.session_state.data) # Filter the data
-                    res = tag.polyline_nearby_query(adid.query_adid(ad_id, st.session_state.data), radius)
+                    st.session_state.data = query_adid(ad_id, st.session_state.data) # Filter the data
+                    res = polyline_nearby_query(query_adid(ad_id, st.session_state.data), radius)
                     results_c.write(res)
 
         # Locations of interest
@@ -156,7 +159,7 @@ with sidebar:
             loi_form = st.form(key="loi_form")
             with loi_form:
                 #loi_data = None #Not set yet but needed for callback
-                #data = adid.query_adid(ad_id, st.session_state.data)
+                #data = query_adid(ad_id, st.session_state.data)
                 ad_id = st.text_input("Advertiser ID")
                 prec = st.slider("Precision", min_value=1, max_value=12, value=10)
                 exth = st.slider("Extended Stay Duration", min_value=1, max_value=24, value=7)
@@ -165,10 +168,10 @@ with sidebar:
                 if submitted:
                     #We need to filter by adid and then perfrom loi analysis
                     #then we need to make a map
-                    data = adid.query_adid(ad_id, st.session_state.data)
-                    loi_data = loi.locations_of_interest(data, precision=prec, extended_duration=exth, repeated_duration=reph)
+                    data = query_adid(ad_id, st.session_state.data)
+                    loi_data = locations_of_interest(data, precision=prec, extended_duration=exth, repeated_duration=reph)
                     #Here we need to make a map and pass the optional parameter for these location points
-                    loc.create_map(data, data.iloc[0]['latitude'], data.iloc[0]['longitude'], results_c, loi_data=loi_data)
+                    create_map(data, data.iloc[0]['latitude'], data.iloc[0]['longitude'], results_c, loi_data=loi_data)
 
                     #Write Locations of Interest to the results container
                     results_c.write("Location of Interest Data")
