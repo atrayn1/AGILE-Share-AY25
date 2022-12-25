@@ -11,13 +11,11 @@ from streamlit_folium import st_folium
 from streamlit_folium import folium_static
 import folium
 
-# Our function imports
-import resources.location as loc 
-import resources.adid as adid
-import resources.date as date
-import resources.tag as tag
-import resources.loi as loi
-from profile import Profile
+import filtering.location as loc 
+import filtering.adid as adid
+import filtering.date as date
+import utils.tag as tag
+import locations.loi as loi
 
 # Global Vars
 # Honestly right now this is just for the data so all containers have access to
@@ -44,7 +42,7 @@ title_left, title_center = title_c.columns([1, 3])
 title_center.title("AGILE")
 title_center.subheader("Advertising and Geolocation Information Logical Extractor")
 # Logo Image
-title_left.image("images/logo.png") 
+title_left.image("../images/logo.png") 
 
 # Main page sidebar
 sidebar = st.sidebar

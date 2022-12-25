@@ -8,6 +8,11 @@
 from english_words import english_words_set
 import random
 import pandas as pd
+from locations.loi import locations_of_interest as loi
+
+# testing
+from filtering.adid import query_adid
+from report import Report
 
 class Profile:
 
@@ -27,26 +32,30 @@ class Profile:
         self.rep_duration = 24
 
     def __overpass_gen(self) -> pd.DataFrame:
-        return pd.DataFrame(columns=['geohash', 'datetime', 'latitude', 'longitude', 'advertiser_id']) # Just for testing
+        return pd.DataFrame(columns=['geohash', 'datetime', 'latitude', 'longitude', 'advertiser_id'])
     # __ means private (thanks python absolute dogshit)
     def __name_gen(self) -> str:
         english = list(english_words_set)
         return random.choice(english) + "-" + random.choice(english)
 
     # generate the locations of interest for this adID
-    # TODO import loi.py
     def __loi_gen(self) -> pd.DataFrame:
-        return pd.DataFrame(columns=['geohash', 'datetime', 'latitude', 'longitude', 'advertiser_id']) # Just for testing
+        return pd.DataFrame(columns=['geohash', 'datetime', 'latitude', 'longitude', 'advertiser_id'])
 
     # generate the colocating adId Dataframe for this adID
     def __coloc_gen(self) -> pd.DataFrame:
-        return pd.DataFrame(columns=['geohash', 'datetime', 'latitude', 'longitude', 'advertiser_id']) # Just for testing
+        return pd.DataFrame(columns=['geohash', 'datetime', 'latitude', 'longitude', 'advertiser_id'])
 
     # generate a pattern of life for this adID
     # probably not gonna be a pandas dataframe but the idea is that we have a
     # member that we can use for comparisons with other instances
     def __pol_gen(self) -> pd.DataFrame:
-        return pd.DataFrame(columns=['geohash', 'datetime', 'latitude', 'longitude', 'advertiser_id']) # Just for testing
+        return pd.DataFrame(columns=['geohash', 'datetime', 'latitude', 'longitude', 'advertiser_id'])
 
-#A test scenario with a week long dataframe
+# test report
+df = pd.read_csv("../data/_54aa7153-1546-ce0d-5dc9-aa9e8e371f00_weeklong.csv")
+data = query_adid("54aa7153-1546-ce0d-5dc9-aa9e8e371f00", df)
+ubl = Profile("54aa7153-1546-ce0d-5dc9-aa9e8e371f00")
+ubl.lois = loi(data, 10, 7, 24)
+Report('test.pdf', ubl)
 

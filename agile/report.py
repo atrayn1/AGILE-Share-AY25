@@ -38,26 +38,18 @@ class Report:
 
         #The logo
         self.pdf.ln(ch)
-        self.pdf.image("images/new_logo.png", w=75, h=100, x=70, y=150)
+        self.pdf.image("../images/new_logo.png", w=75, h=100, x=70, y=150)
 
     def content_page(self):
         self.pdf.add_page()
+
         # cell height
         ch = 8
-
-        #self.pdf.set_font('Arial', '', 16)
-        #self.pdf.cell(w=30, h=ch, txt="Date: ", ln=0)
-        #self.pdf.cell(w=30, h=ch, txt="12/23/2022", ln=1)
-        #self.pdf.cell(w=30, h=ch, txt="Author: ", ln=0)
-        #self.pdf.cell(w=30, h=ch, txt="Ernest Son", ln=1)
-        #self.pdf.cell(w=30, h=ch, ln=0)
-        #self.pdf.cell(w=30, h=ch, txt="Sam Chanow", ln=1)
 
         self.pdf.ln(ch)
         self.pdf.set_font('Arial', 'B', 16)
         self.pdf.cell(w=0, h=ch, txt="Device Details:", ln=1)
         self.pdf.set_font('Arial', '', 16)
-        #self.pdf.multi_cell(w=0, h=ch, txt="Lorem ipsum dolor sit amet...")
         self.pdf.cell(w=30, h=ch, txt="Codename: " + self.profile.name, ln=1)
         self.pdf.cell(w=30, h=ch, txt="AdID: " + self.profile.adid, ln=1)
 
@@ -85,8 +77,6 @@ class Report:
         self.pdf.cell(w=0, h=ch, txt="Pattern of Life:", ln=1)
         self.pdf.set_font('Arial', '', 16)
         self.pdf.multi_cell(w=0, h=ch, txt="TBD")
-
-
 
     def save_pdf(self):
         self.pdf.output(self.path, 'F')
@@ -118,12 +108,3 @@ class Report:
         #    for data in row.values:
         #        pass
 
-
-# TESTING
-#df = pd.DataFrame({'geohash':['asdf','asdf','asdf'], 'datetime':['mon','tue','wed'], 'latitude':[69, 70, 71], 'longitude':[420, 421, 422], 'advertiser_id':['ubl', 'ubl', 'ubl']})
-#Report('test.pdf', df)
-# generate report file for this profile
-def generate_report(profile) -> None:
-    #df = pd.DataFrame({'geohash':['asdf','asdf','asdf'], 'datetime':['mon','tue','wed'], 'latitude':[69, 70, 71], 'longitude':[420, 421, 422], 'advertiser_id':['ubl', 'ubl', 'ubl']})
-    #report = PDFPSReport('report.pdf', self)
-    Report('user.pdf', profile)
