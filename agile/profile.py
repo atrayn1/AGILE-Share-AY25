@@ -18,8 +18,8 @@ class Profile:
 
     # Constructor
     #Some fake values
-    def __init__(self, adId) -> None:
-        self.adid = adId
+    def __init__(self, adID) -> None:
+        self.adid = adID
         self.name = self.__name_gen()
         self.lois = self.__loi_gen()
         self.coloc = self.__coloc_gen()
@@ -42,7 +42,7 @@ class Profile:
     def __loi_gen(self) -> pd.DataFrame:
         return pd.DataFrame(columns=['geohash', 'datetime', 'latitude', 'longitude', 'advertiser_id'])
 
-    # generate the colocating adId Dataframe for this adID
+    # generate the colocating adID Dataframe for this adID
     def __coloc_gen(self) -> pd.DataFrame:
         return pd.DataFrame(columns=['geohash', 'datetime', 'latitude', 'longitude', 'advertiser_id'])
 

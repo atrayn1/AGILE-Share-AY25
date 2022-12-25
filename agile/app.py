@@ -19,6 +19,8 @@ from filtering.adid import query_adid
 from filtering.adid import create_adid_map
 from locations.loi import locations_of_interest
 from utils.tag import polyline_nearby_query
+from profile import Profile
+from report import Report
 
 # Global Vars
 # Honestly right now this is just for the data so all containers have access to
@@ -158,7 +160,7 @@ with sidebar:
             st.subheader("Location of Interest")
             loi_form = st.form(key="loi_form")
             with loi_form:
-                #loi_data = None #Not set yet but needed for callback
+                #loi_data = None # Not set yet but needed for callback
                 #data = query_adid(ad_id, st.session_state.data)
                 ad_id = st.text_input("Advertiser ID")
                 prec = st.slider("Precision", min_value=1, max_value=12, value=10)
@@ -166,21 +168,26 @@ with sidebar:
                 reph = st.slider("Time Between Repeat Visits", min_value=1, max_value=72, value=24)
                 submitted = st.form_submit_button("Query")
                 if submitted:
-                    #We need to filter by adid and then perfrom loi analysis
-                    #then we need to make a map
+                    # We need to filter by adid and then perform loi analysis
+                    # then we need to make a map
                     data = query_adid(ad_id, st.session_state.data)
                     loi_data = locations_of_interest(data, precision=prec, extended_duration=exth, repeated_duration=reph)
-                    #Here we need to make a map and pass the optional parameter for these location points
+                    # Here we need to make a map and pass the optional parameter for these location points
                     create_map(data, data.iloc[0]['latitude'], data.iloc[0]['longitude'], results_c, loi_data=loi_data)
 
-                    #Write Locations of Interest to the results container
+                    # Write Locations of Interest to the results container
                     results_c.write("Location of Interest Data")
                     results_c.write(loi_data)
 
-        #st.subheader("KMeans?")
-        #st.subheader("Next Event Prediction?")
-        #st.subheader("Outlier Prediction?")
-        #st.subheader("Open source??")
+                    # TODO
+                    # Give the option to generate a report
+                    # this resets everything, idk what's happening lol
+                    report_requested = st.form_submit_button("Generate Report")
+                    if report_requested:
+                        report_adID = loi_data['advertiser_id'][0]
+                        device = Profile(report_adID)
+                        device.lois = loi_data
+                        Report('test.pdf', device)
 
 # Preview container
 with preview_c:
