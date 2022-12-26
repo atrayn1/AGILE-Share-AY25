@@ -170,7 +170,13 @@ with sidebar:
                     results_c.write("Location of Interest Data")
                     results_c.write(loi_data)
                 if st.form_submit_button("Generate Report"):
-                    Report(Profile(ad_id))
+                    # streamlit does NOT have a way to maintain state, so we have to run locations_of_interest again
+                    data = query_adid(ad_id, st.session_state.data)
+                    loi_data = locations_of_interest(data, precision=prec, extended_duration=exth, repeated_duration=reph)
+                    device = Profile(ad_id)
+                    device.lois = loi_data
+                    Report(device)
+                    results_c.write("Report generated...")
 
 # Preview container
 with preview_c:
