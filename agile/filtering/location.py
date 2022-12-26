@@ -1,5 +1,5 @@
-#Functions and Utility for Location Based Querys
-#Sam Chanow
+# Functions and Utility for Location Based Queries
+# Sam Chanow
 
 import streamlit as st
 import streamlit.components.v1 as components

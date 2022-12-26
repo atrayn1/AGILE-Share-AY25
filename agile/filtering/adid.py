@@ -10,7 +10,7 @@ from streamlit_folium import st_folium
 from streamlit_folium import folium_static
 import folium
 
-import resources.location as loc 
+from .location import create_map
 
 #Fuction that querys a dataframe and filters based on AdId
 def query_adid(adid, df):
@@ -25,7 +25,7 @@ def query_adid(adid, df):
 def create_adid_map(df, container):
     #uses the first data point as the center lat and long
     if len(df.index) > 0:
-        loc.create_map(df, df.iloc[0]['latitude'], df.iloc[0]['longitude'], container)
+        create_map(df, df.iloc[0]['latitude'], df.iloc[0]['longitude'], container)
     else:
         container.write("No Data Points Available")
 

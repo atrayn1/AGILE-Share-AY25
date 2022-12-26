@@ -8,12 +8,8 @@
 - Ernest Son
 - Katie Dessauer
 
-### File Structure
-
-- app/ contains all of the web application code and data
-- app/resources/ contains functions for the web application
-
 ### Dependencies
+
 - streamlit
 - proximitypyhash
 - pygeohash
@@ -23,24 +19,27 @@
 - streamlit-folium
 - overpy
 - geopy
+- scikit-learn
+- english-words
+- fpdf2
 
 ### How do I run the demo?
 
 ```console
-foo@bar:../AGILE/app$ streamlit run agile.py
+foo@bar:../AGILE/agile$ streamlit run app.py
 ```
 
 ## DONE
 
 - Resolve addresses from lat/long coordinates
+- Get areas of interest for a specific data point
+- Integrate an "areas of interest" query into webapp demo
 
 ## TODO
 
-- Get areas of interest for a specific data point
-  - Effectively and efficiently identify clusters of data points
 - Name areas of interest via reverse geocoding
-  - centroid?
-- Integrate an "areas of interest" query into webapp demo
+  - median data point?
+- Generate a PDF report of areas of interest for a specific adID
 
 ## FUTURE
 
