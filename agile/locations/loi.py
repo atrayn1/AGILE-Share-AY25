@@ -7,9 +7,6 @@ import pandas as pd
 import pygeohash as gh
 from datetime import datetime as dt
 
-def convert_numpy_row_to_df(data_values, index):
-    pass
-
 # Location of Interest Algorithm
 # Prototype
 # Input: Dataframe w/ geohash, timestamp, latitude, longitude, and adID
@@ -19,7 +16,7 @@ def convert_numpy_row_to_df(data_values, index):
 # Assuming that that all of the points in the dataframe relate to the same adID
 # I.E. the dataframe has already been filtered
 # Return: A filtered dataframe with the Locations of Interest
-def LOI(data, precision, extended_duration, repeated_duration, debug=False) -> pd.DataFrame:
+def locations_of_interest(data, precision, extended_duration, repeated_duration, debug=False) -> pd.DataFrame:
 
     # Now that we have locations sorted by time we can use iteration to view an
     # ADIDs movement Chronologically
@@ -69,7 +66,6 @@ def LOI(data, precision, extended_duration, repeated_duration, debug=False) -> p
     # column indices are consistent
 
     data_values = data[relevant_features].values
-    #latlongs = data[['latitude', 'longitude']].values
     data_size = len(data_values)
 
     # 1) Extended stay in one location
@@ -109,20 +105,6 @@ def LOI(data, precision, extended_duration, repeated_duration, debug=False) -> p
         end_time = dt.strptime(data_values[end_index, 1], '%Y-%m-%d %H:%M:%S')
         time_difference = end_time - start_time
         if time_difference.total_seconds() > 3600 * extended_duration:
-
-            # We're only adding the start_index datapoint to our final
-            # dataframe... it would be more robust to add the centroid resulting
-            # from all the data points between start_index and index, or by some
-            # other metric that captures the relevance of the other data points
-            '''
-            X = latlongs[start_index:end_index]
-            length = X.shape[0]
-            sum_x = np.sum(X[:,0])
-            sum_y = np.sum(X[:,1])
-            centroid_lat, centroid_long = sum_x / length, sum_y / length
-            average_delta = (end_time - start_time) / 2
-            average_time = start_time + average_delta
-            '''
 
             # the centroid idea sucked, let's do a median data point based on
             # timestamp instead

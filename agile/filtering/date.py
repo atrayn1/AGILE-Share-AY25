@@ -10,8 +10,7 @@ from streamlit_folium import st_folium
 from streamlit_folium import folium_static
 import folium
 
-import resources.location as loc
-import resources.adid as adid
+from .adid import create_adid_map
 
 #function that queries a df by date range
 def query_date(start_date, start_time, end_date, end_time, df):
@@ -39,4 +38,4 @@ def query_date(start_date, start_time, end_date, end_time, df):
 
 #Creates map based on date range dataframe
 def create_date_map(df, container):
-    adid.create_adid_map(df, container)
+    create_adid_map(df, container)
