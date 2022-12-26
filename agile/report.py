@@ -69,12 +69,14 @@ class Report:
         self.pdf.set_font('Arial', 'B', 16)
         self.pdf.cell(w=0, h=ch, txt="Co-located Devices:", ln=1)
         self.pdf.set_font('Arial', '', 16)
-        self.display_dataframe(self.profile.coloc)
+        #self.display_dataframe(self.profile.coloc)
+        self.pdf.multi_cell(w=0, h=ch, txt="TBD")
 
         self.pdf.ln(ch)
         self.pdf.set_font('Arial', 'B', 16)
         self.pdf.cell(w=0, h=ch, txt="Pattern of Life:", ln=1)
         self.pdf.set_font('Arial', '', 16)
+        #self.display_dataframe(self.profile.pol)
         self.pdf.multi_cell(w=0, h=ch, txt="TBD")
 
     def save_pdf(self):
