@@ -13,7 +13,6 @@ from utils.files import random_line
 # testing
 from filtering.adid import query_adid
 from report import Report
-
 test = pd.DataFrame(columns=['geohash', 'datetime', 'latitude', 'longitude', 'advertiser_id'])
 
 class Profile:
