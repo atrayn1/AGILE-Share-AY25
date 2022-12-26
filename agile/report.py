@@ -8,7 +8,7 @@ class PDF(FPDF):
         super().__init__()
     def header(self):
         self.set_font('Arial', '', 12)
-        self.cell(0, 8, 'A.G.I.L.E. User Activity Report', 0, 1, 'C')
+        self.cell(0, 8, 'A.G.I.L.E. Device Activity Report', 0, 1, 'C')
     def footer(self):
         self.set_y(-15)
         self.set_font('Arial', '', 12)
@@ -33,7 +33,7 @@ class Report:
 
         self.pdf.cell(w=0, h=100, txt=self.profile.name, align="C")
         self.pdf.ln(ch)
-        self.pdf.cell(w=0, h=120, txt="Report on User Activity", align="C")
+        self.pdf.cell(w=0, h=120, txt="Report on Device Activity", align="C")
 
         #The logo
         self.pdf.ln(ch)
