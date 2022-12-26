@@ -176,7 +176,7 @@ with sidebar:
                     device = Profile(ad_id)
                     device.lois = loi_data
                     Report(device)
-                    results_c.write("Report generated...")
+                    results_c.write("Report generated in ../data/")
 
 # Preview container
 with preview_c:

@@ -80,8 +80,11 @@ class Report:
         #self.display_dataframe(self.profile.pol)
         self.pdf.multi_cell(w=0, h=ch, txt="TBD")
 
+    # TODO
+    # fix this, hacky
+    # Report() needs to be run in AGILE/agile/ in order to work...
     def save_pdf(self):
-        output_path = self.profile.name + '.pdf'
+        output_path = '../data/' + self.profile.name + '.pdf'
         self.pdf.output(output_path, 'F')
 
     def display_dataframe(self, df):
