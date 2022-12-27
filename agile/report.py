@@ -1,7 +1,8 @@
 import pandas as pd
 from fpdf import FPDF
-
+#PDF Report class for AGILE Device Activity Rreports
 # Ernest Son
+#Sam Chanow
 
 class PDF(FPDF):
     def __init__(self):
