@@ -47,7 +47,7 @@ title_left, title_center = title_c.columns([1, 3])
 title_center.title("AGILE")
 title_center.subheader("Advertising and Geolocation Information Logical Extractor")
 # Logo Image
-title_left.image("../images/logo.png") 
+title_left.image("../images/new_logo.png") 
 
 # Main page sidebar
 sidebar = st.sidebar
