@@ -40,12 +40,10 @@ if 'uploaded' not in st.session_state:
 
 # Title container
 title_c = st.container()
-
-# Title Columns
 title_left, title_center = title_c.columns([1, 3])
-
 title_center.title("AGILE")
 title_center.subheader("Advertising and Geolocation Information Logical Extractor")
+
 # Logo Image
 title_left.image("../images/new_logo.png") 
 
@@ -63,11 +61,9 @@ analysis_ex = sidebar.expander("Data Analysis")
 preview_c = st.container()
 preview_c.subheader("Data Preview")
     
-
 # The data analysis/filtering results container
 results_c = st.container()
 results_c.subheader("Analysis")
-
 
 ###ACTIONS FOR THE UI###
 ###THIS IS THE DYANMIC SECTION OF THE WEB APP###
@@ -89,9 +85,8 @@ with sidebar:
         with reset_c:
             reset_form = st.form(key="reset")
             with reset_form:
-                submitted = st.form_submit_button("RESET DATA")
                 # This will reset the state variable resetting the data to uploaded state
-                if submitted:
+                if st.form_submit_button("RESET DATA"):
                     st.session_state.data = pd.read_csv(raw_data, sep=",")
 
     # Data Filtering Expander
@@ -104,10 +99,10 @@ with sidebar:
             adid_form = st.form(key="adid_filter")
             with adid_form:
                 ad_id = st.text_input("Advertiser ID")
-                submitted = st.form_submit_button("Query")
-                if submitted:
+                if st.form_submit_button("Query"):
                     st.session_state.data = query_adid(ad_id, st.session_state.data) #Filter the data
                     create_adid_map(st.session_state.data, results_c)
+
         # Filter by lat/long
         location_filter_c = st.container()
         with location_filter_c:
@@ -118,10 +113,10 @@ with sidebar:
                 lat = st.text_input("Latitude")
                 long = st.text_input("Longitude")
                 radius = st.text_input("Radius")
-                submitted = st.form_submit_button("Query")
-                if submitted:
+                if st.form_submit_button("Query"):
                     st.session_state.data = query_location(lat, long, radius, st.session_state.data)
                     create_map(st.session_state.data, lat, long, results_c)
+
         # Filter by timestamp
         time_filter = st.container()
         with time_filter:
@@ -132,8 +127,7 @@ with sidebar:
                 start_time = st.time_input("Time:", key="starttime")
                 end_date = st.date_input("End Date")
                 end_time = st.time_input("Time:", key="endtime")
-                submitted = st.form_submit_button("Query")
-                if submitted:
+                if st.form_submit_button("Query"):
                     st.session_state.data = query_date(start_date, start_time, end_date, end_time, st.session_state.data)
                     create_date_map(st.session_state.data, results_c)
 
@@ -148,8 +142,7 @@ with sidebar:
             with overpass_form:
                 ad_id = st.text_input("Advertiser ID")
                 radius = st.text_input("Radius")
-                submitted = st.form_submit_button("Query")
-                if submitted:
+                if st.form_submit_button("Query"):
                     st.session_state.data = query_adid(ad_id, st.session_state.data) # Filter the data
                     res = polyline_nearby_query(query_adid(ad_id, st.session_state.data), radius)
                     results_c.write(res)
@@ -157,37 +150,31 @@ with sidebar:
         # Locations of interest
         loi_analysis = st.container()
         with loi_analysis:
-            st.subheader("Location of Interest")
+            st.subheader("Locations of Interest")
             loi_form = st.form(key="loi_form")
             with loi_form:
-                #loi_data = None # Not set yet but needed for callback
-                #data = query_adid(ad_id, st.session_state.data)
+                loi_data = None
                 ad_id = st.text_input("Advertiser ID")
                 prec = st.slider("Precision", min_value=1, max_value=12, value=10)
                 exth = st.slider("Extended Stay Duration", min_value=1, max_value=24, value=7)
                 reph = st.slider("Time Between Repeat Visits", min_value=1, max_value=72, value=24)
-                submitted = st.form_submit_button("Query")
-                if submitted:
+                if st.form_submit_button("Query"):
                     # We need to filter by adid and then perform loi analysis
-                    # then we need to make a map
                     data = query_adid(ad_id, st.session_state.data)
                     loi_data = locations_of_interest(data, precision=prec, extended_duration=exth, repeated_duration=reph)
                     # Here we need to make a map and pass the optional parameter for these location points
                     create_map(data, data.iloc[0]['latitude'], data.iloc[0]['longitude'], results_c, loi_data=loi_data)
-
                     # Write Locations of Interest to the results container
                     results_c.write("Location of Interest Data")
                     results_c.write(loi_data)
-
-                    # TODO
-                    # Give the option to generate a report
-                    # this resets everything, idk what's happening lol
-                    report_requested = st.form_submit_button("Generate Report")
-                    if report_requested:
-                        report_adID = loi_data['advertiser_id'][0]
-                        device = Profile(report_adID)
-                        device.lois = loi_data
-                        Report(device)
+                if st.form_submit_button("Generate Report"):
+                    # streamlit does NOT have a way to maintain state, so we have to run locations_of_interest again
+                    data = query_adid(ad_id, st.session_state.data)
+                    loi_data = locations_of_interest(data, precision=prec, extended_duration=exth, repeated_duration=reph)
+                    device = Profile(ad_id)
+                    device.lois = loi_data
+                    Report(device)
+                    results_c.write("Report generated in ../data/")
 
 # Preview container
 with preview_c:
