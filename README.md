@@ -20,7 +20,6 @@
 - overpy
 - geopy
 - scikit-learn
-- english-words
 - fpdf2
 
 ### How do I run the demo?
