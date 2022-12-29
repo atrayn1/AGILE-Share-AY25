@@ -27,7 +27,7 @@ def colocation(data, lois, hours, minutes, debug=False) -> pd.DataFrame:
     data_out = pd.DataFrame(columns=relevant_features)
 
     # Sort by time
-    # in the future, we may need to use something this
+    # with newer versions of pandas, we may need to use something this
     #data['datetime'] = pd.to_datetime(data['datetime'], infer_datetime_format=True)
     data.loc[:, ('dates')] = pd.to_datetime(data['datetime'])
     data.sort_values(by="dates", inplace=True)
@@ -36,8 +36,7 @@ def colocation(data, lois, hours, minutes, debug=False) -> pd.DataFrame:
     data = data[relevant_features]
     data.reset_index(drop=True, inplace=True)
 
-    # We ensure that our geohashing is of sufficient precision. We don't want to
-    # be too precise or else every data point will have its own geohash.
+    # Ensure our geohashing is of sufficient precision.
     #data["geohash"] = data.apply(lambda d : gh.encode(d.latitude, d.longitude, precision=10), axis=1)
 
     # 1)
@@ -58,6 +57,7 @@ def colocation(data, lois, hours, minutes, debug=False) -> pd.DataFrame:
     # around the first and last timestamp of the given location of interest?
     hours = timedelta(hours=hours)
     minutes = timedelta(minutes=minutes)
+    search_time = hours + minutes
     filtered_values = filtered[relevant_features].values
     filtered_size = len(filtered_values)
     loi_values = lois[relevant_features].values
@@ -67,9 +67,9 @@ def colocation(data, lois, hours, minutes, debug=False) -> pd.DataFrame:
             if filtered_values[i,0] == loi_values[j,0]:
                 filtered_time = datetime.strptime(filtered_values[i,1], '%Y-%m-%d %H:%M:%S')
                 loi_time = datetime.strptime(loi_values[j,1], '%Y-%m-%d %H:%M:%S')
-                lower = loi_time - hours
-                upper = loi_time + hours
-                if filtered_time > lower or filtered_time < upper:
+                lower = loi_time - search_time
+                upper = loi_time + search_time
+                if (filtered_time > lower) and (filtered_time < upper):
                     d_sus = pd.DataFrame(np.atleast_2d(filtered_values[i]), columns=relevant_features)
                     data_out = pd.concat([data_out, d_sus], ignore_index=True)
 
@@ -82,4 +82,4 @@ def colocation(data, lois, hours, minutes, debug=False) -> pd.DataFrame:
 # testing
 df = pd.read_csv("../../data/weeklong_gh.csv")
 locations = pd.read_csv("../../data/lois.csv")
-colocation(data=df, lois=locations, hours=0, minutes=30, debug=True)
+colocation(data=df, lois=locations, hours=1, minutes=30, debug=True)
