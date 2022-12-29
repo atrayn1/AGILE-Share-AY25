@@ -20,7 +20,7 @@ from datetime import datetime, timedelta
 # OUTPUT
 #   data_out:
 #     a dataframe containing co-located devices
-def colocations(data, lois, timerange, debug=False) -> pd.DataFrame:
+def colocation(data, lois, timerange, debug=False) -> pd.DataFrame:
 
     # This is the output dataframe, i.e. where we store suspicious data points.
     relevant_features = ['geohash', 'datetime', 'latitude', 'longitude', 'advertiser_id']
@@ -35,11 +35,6 @@ def colocations(data, lois, timerange, debug=False) -> pd.DataFrame:
     # filter only the useful columns
     data = data[relevant_features]
     data.reset_index(drop=True, inplace=True)
-
-    if debug:
-        print("SORTED BY DATETIME:")
-        print(data)
-        print()
 
     # We ensure that our geohashing is of sufficient precision. We don't want to
     # be too precise or else every data point will have its own geohash.
@@ -62,18 +57,29 @@ def colocations(data, lois, timerange, debug=False) -> pd.DataFrame:
     # From the filtered data points, are they there at the same time? Does the
     # timestamp associated with a given data point fall within a given range
     # around the first and last timestamp of the given location of interest?
-    timerange = timedelta(hours=timerange)
-    #filtered = filtered[(filtered['geohash'] == lois['geohash']) & (filtered['datetime'] < (lois['datetime'] + timerange)) & (filtered['datetime'] > (lois['datetime'] - timerange))]
-
-    if debug:
-        print("FILTERED DATA:")
-        print(filtered)
-        print()
+    hours = timedelta(hours=timerange)
+    filtered_values = filtered[relevant_features].values
+    filtered_size = len(filtered_values)
+    loi_values = lois[relevant_features].values
+    loi_size = len(loi_values)
+    for i in range(0, filtered_size):
+        for j in range(0, loi_size):
+            if filtered_values[i,0] == loi_values[j,0]:
+                filtered_time = datetime.strptime(filtered_values[i,1], '%Y-%m-%d %H:%M:%S')
+                loi_time = datetime.strptime(loi_values[j,1], '%Y-%m-%d %H:%M:%S')
+                lower = loi_time - hours
+                upper = loi_time + hours
+                if filtered_time > lower or filtered_time < upper:
+                    d_sus = pd.DataFrame(np.atleast_2d(filtered_values[i]), columns=relevant_features)
+                    data_out = pd.concat([data_out, d_sus], ignore_index=True)
 
     # Return the suspicious data points
-    #return data_out
+    if debug:
+        print('colocated devices:')
+        print(data_out['advertiser_id'].unique())
+    return data_out
 
 # testing
 df = pd.read_csv("../../data/weeklong_gh.csv")
 locations = pd.read_csv("../../data/lois.csv")
-colocations(data=df, lois=locations, timerange=1, debug=True)
+colocation(data=df, lois=locations, timerange=1, debug=True)
