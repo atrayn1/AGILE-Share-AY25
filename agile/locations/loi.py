@@ -4,7 +4,7 @@
 
 import numpy as np
 import pandas as pd
-import pygeohash as gh
+from pygeohash import encode
 from datetime import datetime as dt
 
 # Location of Interest Algorithm
@@ -48,7 +48,7 @@ def locations_of_interest(data, precision, extended_duration, repeated_duration,
 
     # We ensure that our geohashing is of sufficient precision. We don't want to
     # be too precise or else every data point will have its own geohash.
-    data["geohash"] = data.apply(lambda d : gh.encode(d.latitude, d.longitude, precision=precision), axis=1)
+    data["geohash"] = data.apply(lambda d : encode(d.latitude, d.longitude, precision=precision), axis=1)
 
     # With the geohashes this seems straight forward:
     # For every unique geohash we will repeat the search process
@@ -175,5 +175,7 @@ def locations_of_interest(data, precision, extended_duration, repeated_duration,
     return data_out#.drop_duplicates(subset=['geohash'])
 
 # testing
-#df = pd.read_csv("../data/_54aa7153-1546-ce0d-5dc9-aa9e8e371f00_weeklong_gh.csv")
-#loi_dataframe = LOI(data=df, precision=10, extended_duration=8, repeated_duration=6, debug=True)
+df = pd.read_csv("../../data/_54aa7153-1546-ce0d-5dc9-aa9e8e371f00_weeklong_gh.csv")
+lois = locations_of_interest(data=df, precision=10, extended_duration=8, repeated_duration=24, debug=True)
+lois.to_csv('lois.csv')
+

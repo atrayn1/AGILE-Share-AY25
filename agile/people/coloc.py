@@ -9,14 +9,14 @@ from datetime import datetime as dt
 # INPUT
 #   data:
 #     dataframe containing all of the data
-#   precision:
-#     geohashing precision value
 #   lois:
 #     dataframe of just locations of interest
+#   precision:
+#     geohashing precision value
 # OUTPUT
 #   data_out:
 #     a dataframe containing co-located devices
-def colocations(data, precision, lois, debug=False) -> pd.DataFrame:
+def colocations(data, lois, precision, debug=False) -> pd.DataFrame:
 
     # This is the output dataframe, i.e. where we store suspicious data points.
     relevant_features = ['geohash', 'datetime', 'latitude', 'longitude', 'advertiser_id']
@@ -30,11 +30,6 @@ def colocations(data, precision, lois, debug=False) -> pd.DataFrame:
     # be too precise or else every data point will have its own geohash.
     data["geohash"] = data.apply(lambda d : gh.encode(d.latitude, d.longitude, precision=precision), axis=1)
 
-    # DEBUG
-    if debug:
-        print(data_out.nunique())
-        print('unique geohashes:', data_out['geohash'].unique())
-        print()
 
     # TODO
     # 1)
@@ -43,6 +38,9 @@ def colocations(data, precision, lois, debug=False) -> pd.DataFrame:
     # This produces a "filtered" dataframe that we will work with.
     loi_geohashes = lois['geohash'].unique()
     data_filtered = data[data['geohash'].isin(loi_geohashes)]
+    # DEBUG
+    if debug:
+        print(data_filtered)
     data_values = data_filtered[relevant_features].values
     data_size = len(data_values)
 
@@ -66,5 +64,9 @@ def colocations(data, precision, lois, debug=False) -> pd.DataFrame:
             data_out = pd.concat([data_out, d_sus], ignore_index=True)
 
     # Return the suspicious data points
-    return data_out
+    #return data_out
 
+# testing
+df = pd.read_csv("../../data/week.csv")
+locations = pd.read_csv("../../data/lois.csv")
+colocations(data=df, lois=locations, precision=10, debug=True)
