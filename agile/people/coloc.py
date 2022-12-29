@@ -44,36 +44,25 @@ def colocations(data, lois, precision, debug=False) -> pd.DataFrame:
     # 1)
     # From the main data array, grab rows that have a geohash that is also found
     # within the locations of interest dataframe. Pandas should make this easy.
-    # This produces a "filtered" dataframe that we will work with.
     loi_geohashes = lois['geohash'].unique()
     data_filtered = data[data['geohash'].isin(loi_geohashes)]
+
+    # 2)
+    # Remove data points that come from the same advertiser_id as the LOI data
+    # that we're working with.
+    loi_adid = lois['advertiser_id'][0]
+    data_filtered = data_filtered[data_filtered['advertiser_id'] != loi_adid]
 
     if debug:
         print("FILTERED DATA:")
         print(data_filtered)
         print()
 
-    data_values = data_filtered[relevant_features].values
-    data_size = len(data_values)
-
-    # 2)
-    # Make a dictionary of all the adIDs.
-    #adid_dict = dict(enumerate(data_filtered['advertiser_id'].unique()))
-
     # TODO
     # 3)
-    # In the filtered dataframe, check a few things ...
-    # ... different adID from the one associated with the geohash in "lois"?
-    # ... timestamp is within the same timeframe as the identified LOI?
-    # If all of these criteria are met, increment by one in the dictionary for
-    # the adID of the datapoint that we're working on.
-    # If, after the increment, the dictionary value exceeds a certain threshold,
-    # then add that adID to data_out.
-    for index in range(0, data_size):
-        # Is the adid in the dictionary?
-        if data_values[index, 4] in adid_dict:
-            d_sus = pd.DataFrame(np.atleast_2d(data_values[index]), columns=relevant_features)
-            data_out = pd.concat([data_out, d_sus], ignore_index=True)
+    # From the filtered data points, are they there at the same time? Does the
+    # timestamp associated with a given data point fall between the range of
+    # the first and last timestamp of the given location of interest?
 
     # Return the suspicious data points
     #return data_out
