@@ -19,6 +19,7 @@ from filtering.adid import query_adid
 from filtering.adid import create_adid_map
 from locations.loi import locations_of_interest
 from utils.tag import polyline_nearby_query
+from utils.geocode import reverse_geocode
 from profile import Profile
 from report import Report
 
@@ -54,6 +55,7 @@ sidebar.title("Data Options")
 # Data Upload container (This is only for dev purposes)
 data_upload_c = sidebar.container()
 reset_ex = sidebar.container()
+report_c = sidebar.container()
 filtering_ex = sidebar.expander("Data Filtering")
 analysis_ex = sidebar.expander("Data Analysis")
 
@@ -88,6 +90,7 @@ with sidebar:
                 # This will reset the state variable resetting the data to uploaded state
                 if st.form_submit_button("RESET DATA"):
                     st.session_state.data = pd.read_csv(raw_data, sep=",")
+    
 
     # Data Filtering Expander
     with filtering_ex:
@@ -161,7 +164,7 @@ with sidebar:
                 if st.form_submit_button("Query"):
                     # We need to filter by adid and then perform loi analysis
                     data = query_adid(ad_id, st.session_state.data)
-                    loi_data = locations_of_interest(data, precision=prec, extended_duration=exth, repeated_duration=reph)
+                    loi_data = reverse_geocode(locations_of_interest(data, precision=prec, extended_duration=exth, repeated_duration=reph))
                     # Here we need to make a map and pass the optional parameter for these location points
                     create_map(data, data.iloc[0]['latitude'], data.iloc[0]['longitude'], results_c, loi_data=loi_data)
                     # Write Locations of Interest to the results container
@@ -170,7 +173,7 @@ with sidebar:
                 if st.form_submit_button("Generate Report"):
                     # streamlit does NOT have a way to maintain state, so we have to run locations_of_interest again
                     data = query_adid(ad_id, st.session_state.data)
-                    loi_data = locations_of_interest(data, precision=prec, extended_duration=exth, repeated_duration=reph)
+                    loi_data = reverse_geocode(locations_of_interest(data, precision=prec, extended_duration=exth, repeated_duration=reph))
                     device = Profile(ad_id)
                     device.lois = loi_data
                     Report(device)

@@ -16,9 +16,10 @@ def reverse_geocoding(lat, lon):
         return None
 
 # This dataframe must contain 'latitude' 'longitude' 'datetime'
+#No reason to include datetime here it is not useful
 def reverse_geocode(df):
-    df.loc[:, ('dates')] = pd.to_datetime(df['datetime']) # No setting with copy error
-    df.sort_values(by="dates")
+    #df.loc[:, ('dates')] = pd.to_datetime(df['datetime']) # No setting with copy error
+    #df.sort_values(by="dates")
     df['address'] = np.vectorize(reverse_geocoding)(df['latitude'], df['longitude'])
     return df 
 

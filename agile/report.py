@@ -62,7 +62,13 @@ class Report:
         self.pdf.multi_cell(w=0, h=ch, txt="All Locations of Interest were flagged for either repeated visits separated by more than " + str(self.profile.rep_duration) +
             " hours, or extended stays at the location for over "+ str(self.profile.ext_duration) + " hours. Locations were determined with a geohash precision of " + str(self.profile.prec) + ".")
         self.pdf.ln(ch)
-        self.display_dataframe(self.profile.lois)
+        self.display_dataframe(self.profile.lois.drop(columns=['address']).drop(columns=['advertiser_id'])) #Everything except the adresses
+        self.pdf.ln(ch)
+        #Now we display the resolved addresses (THis is ostly for spacing issues since addresses are long)
+        self.pdf.multi_cell(w=0, h=ch, txt="The above Latitudes and Longitudes were resolved to the following addresses.")
+        self.pdf.ln(ch)
+        self.display_dataframe(self.profile.lois['address'].to_frame(), w=160)
+
 
         # Co-locations
         self.pdf.ln(ch)
@@ -87,19 +93,18 @@ class Report:
         output_path = '../data/' + self.profile.name + '.pdf'
         self.pdf.output(output_path, 'F')
 
-    def display_dataframe(self, df):
-        df = df.drop(columns=['advertiser_id'])
+    def display_dataframe(self, df, w=45):
 
         # feature names
         self.pdf.set_font('Arial', 'B', 12)
         for col in df.columns:
-                self.pdf.cell(45, 8, str(col), border=1, align='C')#, new_x=index*40)
+                self.pdf.cell(w, 8, str(col), border=1, align='C')#, new_x=index*40)
         self.pdf.ln(8)
 
         # the actual data
         self.pdf.set_font('Arial', '', 10)
         for j,row in df.iterrows():
             for datum in row.values:
-                self.pdf.cell(45, 8, str(datum), border=1,align='L')
+                self.pdf.cell(w, 8, str(datum), border=1,align='L')
             self.pdf.ln(8)
 
