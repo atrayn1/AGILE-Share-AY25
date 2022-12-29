@@ -170,6 +170,8 @@ with sidebar:
                     # Write Locations of Interest to the results container
                     results_c.write("Location of Interest Data")
                     results_c.write(loi_data)
+                # TODO
+                # Move this button outside LOI section
                 if st.form_submit_button("Generate Report"):
                     # streamlit does NOT have a way to maintain state, so we have to run locations_of_interest again
                     data = query_adid(ad_id, st.session_state.data)
