@@ -6,13 +6,13 @@ import pandas as pd
 import pygeohash as gh
 from datetime import datetime as dt
 
+# ASSUMPTIONS
+#   data is already geohashed to sufficient precision
 # INPUT
 #   data:
 #     dataframe containing all of the data
 #   lois:
 #     dataframe of just locations of interest
-#   precision:
-#     geohashing precision value
 # OUTPUT
 #   data_out:
 #     a dataframe containing co-located devices
@@ -23,30 +23,42 @@ def colocations(data, lois, precision, debug=False) -> pd.DataFrame:
     data_out = pd.DataFrame(columns=relevant_features)
 
     # Sort by time
+    # in the future, we may need to use something this
+    #data['datetime'] = pd.to_datetime(data['datetime'], infer_datetime_format=True)
     data.loc[:, ('dates')] = pd.to_datetime(data['datetime'])
     data.sort_values(by="dates", inplace=True)
 
+    # filter only the useful columns
+    data = data[relevant_features]
+    data.reset_index(drop=True, inplace=True)
+
+    if debug:
+        print("SORTED BY DATETIME:")
+        print(data)
+        print()
+
     # We ensure that our geohashing is of sufficient precision. We don't want to
     # be too precise or else every data point will have its own geohash.
-    data["geohash"] = data.apply(lambda d : gh.encode(d.latitude, d.longitude, precision=precision), axis=1)
+    #data["geohash"] = data.apply(lambda d : gh.encode(d.latitude, d.longitude, precision=precision), axis=1)
 
-
-    # TODO
     # 1)
     # From the main data array, grab rows that have a geohash that is also found
     # within the locations of interest dataframe. Pandas should make this easy.
     # This produces a "filtered" dataframe that we will work with.
     loi_geohashes = lois['geohash'].unique()
     data_filtered = data[data['geohash'].isin(loi_geohashes)]
-    # DEBUG
+
     if debug:
+        print("FILTERED DATA:")
         print(data_filtered)
+        print()
+
     data_values = data_filtered[relevant_features].values
     data_size = len(data_values)
 
     # 2)
     # Make a dictionary of all the adIDs.
-    adid_dict = dict()
+    #adid_dict = dict(enumerate(data_filtered['advertiser_id'].unique()))
 
     # TODO
     # 3)
@@ -67,6 +79,6 @@ def colocations(data, lois, precision, debug=False) -> pd.DataFrame:
     #return data_out
 
 # testing
-df = pd.read_csv("../../data/week.csv")
+df = pd.read_csv("../../data/weeklong_gh.csv")
 locations = pd.read_csv("../../data/lois.csv")
 colocations(data=df, lois=locations, precision=10, debug=True)
