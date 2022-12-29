@@ -61,8 +61,8 @@ def colocations(data, lois, precision, debug=False) -> pd.DataFrame:
     # TODO
     # 3)
     # From the filtered data points, are they there at the same time? Does the
-    # timestamp associated with a given data point fall between the range of
-    # the first and last timestamp of the given location of interest?
+    # timestamp associated with a given data point fall within a given range
+    # around the first and last timestamp of the given location of interest?
 
     # Return the suspicious data points
     #return data_out
