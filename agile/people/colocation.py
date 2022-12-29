@@ -20,7 +20,7 @@ from datetime import datetime, timedelta
 # OUTPUT
 #   data_out:
 #     a dataframe containing co-located devices
-def colocation(data, lois, timerange, debug=False) -> pd.DataFrame:
+def colocation(data, lois, hours, minutes, debug=False) -> pd.DataFrame:
 
     # This is the output dataframe, i.e. where we store suspicious data points.
     relevant_features = ['geohash', 'datetime', 'latitude', 'longitude', 'advertiser_id']
@@ -52,12 +52,12 @@ def colocation(data, lois, timerange, debug=False) -> pd.DataFrame:
     loi_adid = lois['advertiser_id'][0]
     filtered = filtered[filtered['advertiser_id'] != loi_adid]
 
-    # TODO
     # 3)
     # From the filtered data points, are they there at the same time? Does the
     # timestamp associated with a given data point fall within a given range
     # around the first and last timestamp of the given location of interest?
-    hours = timedelta(hours=timerange)
+    hours = timedelta(hours=hours)
+    minutes = timedelta(minutes=minutes)
     filtered_values = filtered[relevant_features].values
     filtered_size = len(filtered_values)
     loi_values = lois[relevant_features].values
@@ -82,4 +82,4 @@ def colocation(data, lois, timerange, debug=False) -> pd.DataFrame:
 # testing
 df = pd.read_csv("../../data/weeklong_gh.csv")
 locations = pd.read_csv("../../data/lois.csv")
-colocation(data=df, lois=locations, timerange=1, debug=True)
+colocation(data=df, lois=locations, hours=0, minutes=30, debug=True)
