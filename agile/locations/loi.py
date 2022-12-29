@@ -177,5 +177,5 @@ def locations_of_interest(data, precision, extended_duration, repeated_duration,
 # testing
 df = pd.read_csv("../../data/_54aa7153-1546-ce0d-5dc9-aa9e8e371f00_weeklong_gh.csv")
 lois = locations_of_interest(data=df, precision=10, extended_duration=8, repeated_duration=24, debug=True)
-lois.to_csv('lois.csv')
+lois.to_csv('../../data/lois.csv')
 
