@@ -60,9 +60,10 @@ def colocation(data, lois, hours, minutes, debug=False) -> pd.DataFrame:
     search_time = hours + minutes
     filtered_values = filtered[relevant_features].values
     filtered_size = len(filtered_values)
+    '''
     loi_values = lois[relevant_features].values
     loi_size = len(loi_values)
-    # TODO
+
     # convert this to use pd.DataFrame().apply()
     # I don't think we even need to use apply I think we can probably use
     # A strategy as showed on this thread https://stackoverflow.com/questions/51589573/pandas-filter-data-frame-rows-by-function
@@ -79,6 +80,20 @@ def colocation(data, lois, hours, minutes, debug=False) -> pd.DataFrame:
                 if (filtered_time > lower) and (filtered_time < upper):
                     d_sus = pd.DataFrame(np.atleast_2d(filtered_values[i]), columns=relevant_features)
                     data_out = pd.concat([data_out, d_sus], ignore_index=True)
+    '''
+
+    # TODO
+    # Making strides towards a better solution
+    # The body of this for-loop should be trivial to apply()
+    for i in range(0, filtered_size):
+        filtered_geohash = filtered_values[i,0]
+        loi_filtered = lois[lois['geohash'] == filtered_geohash]
+        loi_dates = pd.to_datetime(loi_filtered.datetime, infer_datetime_format=True)
+        filtered_time = datetime.strptime(filtered_values[i,1], '%Y-%m-%d %H:%M:%S')
+        within_timerange = (filtered_time > (loi_dates - search_time)) & (filtered_time < (loi_dates + search_time))
+        if within_timerange.any():
+            d_sus = pd.DataFrame(np.atleast_2d(filtered_values[i]), columns=relevant_features)
+            data_out = pd.concat([data_out, d_sus], ignore_index=True)
 
     # Return the suspicious data points
     if debug:
