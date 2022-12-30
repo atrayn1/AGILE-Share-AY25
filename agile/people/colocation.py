@@ -62,6 +62,8 @@ def colocation(data, lois, hours, minutes, debug=False) -> pd.DataFrame:
     filtered_size = len(filtered_values)
     loi_values = lois[relevant_features].values
     loi_size = len(loi_values)
+    # TODO
+    # convert this to use pd.DataFrame().apply()
     for i in range(0, filtered_size):
         for j in range(0, loi_size):
             filtered_geohash = filtered_values[i,0]
