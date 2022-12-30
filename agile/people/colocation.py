@@ -66,7 +66,7 @@ def colocation(data, lois, hours, minutes, debug=False) -> pd.DataFrame:
         for j in range(0, loi_size):
             filtered_geohash = filtered_values[i,0]
             loi_geohash = loi_values[j,0]
-            if filtered_geohash = loi_geohash:
+            if filtered_geohash == loi_geohash:
                 filtered_time = datetime.strptime(filtered_values[i,1], '%Y-%m-%d %H:%M:%S')
                 loi_time = datetime.strptime(loi_values[j,1], '%Y-%m-%d %H:%M:%S')
                 lower = loi_time - search_time
