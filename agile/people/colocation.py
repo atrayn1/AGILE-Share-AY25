@@ -64,6 +64,9 @@ def colocation(data, lois, hours, minutes, debug=False) -> pd.DataFrame:
     loi_size = len(loi_values)
     # TODO
     # convert this to use pd.DataFrame().apply()
+    # I don't think we even need to use apply I think we can probably use
+    # A strategy as showed on this thread https://stackoverflow.com/questions/51589573/pandas-filter-data-frame-rows-by-function
+    # We can create a function to return a bool
     for i in range(0, filtered_size):
         for j in range(0, loi_size):
             filtered_geohash = filtered_values[i,0]
