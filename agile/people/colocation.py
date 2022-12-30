@@ -98,15 +98,21 @@ def colocation(data, lois, hours, minutes, debug=False) -> pd.DataFrame:
 
     # TODO
     # Just need to return the row properly so we can concat it to data_out
+    # Return the rwo with a column (remove) if we should remove it
     def time_filter(row):
         loi_filtered = lois[lois.geohash == row.geohash]
         loi_dates = pd.to_datetime(loi_filtered.datetime, infer_datetime_format=True)
         filtered_time = datetime.strptime(row.datetime, '%Y-%m-%d %H:%M:%S')
         within_timerange = (filtered_time > (loi_dates - search_time)) & (filtered_time < (loi_dates + search_time))
-        if within_timerange.any():
-            print(row)
+        #if within_timerange.any():
+            #print(row)
             #data_out = pd.concat([data_out, d_sus], ignore_index=True)
-    filtered.apply(time_filter, axis=1)
+        row['remove'] = not within_timerange.any()
+        return row
+    #Create the remove column
+    filtered = filtered.apply(time_filter, axis=1)
+    #Filter based on that column and drop it
+    data_out = filtered.loc[filtered['remove'] == False].drop(columns=['remove'])
 
     # Return the suspicious data points
     if debug:
