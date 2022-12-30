@@ -82,9 +82,9 @@ def colocation(data, lois, hours, minutes, debug=False) -> pd.DataFrame:
                     data_out = pd.concat([data_out, d_sus], ignore_index=True)
     '''
 
-    # TODO
     # Making strides towards a better solution
     # The body of this for-loop should be trivial to apply()
+    '''
     for i in range(0, filtered_size):
         filtered_geohash = filtered_values[i,0]
         loi_filtered = lois[lois['geohash'] == filtered_geohash]
@@ -94,6 +94,19 @@ def colocation(data, lois, hours, minutes, debug=False) -> pd.DataFrame:
         if within_timerange.any():
             d_sus = pd.DataFrame(np.atleast_2d(filtered_values[i]), columns=relevant_features)
             data_out = pd.concat([data_out, d_sus], ignore_index=True)
+    '''
+
+    # TODO
+    # Just need to return the row properly so we can concat it to data_out
+    def time_filter(row):
+        loi_filtered = lois[lois.geohash == row.geohash]
+        loi_dates = pd.to_datetime(loi_filtered.datetime, infer_datetime_format=True)
+        filtered_time = datetime.strptime(row.datetime, '%Y-%m-%d %H:%M:%S')
+        within_timerange = (filtered_time > (loi_dates - search_time)) & (filtered_time < (loi_dates + search_time))
+        if within_timerange.any():
+            print(row)
+            #data_out = pd.concat([data_out, d_sus], ignore_index=True)
+    filtered.apply(time_filter, axis=1)
 
     # Return the suspicious data points
     if debug:
