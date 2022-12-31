@@ -58,60 +58,20 @@ def colocation(data, lois, hours, minutes, debug=False) -> pd.DataFrame:
     hours = timedelta(hours=hours)
     minutes = timedelta(minutes=minutes)
     search_time = hours + minutes
-    filtered_values = filtered[relevant_features].values
-    filtered_size = len(filtered_values)
-    '''
-    loi_values = lois[relevant_features].values
-    loi_size = len(loi_values)
 
-    # convert this to use pd.DataFrame().apply()
-    # I don't think we even need to use apply I think we can probably use
-    # A strategy as showed on this thread https://stackoverflow.com/questions/51589573/pandas-filter-data-frame-rows-by-function
-    # We can create a function to return a bool
-    for i in range(0, filtered_size):
-        for j in range(0, loi_size):
-            filtered_geohash = filtered_values[i,0]
-            loi_geohash = loi_values[j,0]
-            if filtered_geohash == loi_geohash:
-                filtered_time = datetime.strptime(filtered_values[i,1], '%Y-%m-%d %H:%M:%S')
-                loi_time = datetime.strptime(loi_values[j,1], '%Y-%m-%d %H:%M:%S')
-                lower = loi_time - search_time
-                upper = loi_time + search_time
-                if (filtered_time > lower) and (filtered_time < upper):
-                    d_sus = pd.DataFrame(np.atleast_2d(filtered_values[i]), columns=relevant_features)
-                    data_out = pd.concat([data_out, d_sus], ignore_index=True)
-    '''
-
-    # Making strides towards a better solution
-    # The body of this for-loop should be trivial to apply()
-    '''
-    for i in range(0, filtered_size):
-        filtered_geohash = filtered_values[i,0]
-        loi_filtered = lois[lois['geohash'] == filtered_geohash]
-        loi_dates = pd.to_datetime(loi_filtered.datetime, infer_datetime_format=True)
-        filtered_time = datetime.strptime(filtered_values[i,1], '%Y-%m-%d %H:%M:%S')
-        within_timerange = (filtered_time > (loi_dates - search_time)) & (filtered_time < (loi_dates + search_time))
-        if within_timerange.any():
-            d_sus = pd.DataFrame(np.atleast_2d(filtered_values[i]), columns=relevant_features)
-            data_out = pd.concat([data_out, d_sus], ignore_index=True)
-    '''
-
-    # TODO
-    # Just need to return the row properly so we can concat it to data_out
-    # Return the rwo with a column (remove) if we should remove it
+    # Return the row with a column (remove) if we should remove it
     def time_filter(row):
         loi_filtered = lois[lois.geohash == row.geohash]
         loi_dates = pd.to_datetime(loi_filtered.datetime, infer_datetime_format=True)
         filtered_time = datetime.strptime(row.datetime, '%Y-%m-%d %H:%M:%S')
         within_timerange = (filtered_time > (loi_dates - search_time)) & (filtered_time < (loi_dates + search_time))
-        #if within_timerange.any():
-            #print(row)
-            #data_out = pd.concat([data_out, d_sus], ignore_index=True)
         row['remove'] = not within_timerange.any()
         return row
-    #Create the remove column
+
+    # Create the remove column
     filtered = filtered.apply(time_filter, axis=1)
-    #Filter based on that column and drop it
+
+    # Filter based on that column and drop it
     data_out = filtered.loc[filtered['remove'] == False].drop(columns=['remove'])
 
     # Return the suspicious data points
