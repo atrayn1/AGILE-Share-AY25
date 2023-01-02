@@ -76,8 +76,9 @@ def colocation(data, lois, hours, minutes, debug=False) -> pd.DataFrame:
 
     # Return the suspicious data points
     if debug:
-        print('colocated devices:')
-        print(data_out['advertiser_id'].unique())
+        print('colocated adIDs:')
+        for id in data_out['advertiser_id'].unique():
+            print('-', id)
     return data_out
 
 # testing
@@ -88,3 +89,4 @@ def colocation(data, lois, hours, minutes, debug=False) -> pd.DataFrame:
 df = pd.read_csv("../../data/weeklong_gh.csv")
 locations = pd.read_csv("../../data/lois.csv")
 colocation(data=df, lois=locations, hours=1, minutes=30, debug=True)
+
