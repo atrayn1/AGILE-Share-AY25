@@ -51,7 +51,7 @@ class Report:
         self.pdf.cell(w=0, h=ch, txt="Device Details:", ln=1)
         self.pdf.set_font('Arial', '', 16)
         self.pdf.cell(w=30, h=ch, txt="Codename: " + self.profile.name, ln=1)
-        self.pdf.cell(w=30, h=ch, txt="AdID: " + self.profile.adid, ln=1)
+        self.pdf.cell(w=30, h=ch, txt="AdID: " + self.profile.ad_id, ln=1)
 
         # Locations of interest
         self.pdf.ln(ch)
@@ -76,8 +76,7 @@ class Report:
         self.pdf.set_font('Arial', 'B', 16)
         self.pdf.cell(w=0, h=ch, txt="Co-located Devices:", ln=1)
         self.pdf.set_font('Arial', '', 16)
-        #self.display_dataframe(self.profile.coloc)
-        self.pdf.multi_cell(w=0, h=ch, txt="TBD")
+        self.display_dataframe(self.profile.coloc.advertiser_id.to_frame(), w=160)
 
         # Pattern of life
         self.pdf.ln(ch)
@@ -88,10 +87,9 @@ class Report:
         self.pdf.multi_cell(w=0, h=ch, txt="TBD")
 
     # TODO
-    # fix this, hacky
-    # Report() needs to be run in AGILE/agile/ in order to work...
+    # fix this so we can save where we want to
     def save_pdf(self):
-        output_path = '../data/' + self.profile.name + '.pdf'
+        output_path = self.profile.name + '.pdf'
         self.pdf.output(output_path, 'F')
 
     def display_dataframe(self, df, w=45):

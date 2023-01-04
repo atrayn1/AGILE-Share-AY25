@@ -10,7 +10,7 @@ geolocator = Nominatim(user_agent='usna')
 def reverse_geocoding(lat, lon):
     try:
         location = geolocator.reverse(Point(lat, lon))
-        print(location.raw['display_name'])
+        #print(location.raw['display_name'])
         return location.raw['display_name']
     except:
         return None

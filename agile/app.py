@@ -84,6 +84,8 @@ with sidebar:
 
     # TODO
     # Generate Report
+    # this error frequently comes up, I think we lose a dataframe somewhere along the process:
+    # cannot call vectorize on size 0 inputs unless otypes is set
     with report_sb:
         report_c = st.container()
         with report_c:
@@ -93,17 +95,14 @@ with sidebar:
                 prec = st.slider("Precision", min_value=1, max_value=12, value=10)
                 exth = st.slider("Extended Stay Duration", min_value=1, max_value=24, value=7)
                 reph = st.slider("Time Between Repeat Visits", min_value=1, max_value=72, value=24)
+                colh = st.slider("Colocation Duration", min_value=1, max_value=24)
                 if st.form_submit_button("Generate Report"):
                     if st.session_state.uploaded:
-                        st.session_state.data = pd.read_csv(raw_data, sep=",")
                         # let's assume the file is geohashed for now
                         #st.session_state.data["geohash"] = st.session_state.data.apply(lambda d : gh.encode(d.latitude, d.longitude, precision=4), axis=1)
-                        data = query_adid(ad_id, st.session_state.data)
-                        loi_data = reverse_geocode(locations_of_interest(data, precision=prec, extended_duration=exth, repeated_duration=reph))
-                        device = Profile(ad_id)
-                        device.lois = loi_data
+                        device = Profile(st.session_state.data, ad_id, prec, exth, reph, colh)
                         Report(device)
-                        results_c.write("Report generated in ../data/")
+                        results_c.write("Report generated!")
                     else:
                         results_c.write("Upload data first!")
     
@@ -201,3 +200,4 @@ with preview_c:
     # If Data means if they have uploaded a file
     if st.session_state.uploaded:
         st.dataframe(st.session_state.data.head())
+

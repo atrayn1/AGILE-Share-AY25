@@ -9,14 +9,14 @@ from datetime import datetime as dt
 
 # Location of Interest Algorithm
 # Prototype
-# Input: Dataframe w/ geohash, timestamp, latitude, longitude, and adID
+# Input: Dataframe w/ geohash, timestamp, latitude, longitude, and ad_id
 #        geohashing precision value
 #        length of an extended stay in hours
 #        length to check for repeated visits
-# Assuming that that all of the points in the dataframe relate to the same adID
+# Assuming that that all of the points in the dataframe relate to the same ad_id
 # I.E. the dataframe has already been filtered
 # Return: A filtered dataframe with the Locations of Interest
-def locations_of_interest(data, precision, extended_duration, repeated_duration, debug=False) -> pd.DataFrame:
+def locations_of_interest(data, ad_id, precision, extended_duration, repeated_duration, debug=False) -> pd.DataFrame:
 
     # Now that we have locations sorted by time we can use iteration to view an
     # ADIDs movement Chronologically
@@ -32,23 +32,23 @@ def locations_of_interest(data, precision, extended_duration, repeated_duration,
     # point moves from one general area to another general area without manual
     # lat/long calculations
 
-    ###########################
-    #  Algorithm Begins here  #
-    ###########################
-
     # These are the features we care about in the input dataframe
     relevant_features = ['geohash', 'datetime', 'latitude', 'longitude', 'advertiser_id']
 
     # This is the output dataframe, i.e. where we store suspicious geocodes
     data_out = pd.DataFrame(columns=relevant_features)
 
-    # Sort by time
-    data.loc[:, ('dates')] = pd.to_datetime(data['datetime']) # No setting with copy error
-    data.sort_values(by="dates", inplace=True) # Inplace fixes the time sorting error
+    # Sort so we only have the ad_ids we care about
+    data_one_id = data.loc[data.advertiser_id == ad_id]
 
+    # Sort by time
+    data_one_id.loc[:, ('dates')] = pd.to_datetime(data_one_id['datetime']) # No setting with copy error
+    data_one_id.sort_values(by="dates", inplace=True) # Inplace fixes the time sorting error
+
+    # THIS TAKES A LONG TIME ON LARGER DATA SETS
     # We ensure that our geohashing is of sufficient precision. We don't want to
     # be too precise or else every data point will have its own geohash.
-    data["geohash"] = data.apply(lambda d : encode(d.latitude, d.longitude, precision=precision), axis=1)
+    #data["geohash"] = data.apply(lambda d : encode(d.latitude, d.longitude, precision=precision), axis=1)
 
     # With the geohashes this seems straight forward:
     # For every unique geohash we will repeat the search process
@@ -65,7 +65,7 @@ def locations_of_interest(data, precision, extended_duration, repeated_duration,
     # So at this point the dataframe needs to be exactly formatted the same so
     # column indices are consistent
 
-    data_values = data[relevant_features].values
+    data_values = data_one_id[relevant_features].values
     data_size = len(data_values)
 
     # 1) Extended stay in one location
@@ -110,17 +110,6 @@ def locations_of_interest(data, precision, extended_duration, repeated_duration,
             # timestamp instead
             middle_index = (start_index + end_index) // 2
 
-            # I know this is very wonky but the array shape was being weird
-            # This does technically work but lets find a better solution
-            '''
-            d_sus = pd.DataFrame(columns=relevant_features)
-            d_sus['geohash'] = [data_values[middle_index, 0]]
-            d_sus['datetime'] = [data_values[middle_index, 1]]
-            d_sus['latitude'] = [data_values[middle_index, 2]]
-            d_sus['longitude'] = [data_values[middle_index, 3]]
-            d_sus['advertiser_id'] = [data_values[middle_index, 4]]
-            '''
-
             # Possibly a better solution
             d_sus = pd.DataFrame(np.atleast_2d(data_values[middle_index]), columns=relevant_features)
             data_out = pd.concat([data_out, d_sus], ignore_index=True)
@@ -133,7 +122,6 @@ def locations_of_interest(data, precision, extended_duration, repeated_duration,
         print()
 
     # 2) Repeated visits over extended period of time to one location
-
     # We need to look for repeated visits i.e. visits on multiple days
     # I am thinking we have a dictionary with the geohashes and when we see a geohash
     # we add it as key of dictionary where value is the timestamp
@@ -149,16 +137,7 @@ def locations_of_interest(data, precision, extended_duration, repeated_duration,
             start_time = dt.strptime(geohash_dict[data_values[index, 0]], '%Y-%m-%d %H:%M:%S') 
             end_time = dt.strptime(data_values[index, 1], '%Y-%m-%d %H:%M:%S')
             time_difference = end_time - start_time
-            # 4 hours
             if time_difference.total_seconds() > 3600 * repeated_duration:
-                '''
-                d_sus = pd.DataFrame(columns=relevant_features)
-                d_sus['geohash'] = [data_values[index, 0]]
-                d_sus['datetime'] = [data_values[index, 1]]
-                d_sus['latitude'] = [data_values[index, 2]]
-                d_sus['longitude'] = [data_values[index, 3]]
-                d_sus['advertiser_id'] = [data_values[index, 4]]
-                '''
                 d_sus = pd.DataFrame(np.atleast_2d(data_values[index]), columns=relevant_features)
                 data_out = pd.concat([data_out, d_sus], ignore_index=True)
         
@@ -175,7 +154,7 @@ def locations_of_interest(data, precision, extended_duration, repeated_duration,
     return data_out#.drop_duplicates(subset=['geohash'])
 
 # testing
-#df = pd.read_csv("../../data/_54aa7153-1546-ce0d-5dc9-aa9e8e371f00_weeklong_gh.csv")
-#lois = locations_of_interest(data=df, precision=10, extended_duration=8, repeated_duration=24, debug=True)
-#lois.to_csv('../../data/lois.csv')
+#df = pd.read_csv("../../data/weeklong_gh.csv")
+#ubl = "54aa7153-1546-ce0d-5dc9-aa9e8e371f00"
+#lois = locations_of_interest(data=df, ad_id=ubl, precision=10, extended_duration=7, repeated_duration=24, debug=True)
 
