@@ -33,6 +33,4 @@ foo@bar:../AGILE/agile$ streamlit run app.py
 - Fix report generation in webapp demo
 - Make a tl;dr section of the report format
 - Store Profile instances by their codename
-- Generate a general PDF report for a specific adID that includes LOIs and
-  colocation information
 
