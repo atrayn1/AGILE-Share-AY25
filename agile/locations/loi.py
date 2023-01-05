@@ -48,7 +48,6 @@ def locations_of_interest(data, ad_id, precision, extended_duration, repeated_du
     data.sort_values(by="dates", inplace=True) # Inplace fixes the time sorting error
 
     # DEBUG
-    print('sorted by time!')
 
     # THIS TAKES A LONG TIME ON LARGER DATA SETS
     # We ensure that our geohashing is of sufficient precision. We don't want to
@@ -129,7 +128,6 @@ def locations_of_interest(data, ad_id, precision, extended_duration, repeated_du
         print(data_out.nunique())
         print('unique geohashes:', data_out['geohash'].unique())
         print()
-    print('extended stays checked!')
 
     # 2) Repeated visits over extended period of time to one location
     # We need to look for repeated visits i.e. visits on multiple days
@@ -151,7 +149,6 @@ def locations_of_interest(data, ad_id, precision, extended_duration, repeated_du
             time_difference = end_time - start_time
             if time_difference.total_seconds() > 3600 * repeated_duration:
                 d_sus = pd.DataFrame(np.atleast_2d(data_values[index]), columns=relevant_features)
-                print('repeated visit LOI found!')
                 data_out = pd.concat([data_out, d_sus], ignore_index=True)
         
         geohash_dict[data_values[index, 0]] = data_values[index, 1]
@@ -162,7 +159,6 @@ def locations_of_interest(data, ad_id, precision, extended_duration, repeated_du
         print(data_out.nunique())
         print('unique geohashes:', data_out['geohash'].unique())
         print()
-    print('repeated visits checked!')
 
     # Remove duplicate geohashes so we limit the size of LOI list
     return data_out#.drop_duplicates(subset=['geohash'])

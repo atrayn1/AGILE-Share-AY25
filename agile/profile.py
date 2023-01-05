@@ -18,19 +18,15 @@ class Profile:
     def __init__(self, data, ad_id, prec, ext_duration, rep_duration, coloc_duration) -> None:
         self.ad_id = ad_id
         self.name = self.__name_gen()
-        print('name generated!')
         # We need to somehow store this information in here so that it can be relayed on the report
         # These are the default values
         self.prec = prec
         self.ext_duration = ext_duration
         self.rep_duration = rep_duration
         self.coloc_duration = coloc_duration
-        print('parameters loaded!')
         # these need to be generated after the parameters are defined
         self.lois = self.__loi_gen(data)
-        print('LOIs generated!')
         self.coloc = self.__coloc_gen(data)
-        print('colocation data generated!')
 
     def __name_gen(self) -> str:
         with open('../names/first.txt') as F, open('../names/last.txt') as L:

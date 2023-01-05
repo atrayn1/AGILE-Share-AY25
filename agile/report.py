@@ -91,7 +91,6 @@ class Report:
     def save_pdf(self):
         output_path = self.profile.name + '.pdf'
         self.pdf.output(output_path, 'F')
-        print('report generated!')
 
     def display_dataframe(self, df, w=45):
 
