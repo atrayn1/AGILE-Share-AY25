@@ -18,15 +18,19 @@ class Profile:
     def __init__(self, data, ad_id, prec, ext_duration, rep_duration, coloc_duration) -> None:
         self.ad_id = ad_id
         self.name = self.__name_gen()
+        print('name generated!')
         # We need to somehow store this information in here so that it can be relayed on the report
         # These are the default values
         self.prec = prec
         self.ext_duration = ext_duration
         self.rep_duration = rep_duration
         self.coloc_duration = coloc_duration
+        print('parameters loaded!')
         # these need to be generated after the parameters are defined
         self.lois = self.__loi_gen(data)
+        print('LOIs generated!')
         self.coloc = self.__coloc_gen(data)
+        print('colocation data generated!')
 
     def __name_gen(self) -> str:
         with open('../names/first.txt') as F, open('../names/last.txt') as L:
@@ -42,9 +46,11 @@ class Profile:
         return colocation(data, self.lois, self.coloc_duration)
 
 # test report
-from report import Report
-data = pd.read_csv("../data/weeklong_gh.csv")
-ubl = Profile(data, "54aa7153-1546-ce0d-5dc9-aa9e8e371f00", 10, 4, 24, 2)
-Report(ubl)
-print("report generated!")
+#from report import Report
+#data = pd.read_csv("../data/weeklong_gh.csv")
+
+# so if you try to make a report using this dataset, it takes a really long time to finish... curious
+#data = pd.read_csv("../data/_54aa7153-1546-ce0d-5dc9-aa9e8e371f00_weeklong_gh.csv")
+#ubl = Profile(data, "54aa7153-1546-ce0d-5dc9-aa9e8e371f00", 10, 7, 24, 1)
+#Report(ubl)
 

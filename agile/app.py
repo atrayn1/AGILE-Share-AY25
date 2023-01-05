@@ -88,10 +88,7 @@ with sidebar:
                 if st.form_submit_button("RESET DATA"):
                     st.session_state.data = pd.read_csv(raw_data, sep=",")
 
-    # TODO
     # Generate Report
-    # this error frequently comes up, I think we lose a dataframe somewhere along the process:
-    # cannot call vectorize on size 0 inputs unless otypes is set
     with report_sb:
         report_c = st.container()
         with report_c:
@@ -102,7 +99,8 @@ with sidebar:
                 exth = st.slider("Extended Stay Duration", min_value=1, max_value=24, value=7)
                 reph = st.slider("Time Between Repeat Visits", min_value=1, max_value=72, value=24)
                 colh = st.slider("Colocation Duration", min_value=1, max_value=24)
-                if st.form_submit_button("Generate Report"):
+                report_button = st.form_submit_button("Generate Report")
+                if report_button:
                     if st.session_state.uploaded:
                         # let's assume the file is geohashed for now
                         #st.session_state.data["geohash"] = st.session_state.data.apply(lambda d : gh.encode(d.latitude, d.longitude, precision=4), axis=1)
