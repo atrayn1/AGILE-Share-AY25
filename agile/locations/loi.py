@@ -39,11 +39,13 @@ def locations_of_interest(data, ad_id, precision, extended_duration, repeated_du
     data_out = pd.DataFrame(columns=relevant_features)
 
     # Sort so we only have the ad_ids we care about
-    data_one_id = data.loc[data.advertiser_id == ad_id]
+    data = pd.DataFrame(data[data.advertiser_id == ad_id])
 
     # Sort by time
-    data_one_id.loc[:, ('dates')] = pd.to_datetime(data_one_id['datetime']) # No setting with copy error
-    data_one_id.sort_values(by="dates", inplace=True) # Inplace fixes the time sorting error
+    #data['datetime'] = pd.to_datetime(data['datetime'])
+    #data.sort_values(by="datetime", inplace=True) # Inplace fixes the time sorting error
+    data.loc[:,'dates'] = pd.to_datetime(data['datetime']) # No setting with copy error
+    data.sort_values(by="dates", inplace=True) # Inplace fixes the time sorting error
 
     # THIS TAKES A LONG TIME ON LARGER DATA SETS
     # We ensure that our geohashing is of sufficient precision. We don't want to
@@ -65,7 +67,8 @@ def locations_of_interest(data, ad_id, precision, extended_duration, repeated_du
     # So at this point the dataframe needs to be exactly formatted the same so
     # column indices are consistent
 
-    data_values = data_one_id[relevant_features].values
+    #data_values = data_id[relevant_features].values
+    data_values = data[relevant_features].values
     data_size = len(data_values)
 
     # 1) Extended stay in one location
@@ -103,6 +106,8 @@ def locations_of_interest(data, ad_id, precision, extended_duration, repeated_du
         # Convert strings to datetime objects so we can compare them easily
         start_time = dt.strptime(data_values[start_index, 1], '%Y-%m-%d %H:%M:%S') 
         end_time = dt.strptime(data_values[end_index, 1], '%Y-%m-%d %H:%M:%S')
+        #start_time = data_values[start_index, 1]
+        #end_time = data_values[end_index, 1]
         time_difference = end_time - start_time
         if time_difference.total_seconds() > 3600 * extended_duration:
 
@@ -136,6 +141,8 @@ def locations_of_interest(data, ad_id, precision, extended_duration, repeated_du
             # If time difference is >4 hours, add to final output dataframe
             start_time = dt.strptime(geohash_dict[data_values[index, 0]], '%Y-%m-%d %H:%M:%S') 
             end_time = dt.strptime(data_values[index, 1], '%Y-%m-%d %H:%M:%S')
+            #start_time = data_values[start_index, 1]
+            #end_time = data_values[end_index, 1]
             time_difference = end_time - start_time
             if time_difference.total_seconds() > 3600 * repeated_duration:
                 d_sus = pd.DataFrame(np.atleast_2d(data_values[index]), columns=relevant_features)
