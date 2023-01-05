@@ -21,6 +21,7 @@ class Report:
         self.pdf = PDF()
         self.profile = profile
         self.title_page()
+        self.tldr_page()
         self.content_page()
         self.save_pdf()
     
@@ -38,6 +39,17 @@ class Report:
         # The (copyright-free!!) logo
         self.pdf.ln(ch)
         self.pdf.image("../images/new_logo.png", w=75, h=100, x=70, y=150)
+
+    def tldr_page(self):
+
+        # Here's an example of a dashed line in fpdf.
+        # In practice, we're probably just going to force a new page, but we
+        # might play around with pretty-printing a literal "tear-line."
+
+        # Adds a dashed line beginning at point (10,30), 
+        #  ending at point (110,30) with a 
+        #  dash length of 1 and a space length of 10.
+        self.pdf.dashed_line(10, 30, 110, 30, 1, 10)
 
     def content_page(self):
         self.pdf.add_page()

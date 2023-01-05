@@ -119,7 +119,6 @@ def locations_of_interest(data, ad_id, precision, extended_duration, repeated_du
 
             # Possibly a better solution
             d_sus = pd.DataFrame(np.atleast_2d(data_values[middle_index]), columns=relevant_features)
-            print('extended stay LOI found!')
             data_out = pd.concat([data_out, d_sus], ignore_index=True)
 
     # DEBUG
