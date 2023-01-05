@@ -33,7 +33,7 @@ def colocation(data, lois, duration, debug=False) -> pd.DataFrame:
     # Sort by time
     # with newer versions of pandas, we may need to use something this
     #data['datetime'] = pd.to_datetime(data['datetime'], infer_datetime_format=True)
-    data.loc[:, ('dates')] = pd.to_datetime(data['datetime'])
+    data.loc[:,'dates'] = pd.to_datetime(data.datetime)
     data.sort_values(by="dates", inplace=True)
 
     # filter only the useful columns

@@ -80,7 +80,7 @@ class Report:
         #Now we display the resolved addresses (THis is ostly for spacing issues since addresses are long)
         self.pdf.multi_cell(w=0, h=ch, txt="The above Latitudes and Longitudes were resolved to the following addresses.")
         self.pdf.ln(ch)
-        self.display_dataframe(self.profile.lois['address'].to_frame(), w=160)
+        self.display_dataframe(self.profile.lois.address.to_frame(), w=160)
 
 
         # Co-locations

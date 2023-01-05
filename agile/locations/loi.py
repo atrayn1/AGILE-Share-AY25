@@ -44,7 +44,7 @@ def locations_of_interest(data, ad_id, precision, extended_duration, repeated_du
     # Sort by time
     #data['datetime'] = pd.to_datetime(data['datetime'])
     #data.sort_values(by="datetime", inplace=True) # Inplace fixes the time sorting error
-    data.loc[:,'dates'] = pd.to_datetime(data['datetime']) # No setting with copy error
+    data.loc[:,'dates'] = pd.to_datetime(data.datetime) # No setting with copy error
     data.sort_values(by="dates", inplace=True) # Inplace fixes the time sorting error
 
     # DEBUG
@@ -125,7 +125,7 @@ def locations_of_interest(data, ad_id, precision, extended_duration, repeated_du
     if debug:
         print('extended stays:')
         print(data_out.nunique())
-        print('unique geohashes:', data_out['geohash'].unique())
+        print('unique geohashes:', data_out.geohash.unique())
         print()
 
     # 2) Repeated visits over extended period of time to one location
@@ -156,7 +156,7 @@ def locations_of_interest(data, ad_id, precision, extended_duration, repeated_du
     if debug:
         print('repeated visits:')
         print(data_out.nunique())
-        print('unique geohashes:', data_out['geohash'].unique())
+        print('unique geohashes:', data_out.geohash.unique())
         print()
 
     # Remove duplicate geohashes so we limit the size of LOI list
