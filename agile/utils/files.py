@@ -7,7 +7,12 @@ def random_line(iterator):
     result = None
     while True:
         try:
-            # slice off the newline character at the end of a line
+            # slice off the last character at the end of a line
+            # this is to deal with newlines, but there are some quirks to this
+            # the last line in an input file should not end in a newline,
+            # contrary to the POSIX standard
+            # there should be a junk character at the end of the last line
+            # instead, I personally use space in first.txt and last.txt
             result = next(iterator)[:-1]
         except StopIteration:
             return result

@@ -20,8 +20,8 @@ class Report:
     def __init__(self, profile):
         self.pdf = PDF()
         self.profile = profile
-        self.title_page()
         self.tldr_page()
+        self.title_page()
         self.content_page()
         self.save_pdf()
     
@@ -29,9 +29,9 @@ class Report:
         # cell height
         ch = 8
         self.pdf.add_page()
-        self.pdf.set_font('Arial', 'B', 36)
 
         # Name / Title of report
+        self.pdf.set_font('Arial', 'B', 36)
         self.pdf.cell(w=0, h=100, txt=self.profile.name, align="C")
         self.pdf.ln(ch)
         self.pdf.cell(w=0, h=120, txt="Report on Device Activity", align="C")
@@ -41,21 +41,13 @@ class Report:
         self.pdf.image("../images/new_logo.png", w=75, h=100, x=70, y=150)
 
     def tldr_page(self):
-
-        # Here's an example of a dashed line in fpdf.
-        # In practice, we're probably just going to force a new page, but we
-        # might play around with pretty-printing a literal "tear-line."
-
-        # Adds a dashed line beginning at point (10,30), 
-        #  ending at point (110,30) with a 
-        #  dash length of 1 and a space length of 10.
-        self.pdf.dashed_line(10, 30, 110, 30, 1, 10)
-
-    def content_page(self):
-        self.pdf.add_page()
-
         # cell height
         ch = 8
+        self.pdf.add_page()
+
+        # tldr title
+        self.pdf.set_font('Arial', 'B', 24)
+        self.pdf.cell(w=0, h=ch, txt="tl;dr:", ln=1)
 
         # advertiser ID and codename
         self.pdf.ln(ch)
@@ -69,8 +61,43 @@ class Report:
         self.pdf.ln(ch)
         self.pdf.set_font('Arial', 'B', 16)
         self.pdf.cell(w=0, h=ch, txt="Locations of Interest:", ln=1)
+        # We only care about addresses for the summary page
+        self.pdf.set_font('Arial', '', 10)
+        loi_addresses = pd.DataFrame(self.profile.lois.address.unique(), columns=['address'])
+        self.display_dataframe(loi_addresses, w=160)
+
+        # Co-locations
+        self.pdf.ln(ch)
+        self.pdf.set_font('Arial', 'B', 16)
+        self.pdf.cell(w=0, h=ch, txt="Co-located Devices:", ln=1)
         self.pdf.set_font('Arial', '', 16)
-        #self.pdf.cell(w=30, h=ch, txt=self.profile.lois.to_string(), ln=1)
+        self.display_dataframe(self.profile.coloc.advertiser_id.to_frame(), w=160)
+
+        # Here's an example of a dashed line in fpdf.
+        # In practice, we're probably just going to force a new page, but we
+        # might play around with pretty-printing a literal "tear-line."
+
+        # Adds a dashed line beginning at point (10,30), 
+        #  ending at point (110,30) with a 
+        #  dash length of 1 and a space length of 10.
+        #self.pdf.dashed_line(10, 30, 110, 30, 1, 10)
+
+    def content_page(self):
+        # cell height
+        ch = 8
+        self.pdf.add_page()
+
+        # advertiser ID and codename
+        self.pdf.set_font('Arial', 'B', 16)
+        self.pdf.cell(w=0, h=ch, txt="Device Details:", ln=1)
+        self.pdf.set_font('Arial', '', 16)
+        self.pdf.cell(w=30, h=ch, txt="Codename: " + self.profile.name, ln=1)
+        self.pdf.cell(w=30, h=ch, txt="AdID: " + self.profile.ad_id, ln=1)
+
+        # Locations of interest
+        self.pdf.ln(ch)
+        self.pdf.set_font('Arial', 'B', 16)
+        self.pdf.cell(w=0, h=ch, txt="Locations of Interest:", ln=1)
         self.pdf.set_font('Arial', '', 10)
         self.pdf.multi_cell(w=0, h=ch, txt="All Locations of Interest were flagged for either repeated visits separated by more than " + str(self.profile.rep_duration) +
             " hours, or extended stays at the location for over "+ str(self.profile.ext_duration) + " hours. Locations were determined with a geohash precision of " + str(self.profile.prec) + ".")

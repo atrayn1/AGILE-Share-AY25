@@ -98,7 +98,7 @@ with sidebar:
                 prec = st.slider("Precision", min_value=1, max_value=12, value=10)
                 exth = st.slider("Extended Stay Duration", min_value=1, max_value=24, value=7)
                 reph = st.slider("Time Between Repeat Visits", min_value=1, max_value=72, value=24)
-                colh = st.slider("Colocation Duration", min_value=1, max_value=24)
+                colh = st.slider("Colocation Duration", min_value=1, max_value=24, value=2)
                 report_button = st.form_submit_button("Generate Report")
                 if report_button:
                     if st.session_state.uploaded:

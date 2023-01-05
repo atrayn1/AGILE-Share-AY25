@@ -33,8 +33,8 @@ def colocation(data, lois, duration, debug=False) -> pd.DataFrame:
     # Sort by time
     # with newer versions of pandas, we may need to use something this
     #data['datetime'] = pd.to_datetime(data['datetime'], infer_datetime_format=True)
-    data.loc[:,'dates'] = pd.to_datetime(data.datetime)
-    data.sort_values(by="dates", inplace=True)
+    data['datetime'] = pd.to_datetime(data.datetime)
+    data.sort_values(by="datetime", inplace=True)
 
     # filter only the useful columns
     data = data[relevant_features]
@@ -65,7 +65,7 @@ def colocation(data, lois, duration, debug=False) -> pd.DataFrame:
     def time_filter(row):
         loi_filtered = lois[lois.geohash == row.geohash]
         loi_dates = pd.to_datetime(loi_filtered.datetime, infer_datetime_format=True)
-        filtered_time = datetime.strptime(row.datetime, '%Y-%m-%d %H:%M:%S')
+        filtered_time = row.datetime
         within_timerange = (filtered_time > (loi_dates - search_time)) & (filtered_time < (loi_dates + search_time))
         row['remove'] = not within_timerange.any()
         return row
@@ -88,7 +88,8 @@ def colocation(data, lois, duration, debug=False) -> pd.DataFrame:
 # ebs@razer:../AGILE/tests$ python3 week.py
 # ebs@razer:../AGILE/tests$ python3 geohash.py
 # ebs@razer:../AGILE/agile/locations$ python3 loi.py
+
 #df = pd.read_csv("../../data/weeklong_gh.csv")
 #locations = pd.read_csv("../../data/lois.csv")
-#colocation(data=df, lois=locations, hours=1, minutes=30, debug=True)
+#colocation(data=df, lois=locations, duration=2, debug=True)
 
