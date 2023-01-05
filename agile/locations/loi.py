@@ -160,6 +160,7 @@ def locations_of_interest(data, ad_id, precision, extended_duration, repeated_du
         print()
 
     # Remove duplicate geohashes so we limit the size of LOI list
+    # We should remove duplicates for the tl;dr section of the report
     return data_out#.drop_duplicates(subset=['geohash'])
 
 # testing

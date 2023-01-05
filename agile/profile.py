@@ -42,10 +42,10 @@ class Profile:
         return colocation(data, self.lois, self.coloc_duration)
 
 # test report
-from report import Report
+#from report import Report
 # so if you try to make a report using this dataset, it takes a really long time to finish... curious
 #data = pd.read_csv("../data/_54aa7153-1546-ce0d-5dc9-aa9e8e371f00_weeklong_gh.csv")
-data = pd.read_csv("../data/weeklong_gh.csv")
-ubl = Profile(data, "54aa7153-1546-ce0d-5dc9-aa9e8e371f00", 10, 7, 24, 1)
-Report(ubl)
+#data = pd.read_csv("../data/weeklong_gh.csv")
+#ubl = Profile(data, "54aa7153-1546-ce0d-5dc9-aa9e8e371f00", 10, 7, 24, 1)
+#Report(ubl)
 
