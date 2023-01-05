@@ -54,7 +54,6 @@ sidebar.title("Data Options")
 
 # Data Upload container (This is only for dev purposes)
 data_upload_sb = sidebar.container()
-reset_sb = sidebar.container()
 report_sb = sidebar.container()
 filtering_ex = sidebar.expander("Data Filtering")
 analysis_ex = sidebar.expander("Data Analysis")
@@ -81,6 +80,13 @@ with sidebar:
             # let's assume the file is geohashed for now
             #st.session_state.data["geohash"] = st.session_state.data.apply(lambda d : gh.encode(d.latitude, d.longitude, precision=4), axis=1)
             st.session_state.uploaded = True
+        reset_c = st.container()
+        with reset_c:
+            reset_form = st.form(key="reset")
+            with reset_form:
+                # This will reset the state variable resetting the data to uploaded state
+                if st.form_submit_button("RESET DATA"):
+                    st.session_state.data = pd.read_csv(raw_data, sep=",")
 
     # TODO
     # Generate Report
@@ -105,16 +111,6 @@ with sidebar:
                         results_c.write("Report generated!")
                     else:
                         results_c.write("Upload data first!")
-    
-    # Reset
-    with reset_sb:
-        reset_c = st.container()
-        with reset_c:
-            reset_form = st.form(key="reset")
-            with reset_form:
-                # This will reset the state variable resetting the data to uploaded state
-                if st.form_submit_button("RESET DATA"):
-                    st.session_state.data = pd.read_csv(raw_data, sep=",")
 
     # Data Filtering Expander
     with filtering_ex:
