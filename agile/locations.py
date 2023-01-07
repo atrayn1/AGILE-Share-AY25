@@ -132,19 +132,20 @@ def locations_of_interest(data, ad_id, precision, extended_duration, repeated_du
     # Then we can check time differences (more than 16 hours i.e. multiple visits) and still keep O(n)
     # This will make it O(2n)
     geohash_dict = dict()
-
-    for index in range(0, data_size):
+    def repeated_visits(row):
         # Is the geohash key in the dictionary?
-        if data_values[index, 0] in geohash_dict:
-            # Compare time in dict to current time
-            start_time = geohash_dict[data_values[index, 0]]
-            end_time = data_values[index, 1]
+        if row.geohash in geohash_dict:
+            start_time = geohash_dict[row.geohash]
+            end_time = row.datetime
             time_difference = end_time - start_time
             search_time = timedelta(hours=repeated_duration)
-            if time_difference > search_time:
-                d_sus = pd.DataFrame(np.atleast_2d(data_values[index]), columns=relevant_features)
-                data_out = pd.concat([data_out, d_sus], ignore_index=True)
-        geohash_dict[data_values[index, 0]] = data_values[index, 1]
+            within_timerange = time_difference > search_time
+            row['remove'] = not within_timerange
+        geohash_dict[row.geohash] = row.datetime
+        return row
+    data = data.apply(repeated_visits, axis=1)
+    repeated_visits_df = data.loc[data.remove == False].drop(columns=['remove'])
+    data_out = pd.concat([data_out, repeated_visits_df], ignore_index=True)
 
     # DEBUG
     if debug:
@@ -160,7 +161,7 @@ def locations_of_interest(data, ad_id, precision, extended_duration, repeated_du
     return data_out#.drop_duplicates(subset=['geohash'])
 
 # testing
-#df = pd.read_csv("../../data/weeklong_gh.csv")
-#ubl = "54aa7153-1546-ce0d-5dc9-aa9e8e371f00"
-#lois = locations_of_interest(data=df, ad_id=ubl, precision=10, extended_duration=7, repeated_duration=24, debug=True)
+df = pd.read_csv("../data/weeklong_gh.csv")
+ubl = "54aa7153-1546-ce0d-5dc9-aa9e8e371f00"
+lois = locations_of_interest(data=df, ad_id=ubl, precision=10, extended_duration=7, repeated_duration=24, debug=True)
 
