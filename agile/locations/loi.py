@@ -5,7 +5,7 @@
 import numpy as np
 import pandas as pd
 from pygeohash import encode
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 # Location of Interest Algorithm
 # Prototype
@@ -77,7 +77,7 @@ def locations_of_interest(data, ad_id, precision, extended_duration, repeated_du
         # Do not do anything on the first point
         if index == 0:
             continue
-        
+
         # Now here is the meat and potatoes
         # We are looking for relationships between rows specifically:
         # Same Geohash over long period of time
@@ -144,7 +144,6 @@ def locations_of_interest(data, ad_id, precision, extended_duration, repeated_du
             if time_difference > search_time:
                 d_sus = pd.DataFrame(np.atleast_2d(data_values[index]), columns=relevant_features)
                 data_out = pd.concat([data_out, d_sus], ignore_index=True)
-        
         geohash_dict[data_values[index, 0]] = data_values[index, 1]
 
     # DEBUG
