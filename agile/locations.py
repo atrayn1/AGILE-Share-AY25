@@ -152,7 +152,7 @@ def locations_of_interest(data, ad_id, precision, extended_duration, repeated_du
         print()
         print('repeated visits:', repeated_visits_df.shape[0])
         print('unique geohashes:')
-        for geohash in data_out.geohash.unique():
+        for geohash in repeated_visits_df.geohash.unique():
             print('-', geohash)
         print()
 
@@ -162,7 +162,7 @@ def locations_of_interest(data, ad_id, precision, extended_duration, repeated_du
     return data_out#.drop_duplicates(subset=['geohash'])
 
 # testing
-#df = pd.read_csv("../data/weeklong_gh.csv")
-#ubl = "54aa7153-1546-ce0d-5dc9-aa9e8e371f00"
-#lois = locations_of_interest(data=df, ad_id=ubl, precision=10, extended_duration=7, repeated_duration=24, debug=True)
+df = pd.read_csv("../data/weeklong_gh.csv")
+ubl = "54aa7153-1546-ce0d-5dc9-aa9e8e371f00"
+lois = locations_of_interest(data=df, ad_id=ubl, precision=10, extended_duration=7, repeated_duration=24, debug=True)
 
