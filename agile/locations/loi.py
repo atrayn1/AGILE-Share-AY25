@@ -5,7 +5,7 @@
 import numpy as np
 import pandas as pd
 from pygeohash import encode
-from datetime import datetime as dt
+from datetime import datetime, timedelta
 
 # Location of Interest Algorithm
 # Prototype
@@ -106,12 +106,11 @@ def locations_of_interest(data, ad_id, precision, extended_duration, repeated_du
         end_index = index
 
         # Convert strings to datetime objects so we can compare them easily
-        start_time = dt.strptime(data_values[start_index, 1], '%Y-%m-%d %H:%M:%S') 
-        end_time = dt.strptime(data_values[end_index, 1], '%Y-%m-%d %H:%M:%S')
-        #start_time = data_values[start_index, 1]
-        #end_time = data_values[end_index, 1]
+        start_time = datetime.strptime(data_values[start_index, 1], '%Y-%m-%d %H:%M:%S') 
+        end_time = datetime.strptime(data_values[end_index, 1], '%Y-%m-%d %H:%M:%S')
         time_difference = end_time - start_time
-        if time_difference.total_seconds() > 3600 * extended_duration:
+        search_time = timedelta(hours=extended_duration)
+        if time_difference > search_time:
 
             # the centroid idea sucked, let's do a median data point based on
             # timestamp instead
@@ -123,9 +122,11 @@ def locations_of_interest(data, ad_id, precision, extended_duration, repeated_du
 
     # DEBUG
     if debug:
-        print('extended stays:')
-        print(data_out.nunique())
-        print('unique geohashes:', data_out.geohash.unique())
+        print()
+        print('extended stays:', data_out.shape[0])
+        print('unique geohashes:')
+        for geohash in data_out.geohash.unique():
+            print('-', geohash)
         print()
 
     # 2) Repeated visits over extended period of time to one location
@@ -140,13 +141,11 @@ def locations_of_interest(data, ad_id, precision, extended_duration, repeated_du
         # Is the geohash key in the dictionary?
         if data_values[index, 0] in geohash_dict:
             # Compare time in dict to current time
-            # If time difference is >4 hours, add to final output dataframe
-            start_time = dt.strptime(geohash_dict[data_values[index, 0]], '%Y-%m-%d %H:%M:%S') 
-            end_time = dt.strptime(data_values[index, 1], '%Y-%m-%d %H:%M:%S')
-            #start_time = data_values[start_index, 1]
-            #end_time = data_values[end_index, 1]
+            start_time = datetime.strptime(geohash_dict[data_values[index, 0]], '%Y-%m-%d %H:%M:%S') 
+            end_time = datetime.strptime(data_values[index, 1], '%Y-%m-%d %H:%M:%S')
             time_difference = end_time - start_time
-            if time_difference.total_seconds() > 3600 * repeated_duration:
+            search_time = timedelta(hours=repeated_duration)
+            if time_difference > search_time:
                 d_sus = pd.DataFrame(np.atleast_2d(data_values[index]), columns=relevant_features)
                 data_out = pd.concat([data_out, d_sus], ignore_index=True)
         
@@ -154,9 +153,11 @@ def locations_of_interest(data, ad_id, precision, extended_duration, repeated_du
 
     # DEBUG
     if debug:
-        print('repeated visits:')
-        print(data_out.nunique())
-        print('unique geohashes:', data_out.geohash.unique())
+        print()
+        print('repeated visits:', data_out.shape[0])
+        print('unique geohashes:')
+        for geohash in data_out.geohash.unique():
+            print('-', geohash)
         print()
 
     # Remove duplicate geohashes so we limit the size of LOI list
@@ -164,7 +165,7 @@ def locations_of_interest(data, ad_id, precision, extended_duration, repeated_du
     return data_out#.drop_duplicates(subset=['geohash'])
 
 # testing
-#df = pd.read_csv("../../data/weeklong_gh.csv")
-#ubl = "54aa7153-1546-ce0d-5dc9-aa9e8e371f00"
-#lois = locations_of_interest(data=df, ad_id=ubl, precision=10, extended_duration=7, repeated_duration=24, debug=True)
+df = pd.read_csv("../../data/weeklong_gh.csv")
+ubl = "54aa7153-1546-ce0d-5dc9-aa9e8e371f00"
+lois = locations_of_interest(data=df, ad_id=ubl, precision=10, extended_duration=7, repeated_duration=24, debug=True)
 
