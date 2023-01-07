@@ -7,8 +7,8 @@
 
 import random
 import pandas as pd
-from locations.loi import locations_of_interest
-from people.colocation import colocation
+from locations import locations_of_interest
+from people import colocation
 from utils.files import random_line
 from utils.geocode import reverse_geocode
 

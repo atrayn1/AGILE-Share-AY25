@@ -17,7 +17,7 @@ from filtering.date import query_date
 from filtering.date import create_date_map
 from filtering.adid import query_adid
 from filtering.adid import create_adid_map
-from locations.loi import locations_of_interest
+from locations import locations_of_interest
 from utils.tag import polyline_nearby_query
 from utils.geocode import reverse_geocode
 from profile import Profile
