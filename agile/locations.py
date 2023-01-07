@@ -150,7 +150,7 @@ def locations_of_interest(data, ad_id, precision, extended_duration, repeated_du
     # DEBUG
     if debug:
         print()
-        print('repeated visits:', data_out.shape[0])
+        print('repeated visits:', repeated_visits_df.shape[0])
         print('unique geohashes:')
         for geohash in data_out.geohash.unique():
             print('-', geohash)
@@ -158,10 +158,11 @@ def locations_of_interest(data, ad_id, precision, extended_duration, repeated_du
 
     # Remove duplicate geohashes so we limit the size of LOI list
     # We should remove duplicates for the tl;dr section of the report
+    data_out = data_out[relevant_features]
     return data_out#.drop_duplicates(subset=['geohash'])
 
 # testing
-df = pd.read_csv("../data/weeklong_gh.csv")
-ubl = "54aa7153-1546-ce0d-5dc9-aa9e8e371f00"
-lois = locations_of_interest(data=df, ad_id=ubl, precision=10, extended_duration=7, repeated_duration=24, debug=True)
+#df = pd.read_csv("../data/weeklong_gh.csv")
+#ubl = "54aa7153-1546-ce0d-5dc9-aa9e8e371f00"
+#lois = locations_of_interest(data=df, ad_id=ubl, precision=10, extended_duration=7, repeated_duration=24, debug=True)
 
