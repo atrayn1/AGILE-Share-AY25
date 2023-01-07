@@ -42,12 +42,8 @@ def locations_of_interest(data, ad_id, precision, extended_duration, repeated_du
     data = pd.DataFrame(data[data.advertiser_id == ad_id])
 
     # Sort by time
-    #data['datetime'] = pd.to_datetime(data['datetime'])
-    #data.sort_values(by="datetime", inplace=True) # Inplace fixes the time sorting error
-    data.loc[:,'dates'] = pd.to_datetime(data.datetime) # No setting with copy error
-    data.sort_values(by="dates", inplace=True) # Inplace fixes the time sorting error
-
-    # DEBUG
+    data['datetime'] = pd.to_datetime(data['datetime'])
+    data.sort_values(by="datetime", inplace=True)
 
     # THIS TAKES A LONG TIME ON LARGER DATA SETS
     # We ensure that our geohashing is of sufficient precision. We don't want to
@@ -106,8 +102,8 @@ def locations_of_interest(data, ad_id, precision, extended_duration, repeated_du
         end_index = index
 
         # Convert strings to datetime objects so we can compare them easily
-        start_time = datetime.strptime(data_values[start_index, 1], '%Y-%m-%d %H:%M:%S') 
-        end_time = datetime.strptime(data_values[end_index, 1], '%Y-%m-%d %H:%M:%S')
+        start_time = data_values[start_index, 1]
+        end_time = data_values[end_index, 1]
         time_difference = end_time - start_time
         search_time = timedelta(hours=extended_duration)
         if time_difference > search_time:
@@ -141,8 +137,8 @@ def locations_of_interest(data, ad_id, precision, extended_duration, repeated_du
         # Is the geohash key in the dictionary?
         if data_values[index, 0] in geohash_dict:
             # Compare time in dict to current time
-            start_time = datetime.strptime(geohash_dict[data_values[index, 0]], '%Y-%m-%d %H:%M:%S') 
-            end_time = datetime.strptime(data_values[index, 1], '%Y-%m-%d %H:%M:%S')
+            start_time = geohash_dict[data_values[index, 0]]
+            end_time = data_values[index, 1]
             time_difference = end_time - start_time
             search_time = timedelta(hours=repeated_duration)
             if time_difference > search_time:
@@ -165,7 +161,7 @@ def locations_of_interest(data, ad_id, precision, extended_duration, repeated_du
     return data_out#.drop_duplicates(subset=['geohash'])
 
 # testing
-df = pd.read_csv("../../data/weeklong_gh.csv")
-ubl = "54aa7153-1546-ce0d-5dc9-aa9e8e371f00"
-lois = locations_of_interest(data=df, ad_id=ubl, precision=10, extended_duration=7, repeated_duration=24, debug=True)
+#df = pd.read_csv("../../data/weeklong_gh.csv")
+#ubl = "54aa7153-1546-ce0d-5dc9-aa9e8e371f00"
+#lois = locations_of_interest(data=df, ad_id=ubl, precision=10, extended_duration=7, repeated_duration=24, debug=True)
 
