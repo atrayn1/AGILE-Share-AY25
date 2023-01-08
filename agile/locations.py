@@ -108,22 +108,16 @@ def locations_of_interest(data, ad_id, precision, extended_duration, repeated_du
         search_time = timedelta(hours=extended_duration)
         if time_difference > search_time:
 
-            # the centroid idea sucked, let's do a median data point based on
-            # timestamp instead
-            middle_index = (start_index + end_index) // 2
-
-            # Possibly a better solution
-            d_sus = pd.DataFrame(np.atleast_2d(data_values[middle_index]), columns=relevant_features)
-            data_out = pd.concat([data_out, d_sus], ignore_index=True)
+            #middle_index = (start_index + end_index) // 2
+            # Add every pinged datapoint to output dataframe
+            # I think we might want to go back to the centroid idea or some way
+            for index in range(start_index, end_index):
+                d_sus = pd.DataFrame(np.atleast_2d(data_values[index]), columns=relevant_features)
+                data_out = pd.concat([data_out, d_sus], ignore_index=True)
 
     # DEBUG
     if debug:
-        print()
         print('extended stays:', data_out.shape[0])
-        print('unique geohashes:')
-        for geohash in data_out.geohash.unique():
-            print('-', geohash)
-        print()
 
     # 2) Repeated visits over extended period of time to one location
     # We need to look for repeated visits i.e. visits on multiple days
@@ -149,20 +143,18 @@ def locations_of_interest(data, ad_id, precision, extended_duration, repeated_du
 
     # DEBUG
     if debug:
-        print()
         print('repeated visits:', repeated_visits_df.shape[0])
-        print('unique geohashes:')
-        for geohash in repeated_visits_df.geohash.unique():
-            print('-', geohash)
-        print()
 
     # Remove duplicate geohashes so we limit the size of LOI list
     # We should remove duplicates for the tl;dr section of the report
     data_out = data_out[relevant_features]
+    if debug:
+        print('final dataframe:')
+        print(data_out)
     return data_out#.drop_duplicates(subset=['geohash'])
 
 # testing
-df = pd.read_csv("../data/weeklong_gh.csv")
-ubl = "54aa7153-1546-ce0d-5dc9-aa9e8e371f00"
-lois = locations_of_interest(data=df, ad_id=ubl, precision=10, extended_duration=7, repeated_duration=24, debug=True)
+#df = pd.read_csv("../data/weeklong_gh.csv")
+#ubl = "54aa7153-1546-ce0d-5dc9-aa9e8e371f00"
+#lois = locations_of_interest(data=df, ad_id=ubl, precision=10, extended_duration=7, repeated_duration=24, debug=True)
 
