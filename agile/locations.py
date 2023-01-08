@@ -1,36 +1,18 @@
 # Sam Chanow
 # Ernest Son
-# The algorithm for returning locations of interest
+# Locations of Interest Algorithm Prototype
 
 import numpy as np
 import pandas as pd
 from pygeohash import encode
 from datetime import timedelta
 
-# Location of Interest Algorithm
-# Prototype
-# Input: Dataframe w/ geohash, timestamp, latitude, longitude, and ad_id
-#        geohashing precision value
-#        length of an extended stay in hours
-#        length to check for repeated visits
-# Assuming that that all of the points in the dataframe relate to the same ad_id
-# I.E. the dataframe has already been filtered
-# Return: A filtered dataframe with the Locations of Interest
+# Input:  Dataframe w/ geohash, timestamp, latitude, longitude, and ad_id
+#         Geohashing precision value
+#         Length of an extended stay in hours
+#         Length of minimum time between repeated visits
+# Output: A dataframe containing all datapoints at locations of interest
 def locations_of_interest(data, ad_id, precision, extended_duration, repeated_duration, debug=False) -> pd.DataFrame:
-
-    # Now that we have locations sorted by time we can use iteration to view an
-    # ADIDs movement Chronologically
-
-    # Probably the two biggest things that mark a location of interest
-    # 1) Extended stay in one location
-    # 2) Repeated visits over extended period of time to one location
-
-    # For this algorithm's efficiency we may have to lean very heavily on
-    # geohashing
-
-    # Using specific precision geohashing would allow us to more easily see if a
-    # point moves from one general area to another general area without manual
-    # lat/long calculations
 
     # These are the features we care about in the input dataframe
     relevant_features = ['geohash', 'datetime', 'latitude', 'longitude', 'advertiser_id']
@@ -99,6 +81,7 @@ def locations_of_interest(data, ad_id, precision, extended_duration, repeated_du
     # Remove duplicate geohashes so we limit the size of LOI list
     # We should remove duplicates for the tl;dr section of the report
     data_out = data_out[relevant_features]
+
     if debug:
         print('final dataframe:')
         print(data_out)
