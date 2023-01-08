@@ -1,0 +1,16 @@
+extended stays: 3
+repeated visits: 7
+final dataframe:
+      geohash  ...                         advertiser_id
+0  c25pmc3804  ...  54aa7153-1546-ce0d-5dc9-aa9e8e371f00
+1  c25pmc3804  ...  54aa7153-1546-ce0d-5dc9-aa9e8e371f00
+2  c25pmc3804  ...  54aa7153-1546-ce0d-5dc9-aa9e8e371f00
+3  c25pmc32pf  ...  54aa7153-1546-ce0d-5dc9-aa9e8e371f00
+4  c25pmc3804  ...  54aa7153-1546-ce0d-5dc9-aa9e8e371f00
+5  c25pmc1x80  ...  54aa7153-1546-ce0d-5dc9-aa9e8e371f00
+6  c25pmc1rxb  ...  54aa7153-1546-ce0d-5dc9-aa9e8e371f00
+7  c25pn7bbhm  ...  54aa7153-1546-ce0d-5dc9-aa9e8e371f00
+8  c25pn6u6qk  ...  54aa7153-1546-ce0d-5dc9-aa9e8e371f00
+9  c25pr2b89k  ...  54aa7153-1546-ce0d-5dc9-aa9e8e371f00
+
+[10 rows x 5 columns]

@@ -34,6 +34,7 @@ def locations_of_interest(data, ad_id, precision, extended_duration, repeated_du
 
     # These are the features we care about in the input dataframe
     relevant_features = ['geohash', 'datetime', 'latitude', 'longitude', 'advertiser_id']
+    data = data[relevant_features]
 
     # This is the output dataframe, i.e. where we store suspicious geocodes
     data_out = pd.DataFrame(columns=relevant_features)
@@ -41,79 +42,29 @@ def locations_of_interest(data, ad_id, precision, extended_duration, repeated_du
     # Sort so we only have the ad_ids we care about
     data = pd.DataFrame(data[data.advertiser_id == ad_id])
 
-    # Sort by time
-    data['datetime'] = pd.to_datetime(data['datetime'])
-    data.sort_values(by="datetime", inplace=True)
-
     # THIS TAKES A LONG TIME ON LARGER DATA SETS
     # We ensure that our geohashing is of sufficient precision. We don't want to
     # be too precise or else every data point will have its own geohash.
     #data["geohash"] = data.apply(lambda d : encode(d.latitude, d.longitude, precision=precision), axis=1)
 
-    # With the geohashes this seems straight forward:
-    # For every unique geohash we will repeat the search process
-    # We are looking for two things, staying in one geohash for a long time, or
-    # repeatedly coming back to a geohash over long periods of time
-
-    # For long dwells this will be iterative so O(n) but I think we can upper
-    # bound it there and I really do not think it will get any better than that
-    # Actually we may be able to scrt this using Pandas Map but it may get janky
-
-    # df.values can produce a 2d numpy array which for us may actually be the
-    # best choice ... at least for a proof of concept
-
-    # So at this point the dataframe needs to be exactly formatted the same so
-    # column indices are consistent
-
-    #data_values = data_id[relevant_features].values
-    data_values = data[relevant_features].values
-    data_size = len(data_values)
+    # Sort by time and geohash
+    # We need to do this in order to group adjacent geohashes properly
+    data['datetime'] = pd.to_datetime(data.datetime)
+    data.sort_values(by=['datetime', 'geohash'], ascending=[True,True], inplace=True)
 
     # 1) Extended stay in one location
-    # In other words, we identify adjacent rows with the same geohash
-    # Trying to keep O(n)
-    for index in range(0, data_size):
-
-        # Do not do anything on the first point
-        if index == 0:
-            continue
-
-        # Now here is the meat and potatoes
-        # We are looking for relationships between rows specifically:
-        # Same Geohash over long period of time
-        start_index = index # Keep track of where we started
-
-        # Do-While-Loop emulation
-        while True:
-            # We reached the end of the array
-            if index == data_size - 1:
-                break
-            # If the geohashes are not equal
-            c_geohash = data_values[index, 0]
-            n_geohash = data_values[index+1, 0]
-            if c_geohash != n_geohash:
-                break # Exit the while Loop
-            # Go to the next row
-            index += 1
-
-        # Now that we have broken out of the loop we compare the timestamps of
-        # start_index and end_index, if we exceed some specific threshold we add
-        # relevant rows to the output dataframe
-        end_index = index
-
-        # Convert strings to datetime objects so we can compare them easily
-        start_time = data_values[start_index, 1]
-        end_time = data_values[end_index, 1]
-        time_difference = end_time - start_time
-        search_time = timedelta(hours=extended_duration)
-        if time_difference > search_time:
-
-            #middle_index = (start_index + end_index) // 2
-            # Add every pinged datapoint to output dataframe
-            # I think we might want to go back to the centroid idea or some way
-            for index in range(start_index, end_index):
-                d_sus = pd.DataFrame(np.atleast_2d(data_values[index]), columns=relevant_features)
-                data_out = pd.concat([data_out, d_sus], ignore_index=True)
+    # In other words, we identify adjacent rows with the same geohash where
+    # the difference between the maximum and minimum timestamp in a geohash
+    # "group" is greater than some minimum "stay time" that we define as a
+    # parameter to locations_of_interest()
+    stay_groups = data.groupby((data.geohash != data.geohash.shift()).cumsum())
+    extended_stays = stay_groups.agg({"datetime" : ["min", "max"]})
+    extended_stays.columns = extended_stays.columns.droplevel(0)
+    min_stay = timedelta(hours=extended_duration)
+    extended_stays = extended_stays[min_stay < (extended_stays['max'] - extended_stays['min'])]
+    for i in extended_stays.index:
+        stay = stay_groups.get_group(i)
+        data_out = pd.concat([data_out, stay], ignore_index=True)
 
     # DEBUG
     if debug:
