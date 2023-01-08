@@ -78,14 +78,18 @@ def locations_of_interest(data, ad_id, precision, extended_duration, repeated_du
     if debug:
         print('repeated visits:', repeated_visits_df.shape[0])
 
-    # Remove duplicate geohashes so we limit the size of LOI list
-    # We should remove duplicates for the tl;dr section of the report
+    # Make sure we only get the columns we want
     data_out = data_out[relevant_features]
 
     if debug:
         print('final dataframe:')
         print(data_out)
-    return data_out#.drop_duplicates(subset=['geohash'])
+    return data_out
+
+# TODO
+# Labeling locations of interest will probably require the use of the Overpass
+# API in order to distinguish the types of geographic nodes (residences,
+# offices, malls, etc.)
 
 # testing
 #df = pd.read_csv("../data/weeklong_gh.csv")
