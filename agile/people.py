@@ -93,9 +93,12 @@ def colocation(data, lois, duration, debug=False) -> pd.DataFrame:
 # to make weeklong_gh.csv and lois.csv I did the following steps:
 # ebs@razer:../AGILE/tests$ python3 week.py
 # ebs@razer:../AGILE/tests$ python3 geohash.py
+# ebs@razer:../AGILE/agile/locations$ python3 loi.py
+#df = pd.read_csv("../../data/weeklong_gh.csv")
+#locations = pd.read_csv("../../data/lois.csv")
+#colocation(data=df, lois=locations, hours=1, minutes=30, debug=True)
 # ebs@razer:../AGILE/agile$ python3 locations.py
 
 #df = pd.read_csv("../data/weeklong_gh.csv")
 #locations = pd.read_csv("../data/lois.csv")
 #colocation(data=df, lois=locations, duration=2, debug=True)
-
