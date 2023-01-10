@@ -28,16 +28,8 @@
 foo@bar:../AGILE/agile$ streamlit run app.py
 ```
 
-## DONE
-
-- Get areas of interest for a specific data point
-- Integrate an "areas of interest" query into webapp
-- Generate a PDF report of areas of interest for a specific adID
-
 ## TODO
 
-- Colocate other adIDs given locations of interest for a specific adID
-- Integrate a "colocation" query into webapp
-- Generate a general PDF report for a specific adID that includes LOIs and
-  colocation information
+- Make a tl;dr section of the report format
+- Store Profile instances by their codename
 

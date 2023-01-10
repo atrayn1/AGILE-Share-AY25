@@ -17,7 +17,7 @@ from filtering.date import query_date
 from filtering.date import create_date_map
 from filtering.adid import query_adid
 from filtering.adid import create_adid_map
-from locations.loi import locations_of_interest
+from locations import locations_of_interest
 from utils.tag import polyline_nearby_query
 from utils.geocode import reverse_geocode
 from profile import Profile
@@ -53,9 +53,8 @@ sidebar = st.sidebar
 sidebar.title("Data Options")
 
 # Data Upload container (This is only for dev purposes)
-data_upload_c = sidebar.container()
-reset_ex = sidebar.container()
-report_c = sidebar.container()
+data_upload_sb = sidebar.container()
+report_sb = sidebar.container()
 filtering_ex = sidebar.expander("Data Filtering")
 analysis_ex = sidebar.expander("Data Analysis")
 
@@ -72,17 +71,15 @@ results_c.subheader("Analysis")
 with sidebar:
 
     # Upload data
-    with data_upload_c:
+    with data_upload_sb:
         raw_data = st.file_uploader("Upload Data File")
         # If a file has not yet been uploaded (this allows multiple form requests in unison)
         if raw_data and not st.session_state.uploaded:
             st.session_state.data = pd.read_csv(raw_data, sep=",")
             # Added default geohasher on upload
-            st.session_state.data["geohash"] = st.session_state.data.apply(lambda d : gh.encode(d.latitude, d.longitude, precision=4), axis=1)
+            # let's assume the file is geohashed for now
+            #st.session_state.data["geohash"] = st.session_state.data.apply(lambda d : gh.encode(d.latitude, d.longitude, precision=4), axis=1)
             st.session_state.uploaded = True
-
-    # Reset
-    with reset_ex:
         reset_c = st.container()
         with reset_c:
             reset_form = st.form(key="reset")
@@ -90,7 +87,28 @@ with sidebar:
                 # This will reset the state variable resetting the data to uploaded state
                 if st.form_submit_button("RESET DATA"):
                     st.session_state.data = pd.read_csv(raw_data, sep=",")
-    
+
+    # Generate Report
+    with report_sb:
+        report_c = st.container()
+        with report_c:
+            report_form = st.form(key="report")
+            with report_form:
+                ad_id = st.text_input("Advertiser ID")
+                prec = st.slider("Precision", min_value=1, max_value=12, value=10)
+                exth = st.slider("Extended Stay Duration", min_value=1, max_value=24, value=7)
+                reph = st.slider("Time Between Repeat Visits", min_value=1, max_value=72, value=24)
+                colh = st.slider("Colocation Duration", min_value=1, max_value=24, value=2)
+                report_button = st.form_submit_button("Generate Report")
+                if report_button:
+                    if st.session_state.uploaded:
+                        # let's assume the file is geohashed for now
+                        #st.session_state.data["geohash"] = st.session_state.data.apply(lambda d : gh.encode(d.latitude, d.longitude, precision=4), axis=1)
+                        device = Profile(st.session_state.data, ad_id, prec, exth, reph, colh)
+                        Report(device)
+                        results_c.write("Report generated!")
+                    else:
+                        results_c.write("Upload data first!")
 
     # Data Filtering Expander
     with filtering_ex:
@@ -170,19 +188,10 @@ with sidebar:
                     # Write Locations of Interest to the results container
                     results_c.write("Location of Interest Data")
                     results_c.write(loi_data)
-                # TODO
-                # Move this button outside LOI section
-                if st.form_submit_button("Generate Report"):
-                    # streamlit does NOT have a way to maintain state, so we have to run locations_of_interest again
-                    data = query_adid(ad_id, st.session_state.data)
-                    loi_data = reverse_geocode(locations_of_interest(data, precision=prec, extended_duration=exth, repeated_duration=reph))
-                    device = Profile(ad_id)
-                    device.lois = loi_data
-                    Report(device)
-                    results_c.write("Report generated in ../data/")
 
 # Preview container
 with preview_c:
     # If Data means if they have uploaded a file
     if st.session_state.uploaded:
         st.dataframe(st.session_state.data.head())
+
