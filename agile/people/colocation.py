@@ -85,6 +85,6 @@ def colocation(data, lois, hours, minutes, debug=False) -> pd.DataFrame:
 # ebs@razer:../AGILE/tests$ python3 week.py
 # ebs@razer:../AGILE/tests$ python3 geohash.py
 # ebs@razer:../AGILE/agile/locations$ python3 loi.py
-df = pd.read_csv("../../data/weeklong_gh.csv")
-locations = pd.read_csv("../../data/lois.csv")
-colocation(data=df, lois=locations, hours=1, minutes=30, debug=True)
+#df = pd.read_csv("../../data/weeklong_gh.csv")
+#locations = pd.read_csv("../../data/lois.csv")
+#colocation(data=df, lois=locations, hours=1, minutes=30, debug=True)
