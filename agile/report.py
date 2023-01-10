@@ -9,7 +9,8 @@ class PDF(FPDF):
         super().__init__()
     def header(self):
         self.set_font('Arial', '', 12)
-        self.cell(0, 8, 'A.G.I.L.E. Device Activity Report', 0, 1, 'C')
+        self.image("../images/new_logo.png", w=18, h=24, x=10, y=10)
+        #self.cell(0, 8, 'A.G.I.L.E. Device Activity Report', 0, 1, 'C')
     def footer(self):
         self.set_y(-15)
         self.set_font('Arial', '', 12)
@@ -21,7 +22,7 @@ class Report:
         self.pdf = PDF()
         self.profile = profile
         self.tldr_page()
-        self.title_page()
+        #self.title_page()
         self.content_page()
         self.save_pdf()
 
@@ -47,7 +48,8 @@ class Report:
 
         # tldr title
         self.pdf.set_font('Arial', 'B', 24)
-        self.pdf.cell(w=0, h=ch, txt="tl;dr:", ln=1)
+        self.pdf.cell(w=0, h=ch, txt="tl;dr Report on Device Activity:", align="C")
+        self.pdf.ln(ch)
 
         # advertiser ID and codename
         self.pdf.ln(ch)
@@ -73,6 +75,20 @@ class Report:
         self.pdf.set_font('Arial', '', 16)
         self.display_dataframe(self.profile.coloc.advertiser_id.to_frame(), w=160)
 
+        # Pattern of life
+        self.pdf.ln(ch)
+        self.pdf.set_font('Arial', 'B', 16)
+        self.pdf.cell(w=0, h=ch, txt="Pattern of Life:", ln=1)
+        self.pdf.set_font('Arial', '', 16)
+        potential_dwells = self.profile.lois[self.profile.lois.potential_dwell == True]
+        potential_dwells = pd.DataFrame(potential_dwells.address.unique(), columns=['address'])
+        potential_workplaces = self.profile.lois[self.profile.lois.potential_workplace == True]
+        potential_workplaces = pd.DataFrame(potential_workplaces.address.unique(), columns=['address'])
+        self.pdf.cell(w=0, h=ch, txt="Potential dwell locations:", ln=1)
+        self.display_dataframe(potential_dwells, w=160)
+        self.pdf.cell(w=0, h=ch, txt="Potential workplaces:", ln=1)
+        self.display_dataframe(potential_workplaces, w=160)
+
         # Here's an example of a dashed line in fpdf.
         # In practice, we're probably just going to force a new page, but we
         # might play around with pretty-printing a literal "tear-line."
@@ -87,7 +103,13 @@ class Report:
         ch = 8
         self.pdf.add_page()
 
+        # full title
+        self.pdf.set_font('Arial', 'B', 24)
+        self.pdf.cell(w=0, h=ch, txt="Full Report on Device Activity:", align="C")
+        self.pdf.ln(ch)
+
         # advertiser ID and codename
+        self.pdf.ln(ch)
         self.pdf.set_font('Arial', 'B', 16)
         self.pdf.cell(w=0, h=ch, txt="Device Details:", ln=1)
         self.pdf.set_font('Arial', '', 16)
@@ -102,13 +124,15 @@ class Report:
         self.pdf.multi_cell(w=0, h=ch, txt="All Locations of Interest were flagged for either repeated visits separated by more than " + str(self.profile.rep_duration) +
             " hours, or extended stays at the location for over "+ str(self.profile.ext_duration) + " hours. Locations were determined with a geohash precision of " + str(self.profile.prec) + ".")
         self.pdf.ln(ch)
-        self.display_dataframe(self.profile.lois.drop(columns=['address']).drop(columns=['advertiser_id'])) #Everything except the adresses
+        # Everything except the adresses
+        relevant_features = ['geohash', 'datetime', 'latitude', 'longitude']
+        self.display_dataframe(self.profile.lois[relevant_features])
         self.pdf.ln(ch)
-        #Now we display the resolved addresses (THis is ostly for spacing issues since addresses are long)
+
+        # Now we display the resolved addresses (This is mostly for spacing issues since addresses are long)
         self.pdf.multi_cell(w=0, h=ch, txt="The above Latitudes and Longitudes were resolved to the following addresses.")
         self.pdf.ln(ch)
         self.display_dataframe(self.profile.lois.address.to_frame(), w=160)
-
 
         # Co-locations
         self.pdf.ln(ch)
@@ -122,8 +146,8 @@ class Report:
         self.pdf.set_font('Arial', 'B', 16)
         self.pdf.cell(w=0, h=ch, txt="Pattern of Life:", ln=1)
         self.pdf.set_font('Arial', '', 16)
-        #self.display_dataframe(self.profile.pol)
-        self.pdf.multi_cell(w=0, h=ch, txt="TBD")
+        named_locations = ['latitude', 'longitude', 'potential_dwell', 'potential_workplace']
+        self.display_dataframe(self.profile.lois[named_locations])
 
     # TODO
     # fix this so we can save where we want to

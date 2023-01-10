@@ -80,9 +80,8 @@ def colocation(data, lois, duration, debug=False) -> pd.DataFrame:
     filtered = filtered.apply(time_filter, axis=1)
 
     # Filter based on that column and drop it
-    if 'remove' not in filtered.columns:
-        filtered['remove'] = False
-    data_out = filtered.loc[filtered.remove == False].drop(columns=['remove'])
+    if 'remove' in filtered.columns:
+        data_out = filtered.loc[filtered.remove == False].drop(columns=['remove'])
 
     # Return the suspicious data points
     if debug:
@@ -100,3 +99,4 @@ def colocation(data, lois, duration, debug=False) -> pd.DataFrame:
 #df = pd.read_csv("../data/weeklong_gh.csv")
 #locations = pd.read_csv("../data/lois.csv")
 #colocation(data=df, lois=locations, duration=2, debug=True)
+
