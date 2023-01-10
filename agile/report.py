@@ -9,8 +9,7 @@ class PDF(FPDF):
         super().__init__()
     def header(self):
         self.set_font('Arial', '', 12)
-        self.image("../images/new_logo.png", w=18, h=24, x=10, y=10)
-        #self.cell(0, 8, 'A.G.I.L.E. Device Activity Report', 0, 1, 'C')
+        self.cell(0, 8, 'A.G.I.L.E. Device Activity Report', 0, 1, 'C')
     def footer(self):
         self.set_y(-15)
         self.set_font('Arial', '', 12)
