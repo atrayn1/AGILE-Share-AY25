@@ -6,7 +6,6 @@ import numpy as np
 import pandas as pd
 from pygeohash import encode
 from datetime import timedelta
-from utils.geocode import reverse_geocode
 
 # Input:  Dataframe w/ geohash, timestamp, latitude, longitude, and ad_id
 #         Geohashing precision value
@@ -81,9 +80,6 @@ def locations_of_interest(data, ad_id, precision, extended_duration, repeated_du
 
     # Make sure we only get the columns we want
     data_out = data_out[relevant_features]
-
-    # Reverse-geocode all the data points
-    #data_out = reverse_geocode(data_out)
 
     if debug:
         print('final dataframe:')
