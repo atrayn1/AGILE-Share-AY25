@@ -7,6 +7,27 @@ import pandas as pd
 from pygeohash import encode
 from datetime import timedelta
 
+# TODO
+# Naming locations of interest will probably require the use of the Overpass API
+# in order to distinguish the types of the nearest geographic nodes.
+# (residences, offices, malls, grocery stores, etc.)
+
+# Potential dwell locations
+def get_dwell(lois, debug=False) ->pd.DataFrame:
+    lois['potential_dwell'] = lois.datetime.isin(lois.set_index('datetime').between_time('20:00', '5:00').index)
+    if debug:
+        print('potential dwell locations:')
+        print(lois)
+    return lois
+
+# Potential workplaces
+def get_workplace(lois, debug=False) ->pd.DataFrame:
+    lois['potential_workplace'] = lois.datetime.isin(lois.set_index('datetime').between_time('9:00', '17:00').index)
+    if debug:
+        print('potential workplaces:')
+        print(lois)
+    return lois
+
 # Input:  Dataframe w/ geohash, timestamp, latitude, longitude, and ad_id
 #         Geohashing precision value
 #         Length of an extended stay in hours
@@ -73,23 +94,19 @@ def locations_of_interest(data, ad_id, precision, extended_duration, repeated_du
     data = data.apply(repeated_visits, axis=1)
     repeated_visits_df = data.loc[data.remove == False].drop(columns=['remove'])
     data_out = pd.concat([data_out, repeated_visits_df], ignore_index=True)
-
-    # DEBUG
     if debug:
         print('repeated visits:', repeated_visits_df.shape[0])
 
     # Make sure we only get the columns we want
     data_out = data_out[relevant_features]
 
+    # Name locations of interest
+    data_out = get_dwell(data_out)
+    data_out = get_workplace(data_out)
     if debug:
         print('final dataframe:')
         print(data_out)
     return data_out
-
-# TODO
-# Labeling locations of interest will probably require the use of the Overpass
-# API in order to distinguish the types of geographic nodes (residences,
-# offices, malls, etc.)
 
 # testing
 #df = pd.read_csv("../data/weeklong_gh.csv")

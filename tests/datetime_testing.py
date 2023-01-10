@@ -35,7 +35,7 @@ data_size = len(data_values)
 for index in range(0, data_size):
 
     # Convert strings to datetime objects so we can compare them easily
-    start_time = dt.strptime(data_values[index, 1], '%Y-%m-%d %H:%M:%S') 
+    start_time = dt.strptime(data_values[index, 1], '%Y-%m-%d %H:%M:%S')
     end_time = dt.strptime(data_values[index+1, 1], '%Y-%m-%d %H:%M:%S')
     time_difference = end_time - start_time
     if time_difference.total_seconds() > 3600 or time_difference.total_seconds() < 0:
