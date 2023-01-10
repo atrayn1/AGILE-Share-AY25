@@ -23,7 +23,7 @@ def reverse_geocode(df):
         df['address'] = pd.Series(dtype='string')
         return df
     df['address'] = np.vectorize(reverse_geocoding)(df.latitude, df.longitude)
-    return df 
+    return df
 
 # testing
 '''

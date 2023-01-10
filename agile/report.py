@@ -24,7 +24,7 @@ class Report:
         self.title_page()
         self.content_page()
         self.save_pdf()
-    
+
     def title_page(self):
         # cell height
         ch = 8
@@ -77,8 +77,8 @@ class Report:
         # In practice, we're probably just going to force a new page, but we
         # might play around with pretty-printing a literal "tear-line."
 
-        # Adds a dashed line beginning at point (10,30), 
-        #  ending at point (110,30) with a 
+        # Adds a dashed line beginning at point (10,30),
+        #  ending at point (110,30) with a
         #  dash length of 1 and a space length of 10.
         #self.pdf.dashed_line(10, 30, 110, 30, 1, 10)
 

@@ -46,7 +46,7 @@ title_center.title("AGILE")
 title_center.subheader("Advertising and Geolocation Information Logical Extractor")
 
 # Logo Image
-title_left.image("../images/new_logo.png") 
+title_left.image("../images/new_logo.png")
 
 # Main page sidebar
 sidebar = st.sidebar
@@ -61,7 +61,7 @@ analysis_ex = sidebar.expander("Data Analysis")
 # The data preview
 preview_c = st.container()
 preview_c.subheader("Data Preview")
-    
+
 # The data analysis/filtering results container
 results_c = st.container()
 results_c.subheader("Analysis")
@@ -184,7 +184,7 @@ with sidebar:
                     data = st.session_state.data
                     loi_data = locations_of_interest(data, ad_id, precision=prec, extended_duration=exth, repeated_duration=reph)
                     # Here we need to make a map and pass the optional parameter for these location points
-                    create_map(data, data.iloc[0]['latitude'], data.iloc[0]['longitude'], results_c, loi_data=loi_data)
+                    create_map(loi_data, loi_data.iloc[0]['latitude'], loi_data.iloc[0]['longitude'], results_c, loi_data=loi_data)
                     # Write Locations of Interest to the results container
                     results_c.write("Location of Interest Data")
                     results_c.write(loi_data)
