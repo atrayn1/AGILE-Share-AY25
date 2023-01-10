@@ -83,7 +83,7 @@ def locations_of_interest(data, ad_id, precision, extended_duration, repeated_du
     data_out = data_out[relevant_features]
 
     # Reverse-geocode all the data points
-    data_out = reverse_geocode(data_out)
+    #data_out = reverse_geocode(data_out)
 
     if debug:
         print('final dataframe:')

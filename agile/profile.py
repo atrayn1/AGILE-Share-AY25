@@ -10,6 +10,7 @@ import pandas as pd
 from locations import locations_of_interest
 from people import colocation
 from utils.files import random_line
+from utils.geocode import reverse_geocode
 
 class Profile:
 
@@ -34,7 +35,7 @@ class Profile:
     # generate the locations of interest for this ad_id
     def __loi_gen(self, data) -> pd.DataFrame:
         lois = locations_of_interest(data, self.ad_id, self.prec, self.ext_duration, self.rep_duration)
-        return lois
+        return reverse_geocode(lois)
 
     # generate the colocating ad_id Dataframe for this ad_id
     def __coloc_gen(self, data) -> pd.DataFrame:

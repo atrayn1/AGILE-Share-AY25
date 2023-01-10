@@ -181,8 +181,8 @@ with sidebar:
                 reph = st.slider("Time Between Repeat Visits", min_value=1, max_value=72, value=24)
                 if st.form_submit_button("Query"):
                     # We need to filter by adid and then perform loi analysis
-                    data = query_adid(ad_id, st.session_state.data)
-                    loi_data = reverse_geocode(locations_of_interest(data, precision=prec, extended_duration=exth, repeated_duration=reph))
+                    data = st.session_state.data
+                    loi_data = locations_of_interest(data, ad_id, precision=prec, extended_duration=exth, repeated_duration=reph)
                     # Here we need to make a map and pass the optional parameter for these location points
                     create_map(data, data.iloc[0]['latitude'], data.iloc[0]['longitude'], results_c, loi_data=loi_data)
                     # Write Locations of Interest to the results container
