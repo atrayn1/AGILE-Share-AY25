@@ -33,7 +33,7 @@ def colocation(data, lois, duration, debug=False) -> pd.DataFrame:
     data_out = pd.DataFrame(columns=relevant_features)
 
     # Fail gracefully if no LOIs exist
-    if lois.empty:
+    if lois is None:
         return data_out
 
     # Sort by time

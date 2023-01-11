@@ -3,7 +3,7 @@ __pycache__/
 *.py[cod]
 *$py.class
 
-#Data Folder
+# Data Folder
 data/
 
 # C extensions
@@ -133,3 +133,4 @@ dmypy.json
 
 # Mac OS X is trash
 .DS_Store
+

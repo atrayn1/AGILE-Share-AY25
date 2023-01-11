@@ -1,5 +1,5 @@
-# Sam Chanow
 # Ernest Son
+# Sam Chanow
 # Locations of Interest Algorithm Prototype
 
 import numpy as np

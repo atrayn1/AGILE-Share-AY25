@@ -1,8 +1,8 @@
 import pandas as pd
 from fpdf import FPDF
-#PDF Report class for AGILE Device Activity Rreports
+# PDF Report class for AGILE Device Activity Rreports
 # Ernest Son
-#Sam Chanow
+# Sam Chanow
 
 class PDF(FPDF):
     def __init__(self):
@@ -10,6 +10,8 @@ class PDF(FPDF):
     def header(self):
         self.set_font('Arial', '', 12)
         self.cell(0, 8, 'A.G.I.L.E. Device Activity Report', 0, 1, 'C')
+        # The (copyright-free!!) logo
+        #self.pdf.image("../images/new_logo.png", w=75, h=100, x=70, y=150)
     def footer(self):
         self.set_y(-15)
         self.set_font('Arial', '', 12)
@@ -20,27 +22,11 @@ class Report:
     def __init__(self, profile):
         self.pdf = PDF()
         self.profile = profile
-        self.tldr_page()
-        #self.title_page()
-        self.content_page()
+        self.tldr_report()
+        self.full_report()
         self.save_pdf()
 
-    def title_page(self):
-        # cell height
-        ch = 8
-        self.pdf.add_page()
-
-        # Name / Title of report
-        self.pdf.set_font('Arial', 'B', 36)
-        self.pdf.cell(w=0, h=100, txt=self.profile.name, align="C")
-        self.pdf.ln(ch)
-        self.pdf.cell(w=0, h=120, txt="Report on Device Activity", align="C")
-
-        # The (copyright-free!!) logo
-        self.pdf.ln(ch)
-        self.pdf.image("../images/new_logo.png", w=75, h=100, x=70, y=150)
-
-    def tldr_page(self):
+    def tldr_report(self):
         # cell height
         ch = 8
         self.pdf.add_page()
@@ -97,7 +83,7 @@ class Report:
         #  dash length of 1 and a space length of 10.
         #self.pdf.dashed_line(10, 30, 110, 30, 1, 10)
 
-    def content_page(self):
+    def full_report(self):
         # cell height
         ch = 8
         self.pdf.add_page()
