@@ -34,7 +34,7 @@ def get_workplace(lois, debug=False) ->pd.DataFrame:
 #         Length of an extended stay in hours
 #         Length of minimum time between repeated visits
 # Output: A dataframe containing all datapoints at locations of interest
-def locations_of_interest(data, ad_id, precision, extended_duration, repeated_duration, debug=False) -> pd.DataFrame:
+def locations_of_interest(data, ad_id, extended_duration, repeated_duration, debug=False) -> pd.DataFrame:
 
     # These are the features we care about in the input dataframe
     relevant_features = ['geohash', 'datetime', 'latitude', 'longitude', 'advertiser_id']
@@ -45,11 +45,6 @@ def locations_of_interest(data, ad_id, precision, extended_duration, repeated_du
 
     # Sort so we only have the ad_ids we care about
     data = pd.DataFrame(data[data.advertiser_id == ad_id])
-
-    # THIS TAKES A LONG TIME ON LARGER DATA SETS
-    # We ensure that our geohashing is of sufficient precision. We don't want to
-    # be too precise or else every data point will have its own geohash.
-    #data["geohash"] = data.apply(lambda d : encode(d.latitude, d.longitude, precision=precision), axis=1)
 
     # Sort by time and geohash
     # We need to do this in order to group adjacent geohashes properly

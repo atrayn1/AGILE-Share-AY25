@@ -4,6 +4,7 @@
 
 import pandas as pd
 from proximitypyhash import get_geohash_radius_approximation
+from datetime import datetime as dt
 
 def query_adid(adid, df):
     if adid == '':
@@ -33,16 +34,16 @@ def query_location(lat, long, radius, df):
 
 def query_date(start_date, start_time, end_date, end_time, df):
     # Combine dates and times together for optimal filtering
-    start_date = pd.datetime.combine(start_date, start_time)
-    end_date = pd.datetime.combine(end_date, end_time)
+    start = dt.combine(start_date, start_time)
+    end = dt.combine(end_date, end_time)
     if start_date == '' or end_date == '':
         return
     # convert string to datetime
     df['date'] = pd.to_datetime(df['datetime'])
-    start_date = pd.to_datetime(start_date)
-    end_date = pd.to_datetime(end_date)
+    start_date = pd.to_datetime(start)
+    end_date = pd.to_datetime(end)
     # Parse the df by datetime
-    date_filter = (df['date'] >= start_date) & (df['date'] <= end_date)
+    date_filter = (df['date'] >= start) & (df['date'] <= end)
     parsed_df = df.loc[date_filter]
     print(parsed_df.head())
     parsed_df['datetime'] = parsed_df['datetime'].astype(str)

@@ -15,12 +15,11 @@ from utils.geocode import reverse_geocode
 class Profile:
 
     # Constructor with specific parameters
-    def __init__(self, data, ad_id, prec, ext_duration, rep_duration, coloc_duration) -> None:
+    def __init__(self, data, ad_id, ext_duration, rep_duration, coloc_duration) -> None:
         self.ad_id = ad_id
         self.name = self.__name_gen()
         # We need to somehow store this information in here so that it can be relayed on the report
         # These are the default values
-        self.prec = prec
         self.ext_duration = ext_duration
         self.rep_duration = rep_duration
         self.coloc_duration = coloc_duration
@@ -34,7 +33,7 @@ class Profile:
 
     # generate the locations of interest for this ad_id
     def __loi_gen(self, data) -> pd.DataFrame:
-        lois = locations_of_interest(data, self.ad_id, self.prec, self.ext_duration, self.rep_duration)
+        lois = locations_of_interest(data, self.ad_id, self.ext_duration, self.rep_duration)
         return reverse_geocode(lois)
 
     # generate the colocating ad_id Dataframe for this ad_id

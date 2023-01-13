@@ -6,8 +6,9 @@
 import streamlit as st
 import streamlit.components.v1 as components
 import pandas as pd
-import proximitypyhash as pph
-import pygeohash as gh
+from datetime import datetime as dt
+#import proximitypyhash as pph
+#import pygeohash as gh
 from streamlit_folium import st_folium
 from streamlit_folium import folium_static
 import folium
@@ -16,8 +17,6 @@ from filtering import query_location
 from filtering import query_date
 from filtering import query_adid
 from mapping import data_map 
-from mapping import loi_data_map
-from mapping import colocation_data_map
 from locations import locations_of_interest
 from people import colocation
 from utils.tag import polyline_nearby_query
@@ -56,7 +55,7 @@ analysis_ex = sidebar.expander('Data Analysis')
 
 # The data preview
 preview_c = st.container()
-preview_c.subheader('Data Preview')
+preview_c.subheader('Total Data Preview')
 
 # The data analysis/filtering results container
 results_c = st.container()
@@ -87,14 +86,13 @@ with sidebar:
             report_form = st.form(key='report')
             with report_form:
                 ad_id = st.text_input('Advertiser ID')
-                prec = st.slider('Precision', min_value=1, max_value=12, value=10)
                 exth = st.slider('Extended Stay Duration', min_value=1, max_value=24, value=7)
                 reph = st.slider('Time Between Repeat Visits', min_value=1, max_value=72, value=24)
                 colh = st.slider('Colocation Duration', min_value=1, max_value=24, value=2)
                 report_button = st.form_submit_button('Generate Report')
                 if report_button:
                     if st.session_state.uploaded:
-                        device = Profile(st.session_state.data, ad_id, prec, exth, reph, colh)
+                        device = Profile(st.session_state.data, ad_id, exth, reph, colh)
                         Report(device)
                         results_c.write('Report generated!')
                     else:
@@ -112,7 +110,9 @@ with sidebar:
                 ad_id = st.text_input('Advertiser ID')
                 if st.form_submit_button('Query'):
                     st.session_state.data = query_adid(ad_id, st.session_state.data)
-                    data_map(st.session_state.data, results_c)
+                    data_map(results_c, data=st.session_state.data)
+                    results_c.write('Datapoints for ' + ad_id + ':')
+                    results_c.write(st.session_state.data)
 
         # Filter by lat/long
         location_filter_c = st.container()
@@ -126,7 +126,9 @@ with sidebar:
                 radius = st.text_input('Radius')
                 if st.form_submit_button('Query'):
                     st.session_state.data = query_location(lat, long, radius, st.session_state.data)
-                    data_map(st.session_state.data, results_c)
+                    data_map(results_c, data=st.session_state.data)
+                    results_c.write('Datapoints around ' + lat + ', ' + long + ' in a radius of ' + radius + ' meters:')
+                    results_c.write(st.session_state.data)
 
         # Filter by timestamp
         time_filter = st.container()
@@ -138,9 +140,13 @@ with sidebar:
                 start_time = st.time_input('Time:', key='starttime')
                 end_date = st.date_input('End Date')
                 end_time = st.time_input('Time:', key='endtime')
+                start = str(dt.combine(start_date, start_time))
+                end = str(dt.combine(end_date, end_time))
                 if st.form_submit_button('Query'):
                     st.session_state.data = query_date(start_date, start_time, end_date, end_time, st.session_state.data)
-                    data_map(st.session_state.data, results_c)
+                    data_map(results_c, data=st.session_state.data)
+                    results_c.write('Datapoints between ' + start + ' and ' + end + ':')
+                    results_c.write(st.session_state.data)
 
     # Data Analysis Expander
     with analysis_ex:
@@ -166,16 +172,15 @@ with sidebar:
             with loi_form:
                 loi_data = None
                 ad_id = st.text_input('Advertiser ID')
-                prec = st.slider('Precision', min_value=1, max_value=12, value=10)
-                exth = st.slider('Extended Stay Duration', min_value=1, max_value=24, value=7)
-                reph = st.slider('Time Between Repeat Visits', min_value=1, max_value=72, value=24)
+                ext_h = st.slider('Extended Stay Duration', min_value=1, max_value=24, value=7)
+                rep_h = st.slider('Time Between Repeat Visits', min_value=1, max_value=72, value=24)
                 if st.form_submit_button('Query'):
                     # We need to filter by adid and then perform loi analysis
                     data = st.session_state.data
-                    loi_data = locations_of_interest(data, ad_id, precision=prec, extended_duration=exth, repeated_duration=reph)
+                    loi_data = locations_of_interest(data, ad_id, ext_h, rep_h)
                     st.session_state.loi_data = loi_data
                     # Here we need to make a map and pass the optional parameter for these location points
-                    loi_data_map(loi_data, results_c)
+                    data_map(results_c, lois=st.session_state.loi_data)
                     # Write Locations of Interest to the results container
                     results_c.write('Location of Interest Data')
                     results_c.write(loi_data)
@@ -191,7 +196,7 @@ with sidebar:
                     data = st.session_state.data
                     loi_data = st.session_state.loi_data
                     colocation_data = colocation(data, loi_data, duration=search_time)
-                    colocation_data_map(colocation_data, loi_data, results_c)
+                    data_map(results_c, data=colocation_data, lois=loi_data)
                     results_c.write('Colocation Data')
                     results_c.write(colocation_data)
 

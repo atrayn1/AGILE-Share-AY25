@@ -69,6 +69,7 @@ class Report:
         potential_dwells = pd.DataFrame(potential_dwells.address.unique(), columns=['address'])
         potential_workplaces = self.profile.lois[self.profile.lois.potential_workplace == True]
         potential_workplaces = pd.DataFrame(potential_workplaces.address.unique(), columns=['address'])
+        self.pdf.set_font('Arial', 'B', 16)
         self.pdf.cell(w=0, h=ch, txt="Potential dwell locations:", ln=1)
         self.display_dataframe(potential_dwells, w=160)
         self.pdf.cell(w=0, h=ch, txt="Potential workplaces:", ln=1)
@@ -107,7 +108,7 @@ class Report:
         self.pdf.cell(w=0, h=ch, txt="Locations of Interest:", ln=1)
         self.pdf.set_font('Arial', '', 10)
         self.pdf.multi_cell(w=0, h=ch, txt="All Locations of Interest were flagged for either repeated visits separated by more than " + str(self.profile.rep_duration) +
-            " hours, or extended stays at the location for over "+ str(self.profile.ext_duration) + " hours. Locations were determined with a geohash precision of " + str(self.profile.prec) + ".")
+            " hours, or extended stays at the location for over "+ str(self.profile.ext_duration) + " hours. Locations were determined with a geohash precision of 10.")
         self.pdf.ln(ch)
         # Everything except the adresses
         relevant_features = ['geohash', 'datetime', 'latitude', 'longitude']

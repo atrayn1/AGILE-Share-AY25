@@ -13,7 +13,7 @@ from datetime import datetime, timedelta
 # colocated actor
 
 # ASSUMPTIONS
-#   - data is already geohashed to sufficient precision
+#   - data is already geohashed to sufficient precision (current value 10)
 #   - locations of interest are from the same data set
 # INPUT
 #   data:
@@ -45,9 +45,6 @@ def colocation(data, lois, duration, debug=False) -> pd.DataFrame:
     # filter only the useful columns
     data = data[relevant_features]
     data.reset_index(drop=True, inplace=True)
-
-    # Ensure our geohashing is of sufficient precision.
-    #data["geohash"] = data.apply(lambda d : gh.encode(d.latitude, d.longitude, precision=10), axis=1)
 
     # 1)
     # From the main data array, grab rows that have a geohash that is also found
