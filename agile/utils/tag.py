@@ -11,7 +11,7 @@ def overpassNearbyQuery(latitude, longitude, range):
     api = overpy.Overpass()
     #Build the query
     query = "node(around:" + str(range) + ", " + str(latitude) + ", " + str(longitude) + "); out body;"
-    
+
     # fetch all ways and nodes
     result = api.query(query)
 
@@ -25,14 +25,14 @@ def overpassNearbyQuery(latitude, longitude, range):
 # Range is in Meters
 # Needs a list of dates so that the polyline is created chronologically
 
-# UPDATE: Function now takes a dataframe 
+# UPDATE: Function now takes a dataframe
 # THIS DATAFRAME MUST CONTAIN 'latitude' 'longitude' 'datetime'
 
 def polyline_nearby_query(data, range):
-    # custom polygon boundary. Boundaries specified as 
-    # (poly:lat1 long1 lat2 long2............latN longN lat1 long1). 
-    # Coordinates (lat, long) at the beginning and at the end of the 
-    # poly are the same signifying that it is a closed polygon. 
+    # custom polygon boundary. Boundaries specified as
+    # (poly:lat1 long1 lat2 long2............latN longN lat1 long1).
+    # Coordinates (lat, long) at the beginning and at the end of the
+    # poly are the same signifying that it is a closed polygon.
     # If there is a mismatch here, query fails with an error message.
 
     # To build the polygon I am thinking of looping through the list frontways and then backways.
@@ -78,7 +78,7 @@ def filter_node_list(results):
     #Build the Dataframe with the names,lats,and longs
     nodes = pd.DataFrame()
     nodes['name'] = [node.tags.get("name", "n/a") for node in results]
-    nodes['latitude'] = [float(node.lat) for node in results] 
+    nodes['latitude'] = [float(node.lat) for node in results]
     nodes['longitude'] = [float(node.lon) for node in results]
 
     #Filter out the n/a rows

@@ -100,7 +100,6 @@ Yellow
 Silver
 Steel
 Ardent
-431st
 Eta
 Iota
 Rolling
@@ -117,4 +116,3 @@ Clear
 Resolute
 Mutual
 Cajun
-

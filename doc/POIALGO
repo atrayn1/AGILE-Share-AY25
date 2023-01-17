@@ -6,6 +6,6 @@ IN: DATAFRAME with timestamped geo-location points, and ADIDs
 OUT: Points of interest, with probability labels (home, work, any context)
 
 ALGORITHM:
-1 - 
-2 - 
-3 - 
+1 -
+2 -
+3 -
