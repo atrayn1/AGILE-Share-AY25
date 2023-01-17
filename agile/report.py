@@ -69,7 +69,7 @@ class Report:
         potential_dwells = pd.DataFrame(potential_dwells.address.unique(), columns=['address'])
         potential_workplaces = self.profile.lois[self.profile.lois.potential_workplace == True]
         potential_workplaces = pd.DataFrame(potential_workplaces.address.unique(), columns=['address'])
-        self.pdf.set_font('Arial', 'B', 16)
+        self.pdf.set_font('Arial', '', 10)
         self.pdf.cell(w=0, h=ch, txt="Potential dwell locations:", ln=1)
         self.display_dataframe(potential_dwells, w=160)
         self.pdf.cell(w=0, h=ch, txt="Potential workplaces:", ln=1)
