@@ -6,6 +6,7 @@ import pandas as pd
 import numpy as np
 from sklearn.cluster import DBSCAN
 from datetime import datetime
+from math import cos, asin, sqrt, pi
 
 # POL Algorithm
 
@@ -20,10 +21,22 @@ from datetime import datetime
 # Classification
 #   Label Test Data Tampstamp -> Cluster Label
 
-# Data is a dataframe that contains at least ad_id, timestamp, lat, long
+# Given two latitude and longitude points return the distance in kilometers
+def geo_distance(lat1, lon1, lat2, lon2):
+    p = pi/180
+    a = 0.5 - cos((lat2-lat1)*p)/2 + cos(lat1*p) * cos(lat2*p) * (1-cos((lon2-lon1)*p))/2
+    return 12742 * asin(sqrt(a)) #2*R*asin...
+
+# Data is a dataframe that contains at least ad_id, datetime, lat, long, and timestamp needs to be string
+# Speed is the cutoff speed (km/hr)
 #TODO SAM
-def speed_filter(data) -> pd.DataFrame:
-    pass
+def speed_filter(data, speed) -> pd.DataFrame:
+    data['date'] = pd.to_datetime(data['datetime'])
+    data['timediff'] = pd.diff(data['date'])
+    #Get distance
+    #Calculate speed
+    #drop bad rows
+    return data
 
 # Creates 'weight' feature in input dataframes
 #TODO SAM
@@ -53,3 +66,12 @@ def pol_predict(test_data) -> pd.DataFrame:
 # Test accuracy of predict
 def pol_accuracy(prediction_data, gold_labels):
     pass
+
+#Test for Lat and Long coordinates
+#lat1 = 38.978015
+#lon1 = -76.504426
+
+#lat2 = 38.981220
+#lon2 = -76.487589
+
+#print(geo_distance(lat1, lon1, lat2, lon2))
