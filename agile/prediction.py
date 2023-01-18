@@ -32,11 +32,22 @@ def geo_distance(lat1, lon1, lat2, lon2):
 #TODO SAM
 def speed_filter(data, speed) -> pd.DataFrame:
     data['date'] = pd.to_datetime(data['datetime'])
-    data['timediff'] = pd.diff(data['date'])
+    data['timediff'] = data['date'].diff()
+    #Convert timedelta to hours
+    data['timediff'] = data['timediff'].apply(lambda d : d.total_seconds() / 3600)
     #Get distance
+    data['next_latitude'] = data['latitude'].shift(1)
+    data['next_longitude'] = data['longitude'].shift(1)
+    #Throw the dataframe into an apply that passes everyhting needed to geo_distance
+    data['distance'] = data.apply(lambda row : geo_distance(row.latitude, row.longitude, 
+                                                row.next_latitude, row.next_longitude), axis=1)
     #Calculate speed
+    data['speed'] = data['distance'] / data['timediff']
+
     #drop bad rows
-    return data
+    filtered_data = df.loc[df['speed'] < speed]
+
+    return filtered_data
 
 # Creates 'weight' feature in input dataframes
 #TODO SAM
@@ -75,3 +86,8 @@ def pol_accuracy(prediction_data, gold_labels):
 #lon2 = -76.487589
 
 #print(geo_distance(lat1, lon1, lat2, lon2))
+df = pd.read_csv("../data/demo_2023-01-11.csv")
+df = speed_filter(df, 120)
+df.to_csv('sample_time_filter.csv')
+
+print(df.head())
