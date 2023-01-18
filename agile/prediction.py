@@ -29,15 +29,16 @@ def geo_distance(lat1, lon1, lat2, lon2):
 
 # Data is a dataframe that contains at least ad_id, datetime, lat, long, and timestamp needs to be string
 # Speed is the cutoff speed (km/hr)
+# The Dataframe must be sorted by time!!!
 #TODO SAM
 def speed_filter(data, speed) -> pd.DataFrame:
     data['date'] = pd.to_datetime(data['datetime'])
-    data['timediff'] = data['date'].diff()
+    data['timediff'] = data['date'].diff(-1) * -1 #to offset reverse diff
     #Convert timedelta to hours
     data['timediff'] = data['timediff'].apply(lambda d : d.total_seconds() / 3600)
     #Get distance
-    data['next_latitude'] = data['latitude'].shift(1)
-    data['next_longitude'] = data['longitude'].shift(1)
+    data['next_latitude'] = data['latitude'].shift(-1)
+    data['next_longitude'] = data['longitude'].shift(-1)
     #Throw the dataframe into an apply that passes everyhting needed to geo_distance
     data['distance'] = data.apply(lambda row : geo_distance(row.latitude, row.longitude, 
                                                 row.next_latitude, row.next_longitude), axis=1)
@@ -50,9 +51,22 @@ def speed_filter(data, speed) -> pd.DataFrame:
     return filtered_data
 
 # Creates 'weight' feature in input dataframes
+# The Dataframe must be sorted by time!!!
 #TODO SAM
 def weighting(data) -> pd.DataFrame:
-    pass
+    #Give every row a weight equal to the number of seconds before the next row
+    data['date'] = pd.to_datetime(data['datetime'])
+    data['timediff'] = data['date'].diff(-1) * -1
+    #Convert timedelta to seconds
+    data['timediff'] = data['timediff'].apply(lambda d : d.total_seconds())
+
+    # Normalize the timediff into weights between (0 and 1) using standard min max normalization
+    td_min = data['timediff'].min()
+    td_max = data['timediff'].max()
+
+    data['weight'] = data['timediff'].apply(lambda td : ((td-td_min) / (td_max - td_min)))
+
+    return data
 
 # Returns optimal hyperparameters for DBSCAN clustering algorithm
 #TODO ERNIE
@@ -87,7 +101,9 @@ def pol_accuracy(prediction_data, gold_labels):
 
 #print(geo_distance(lat1, lon1, lat2, lon2))
 df = pd.read_csv("../data/demo_2023-01-11.csv")
+df.sort_values(by=['datetime'], inplace=True)
 df = speed_filter(df, 120)
+df = weighting(df)
 df.to_csv('sample_time_filter.csv')
 
 print(df.head())
