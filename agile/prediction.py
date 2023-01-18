@@ -71,13 +71,26 @@ def weighting(data) -> pd.DataFrame:
     return data
 
 # Returns optimal hyperparameters for DBSCAN clustering algorithm
+# We use reasonable defaults right now
 def optimize(data):
-    pass
+    # p (rho) is a hyperparameter, values can be 0.1, 0.25, or 0.3
+    # epsilon is another hyperparameter, can be 0.2km or 0.3km
+    epsilon = 0.2
+    p = 0.1
+    kms_per_degree = 111
+    dist = epsilon / kms_per_degree
+    min_samples = int(data.weights.sum() * p)
+    return epsilon, min_samples
 
 # Cluster and return top X clusters
 # Top clusters determined by summation of weights
 def dbscan_cluster(data, X) -> pd.DataFrame:
-    pass
+    eps, min_samples = optimize(data)
+    model = DBSCAN(eps=epsilon,
+            min_samples=min_samples,
+            algorithm='ball_tree',
+            metric='haversine')
+    X = model.fit(data[['latitude', 'longitude']], sample_weight=data.weights)
 
 # Train
 def pol_train(train_data):
