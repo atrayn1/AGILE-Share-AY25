@@ -24,6 +24,9 @@ from utils.geocode import reverse_geocode
 from profile import Profile
 from report import Report
 
+# Make use of the whole screen
+#st.set_page_config(layout="wide")
+
 # Some session state variables that need to be maintained between reloads
 if 'data' not in st.session_state:
     st.session_state.data = None
@@ -41,7 +44,7 @@ title_center.title('AGILE')
 title_center.subheader('Advertising and Geolocation Information Logical Extractor')
 
 # Logo Image
-title_left.image('../images/new_logo.png')
+title_left.image('../images/AGILE_Black.png')
 
 # Main page sidebar
 sidebar = st.sidebar
