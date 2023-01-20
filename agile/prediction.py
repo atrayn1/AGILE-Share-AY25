@@ -6,7 +6,8 @@ import pandas as pd
 import numpy as np
 from sklearn.cluster import DBSCAN
 from datetime import datetime
-from math import cos, asin, sqrt, pi
+from math import cos, asin, sqrt, pi, atan2, sin
+from filtering import query_adid
 
 import matplotlib.pyplot as plt
 
@@ -23,6 +24,20 @@ import matplotlib.pyplot as plt
 # Classification
 #   Label Test Data Tampstamp -> Cluster Label
 
+# Given two latitude and longitude points return the distance in kilometers
+# TODO:
+# using the numpy math functions seems to have a weird sigfig error
+# investigate further...
+def haversine(lat1, lon1, lat2, lon2):
+    p = pi / 180
+    dlat = lat2 - lat1
+    dlon = lon2 - lon1
+    a = 0.5 - cos(dlat*p)/2 + cos(lat1*p) * cos(lat2*p) * (1-cos(dlon*p))/2
+    c = asin(sqrt(a))
+    earth_radius = 6371
+    km = 2 * earth_radius * c
+    return km
+
 # data:
 #   a dataframe that contains at least ad_id, datetime, lat, long, and timestamp
 #   timestamp is assumed to be a string
@@ -38,20 +53,6 @@ def speed_filter(data, speed) -> pd.DataFrame:
     # Get distance
     data['next_latitude'] = data.latitude.shift(-1)
     data['next_longitude'] = data.longitude.shift(-1)
-
-    # Given two latitude and longitude points return the distance in kilometers
-    # TODO:
-    # using the numpy math functions seems to have a weird sigfig error
-    # investigate further...
-    def haversine(lat1, lon1, lat2, lon2):
-        p = pi / 180
-        dlat = lat2 - lat1
-        dlon = lon2 - lon1
-        a = 0.5 - cos(dlat*p)/2 + cos(lat1*p) * cos(lat2*p) * (1-cos(dlon*p))/2
-        c = asin(sqrt(a))
-        earth_radius = 6371
-        km = 2 * earth_radius * c
-        return km
 
     # Throw the dataframe into an apply that calculates distance
     data['distance'] = data.apply(lambda row: haversine(row.latitude, row.longitude, 
@@ -84,7 +85,16 @@ def weighting(data) -> pd.DataFrame:
     threshold = 0.05
     mask = data.distance <= threshold
     data['weights'] = data.weights.where(mask, other=1)
+
+    #For easier Graphing use later
+    data['X'] = data['latitude']
+    data['Y'] = data['longitude']
+
+    #Normalize the weights from 0-1
+    #TODO Look at output of normalized weights too see if useful
+    #data['weights']=(data['weights']-data['weights'].min())/(data['weights'].max()-data['weights'].min())
     return data
+
 
 # Cluster and return top X clusters
 # Top clusters determined by summation of weights
@@ -95,19 +105,19 @@ def get_clusters(data, debug=False) -> pd.DataFrame:
     def optimize(data):
         # p (rho) is a hyperparameter, values can be 0.1, 0.25, or 0.3
         # epsilon is another hyperparameter, can be 0.2km or 0.3km
-        epsilon = 0.2
+        epsilon = 0.1
         p = 0.1
         kms_per_degree = 111
         dist = epsilon / kms_per_degree
         min_samples = int(data.weights.sum() * p)
-        return epsilon, min_samples
+        return dist, min_samples
 
     eps, min_samples = optimize(data)
     model = DBSCAN(eps=eps,
             min_samples=min_samples,
             algorithm='ball_tree',
             metric='haversine')
-    db = model.fit(data[['latitude', 'longitude']], sample_weight=data.weights)
+    db = model.fit(data[['X', 'Y']], sample_weight=data.weights)
     labels = db.labels_
 
     if debug:
@@ -131,8 +141,8 @@ def get_clusters(data, debug=False) -> pd.DataFrame:
 
             xy = data[class_member_mask & core_samples_mask]
             plt.plot(
-                xy.latitude,
-                xy.longitude,
+                xy.X,
+                xy.Y,
                 "o",
                 markerfacecolor=tuple(col),
                 markeredgecolor="k",
@@ -141,8 +151,8 @@ def get_clusters(data, debug=False) -> pd.DataFrame:
 
             xy = data[class_member_mask & ~core_samples_mask]
             plt.plot(
-                xy.latitude,
-                xy.longitude,
+                xy.X,
+                xy.Y,
                 "o",
                 markerfacecolor=tuple(col),
                 markeredgecolor="k",
@@ -172,9 +182,14 @@ def pol_accuracy(prediction_data, gold_labels):
 #lon2 = -76.487589
 
 data = pd.read_csv("../data/test.csv")
+# 81696261-3059-7d66-69cc-67688182f974
+# 54aa7153-1546-ce0d-5dc9-aa9e8e371f00
+data = query_adid("54aa7153-1546-ce0d-5dc9-aa9e8e371f00", data)
 data.sort_values(by=['datetime'], inplace=True)
 data = speed_filter(data, 120)
 data = weighting(data)
-print(data[['datetime', 'travel_time', 'distance', 'speed', 'weights']])
+#data = normalize_pos(data)
+print(data)
+print(data[['datetime', 'travel_time', 'distance', 'speed', 'weights', 'X', 'Y']])
 get_clusters(data, debug=True)
 
