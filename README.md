@@ -30,6 +30,6 @@ foo@bar:../AGILE/agile$ streamlit run app.py
 
 ## TODO
 
-- Make a tl;dr section of the report format
-- Store Profile instances by their codename
+- Refine report formatting to be as easy to read as possible
+- Integrate with midn.cs.usna.edu database
 
