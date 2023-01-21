@@ -5,6 +5,8 @@
 import pandas as pd
 import numpy as np
 from sklearn.cluster import DBSCAN
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestClassifier
 from datetime import datetime
 from math import cos, asin, sqrt, pi, atan2, sin
 from filtering import query_adid
@@ -92,7 +94,7 @@ def weighting(data) -> pd.DataFrame:
 
     #Normalize the weights from 0-1
     #TODO Look at output of normalized weights too see if useful
-    #data['weights']=(data['weights']-data['weights'].min())/(data['weights'].max()-data['weights'].min())
+    data['weights']=(data['weights']-data['weights'].min())/(data['weights'].max()-data['weights'].min())
     return data
 
 
@@ -161,6 +163,15 @@ def get_clusters(data, debug=False) -> pd.DataFrame:
 
         plt.title(f"Estimated number of clusters: {n_clusters_}")
         plt.savefig('clusters.png')
+    return labels
+
+def max_cluster(data, labels) -> int:
+    data['label'] = labels
+    print(data)
+    data['label_sum'] = data.groupby('label')['weights'].transform('sum')
+    max_label = data.loc[data['label_sum'] == data['label_sum'].max(), ['label', 'datetime', 'travel_time', 'distance', 'speed', 'weights', 'X', 'Y']]
+    without_max = data.loc[data['label_sum'] != data['label_sum'].max(), ['label', 'datetime', 'travel_time', 'distance', 'speed', 'weights', 'X', 'Y']]
+    return max_label, without_max
 
 # Train
 def pol_train(train_data):
@@ -181,15 +192,61 @@ def pol_accuracy(prediction_data, gold_labels):
 #lat2 = 38.981220
 #lon2 = -76.487589
 
-data = pd.read_csv("../data/test.csv")
+data = pd.read_csv("../data/weeklong.csv")
 # 81696261-3059-7d66-69cc-67688182f974
 # 54aa7153-1546-ce0d-5dc9-aa9e8e371f00
-data = query_adid("54aa7153-1546-ce0d-5dc9-aa9e8e371f00", data)
+# 18665217-4566-5790-809c-702e77bdbf89
+data = query_adid("18665217-4566-5790-809c-702e77bdbf89", data)
 data.sort_values(by=['datetime'], inplace=True)
 data = speed_filter(data, 120)
 data = weighting(data)
 #data = normalize_pos(data)
-print(data)
-print(data[['datetime', 'travel_time', 'distance', 'speed', 'weights', 'X', 'Y']])
-get_clusters(data, debug=True)
+#print(data)
+#print(data[['datetime', 'travel_time', 'distance', 'speed', 'weights', 'X', 'Y']])
+labels = get_clusters(data) #, debug=True)
+max_group, without_max = max_cluster(data, labels)
+#print(max_group)
+plt.plot(max_group.X, max_group.Y, "o",markersize=30)
+plt.savefig('biggest.png')
 
+plt.clf()
+
+new_labels = get_clusters(without_max) #, debug=True)
+
+#re-label new data
+without_max['label'] = new_labels
+max_new_label = without_max.label.max() + 1
+max_group['label'] = max_new_label
+
+full_labeled_data = pd.concat([max_group, without_max])
+#print(full_labeled_data)
+
+#Make data useable for classifier
+#Input is time (seconds since 0000)
+#Label is label
+classifier_data = pd.DataFrame()
+
+#return number of seconds since midnight
+def since_midnight(now) -> int:
+    return (now - now.replace(hour=0, minute=0, second=0, microsecond=0)).total_seconds()
+
+classifier_data['seconds'] = full_labeled_data['datetime'].apply(since_midnight)
+classifier_data['label'] = full_labeled_data.label
+
+#classifier_data.reset_index(drop=True, inplace=True)
+
+print(classifier_data)
+
+X_train, X_test, y_train, y_test = train_test_split(classifier_data.drop('label', axis=1), classifier_data['label'], test_size=0.25)
+
+#X_train = X_train.to_numpy().reshape(1, -1)
+#y_train = y_train.to_numpy().reshape(1, -1)
+#X_test = X_test.to_numpy().reshape(1, -1)
+#y_test = y_test.to_numpy().reshape(1, -1)
+
+
+model = RandomForestClassifier()#n_estimators=100)
+model.fit(X_train, y_train)
+
+#print(model.predict(X_test))
+print("With", without_max.label.max() +1, "labels, Accuracy:", model.score(X_test, y_test))
