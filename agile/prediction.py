@@ -10,8 +10,11 @@ from sklearn.ensemble import RandomForestClassifier
 from datetime import datetime
 from math import cos, asin, sqrt, pi, atan2, sin
 from filtering import query_adid
+from tqdm import tqdm
 
 import matplotlib.pyplot as plt
+
+pd.options.mode.chained_assignment = None
 
 # POL Algorithm
 
@@ -167,86 +170,83 @@ def get_clusters(data, debug=False) -> pd.DataFrame:
 
 def max_cluster(data, labels) -> int:
     data['label'] = labels
-    print(data)
+    #print(data)
     data['label_sum'] = data.groupby('label')['weights'].transform('sum')
     max_label = data.loc[data['label_sum'] == data['label_sum'].max(), ['label', 'datetime', 'travel_time', 'distance', 'speed', 'weights', 'X', 'Y']]
     without_max = data.loc[data['label_sum'] != data['label_sum'].max(), ['label', 'datetime', 'travel_time', 'distance', 'speed', 'weights', 'X', 'Y']]
     return max_label, without_max
 
-# Train
-def pol_train(train_data):
-    pass
+full_data = pd.read_csv("../data/weeklong.csv")
+accuracy = 0.0
+# Full model pipeline
+for adid in tqdm(full_data['advertiser_id'].unique()):
+    #Test for Lat and Long coordinates
+    #lat1 = 38.978015
+    #lon1 = -76.504426
 
-# Test and predict
-def pol_predict(test_data) -> pd.DataFrame:
-    pass
+    #lat2 = 38.981220
+    #lon2 = -76.487589
+    # 81696261-3059-7d66-69cc-67688182f974
+    # 54aa7153-1546-ce0d-5dc9-aa9e8e371f00
+    # 18665217-4566-5790-809c-702e77bdbf89
+    data = query_adid(adid, full_data)
+    data.sort_values(by=['datetime'], inplace=True)
+    data = speed_filter(data, 120)
+    data = weighting(data)
+    #data = normalize_pos(data)
+    #print(data)
+    #print(data[['datetime', 'travel_time', 'distance', 'speed', 'weights', 'X', 'Y']])
+    labels = get_clusters(data) #, debug=True)
+    max_group, without_max = max_cluster(data, labels)
+    #print(max_group)
+    #plt.plot(max_group.X, max_group.Y, "o",markersize=30)
+    #plt.savefig('biggest.png')
 
-# Test accuracy of predict
-def pol_accuracy(prediction_data, gold_labels):
-    pass
+    #plt.clf()
 
-#Test for Lat and Long coordinates
-#lat1 = 38.978015
-#lon1 = -76.504426
+    if without_max.empty:
+        print("NOPE")
+        continue
 
-#lat2 = 38.981220
-#lon2 = -76.487589
+    new_labels = get_clusters(without_max) #, debug=True)
 
-data = pd.read_csv("../data/weeklong.csv")
-# 81696261-3059-7d66-69cc-67688182f974
-# 54aa7153-1546-ce0d-5dc9-aa9e8e371f00
-# 18665217-4566-5790-809c-702e77bdbf89
-data = query_adid("18665217-4566-5790-809c-702e77bdbf89", data)
-data.sort_values(by=['datetime'], inplace=True)
-data = speed_filter(data, 120)
-data = weighting(data)
-#data = normalize_pos(data)
-#print(data)
-#print(data[['datetime', 'travel_time', 'distance', 'speed', 'weights', 'X', 'Y']])
-labels = get_clusters(data) #, debug=True)
-max_group, without_max = max_cluster(data, labels)
-#print(max_group)
-plt.plot(max_group.X, max_group.Y, "o",markersize=30)
-plt.savefig('biggest.png')
+    #re-label new data
+    without_max['label'] = new_labels
+    max_new_label = without_max.label.max() + 1
+    max_group['label'] = max_new_label
 
-plt.clf()
+    full_labeled_data = pd.concat([max_group, without_max])
+    #print(full_labeled_data)
 
-new_labels = get_clusters(without_max) #, debug=True)
+    #Make data useable for classifier
+    #Input is time (seconds since 0000)
+    #Label is label
+    classifier_data = pd.DataFrame()
 
-#re-label new data
-without_max['label'] = new_labels
-max_new_label = without_max.label.max() + 1
-max_group['label'] = max_new_label
+    #return number of seconds since midnight
+    def since_midnight(now) -> int:
+        return (now - now.replace(hour=0, minute=0, second=0, microsecond=0)).total_seconds()
 
-full_labeled_data = pd.concat([max_group, without_max])
-#print(full_labeled_data)
+    classifier_data['seconds'] = full_labeled_data['datetime'].apply(since_midnight)
+    classifier_data['label'] = full_labeled_data.label
 
-#Make data useable for classifier
-#Input is time (seconds since 0000)
-#Label is label
-classifier_data = pd.DataFrame()
+    #classifier_data.reset_index(drop=True, inplace=True)
 
-#return number of seconds since midnight
-def since_midnight(now) -> int:
-    return (now - now.replace(hour=0, minute=0, second=0, microsecond=0)).total_seconds()
+    #print(classifier_data)
 
-classifier_data['seconds'] = full_labeled_data['datetime'].apply(since_midnight)
-classifier_data['label'] = full_labeled_data.label
+    X_train, X_test, y_train, y_test = train_test_split(classifier_data.drop('label', axis=1), classifier_data['label'], test_size=0.25)
 
-#classifier_data.reset_index(drop=True, inplace=True)
-
-print(classifier_data)
-
-X_train, X_test, y_train, y_test = train_test_split(classifier_data.drop('label', axis=1), classifier_data['label'], test_size=0.25)
-
-#X_train = X_train.to_numpy().reshape(1, -1)
-#y_train = y_train.to_numpy().reshape(1, -1)
-#X_test = X_test.to_numpy().reshape(1, -1)
-#y_test = y_test.to_numpy().reshape(1, -1)
+    #X_train = X_train.to_numpy().reshape(1, -1)
+    #y_train = y_train.to_numpy().reshape(1, -1)
+    #X_test = X_test.to_numpy().reshape(1, -1)
+    #y_test = y_test.to_numpy().reshape(1, -1)
 
 
-model = RandomForestClassifier()#n_estimators=100)
-model.fit(X_train, y_train)
+    model = RandomForestClassifier()#n_estimators=100)
+    model.fit(X_train, y_train)
 
-#print(model.predict(X_test))
-print("With", without_max.label.max() +1, "labels, Accuracy:", model.score(X_test, y_test))
+    #print(model.predict(X_test))
+    #print("With", without_max.label.max() +1, "labels, Accuracy:", model.score(X_test, y_test))
+    accuracy += model.score(X_test, y_test)
+
+print("Average Accuracy:", accuracy / len(full_data['advertiser_id'].unique()))
