@@ -19,7 +19,7 @@
 - streamlit-folium
 - overpy
 - geopy
-- scikit-learn
+- scikit-learn==1.0.2
 - fpdf2
 
 ### How do I run the demo?
