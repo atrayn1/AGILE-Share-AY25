@@ -7,7 +7,7 @@ from proximitypyhash import get_geohash_radius_approximation
 from datetime import datetime as dt
 
 def query_adid(adid, df):
-    if adid == '':
+    if adid == '' or df is None:
         return
     parsed_df = df.loc[df.advertiser_id == adid]
     return parsed_df
