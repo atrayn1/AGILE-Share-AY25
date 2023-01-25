@@ -173,8 +173,8 @@ def max_cluster(data, labels) -> int:
     without_max = data.loc[data.label_sum != data.label_sum.max(), ['label', 'datetime', 'travel_time', 'distance', 'speed', 'weights', 'X', 'Y']]
     return max_label, without_max
 
-# Full model pipeline
-def fit_predictor(adid, data):
+def double_cluster(adid, full_data):
+    # Basic pre-processing
     data = query_adid(adid, full_data)
     data = data.sort_values(by='datetime')
     data = speed_filter(data, 120)
@@ -184,17 +184,21 @@ def fit_predictor(adid, data):
 
     # Fail gracefully
     if without_max.empty:
-        return 0, 0
+        return None
 
+    # Re-label and return new data
     new_labels = get_clusters(without_max)
-
-    # Re-label new data
     without_max['label'] = new_labels
     max_new_label = without_max.label.max() + 1
     max_group['label'] = max_new_label
-
     full_labeled_data = pd.concat([max_group, without_max])
+    return full_labeled_data
 
+# Full model pipeline
+def fit_predictor(clustered_data, debug=False):
+    if clustered_data is None:
+        # No model, zero accuracy
+        return None, 0
     # Make data usable for classifier
     # Input is time (seconds since 0000)
     # Label is label
@@ -204,17 +208,20 @@ def fit_predictor(adid, data):
     def since_midnight(now) -> int:
         return (now - now.replace(hour=0, minute=0, second=0, microsecond=0)).total_seconds()
 
-    classifier_data['seconds'] = full_labeled_data.datetime.apply(since_midnight)
-    classifier_data['label'] = full_labeled_data.label
+    classifier_data['seconds'] = clustered_data.datetime.apply(since_midnight)
+    classifier_data['label'] = clustered_data.label
 
+    # Split data into training and testing sets
     X_train, X_test, y_train, y_test = train_test_split(classifier_data.drop('label', axis=1), classifier_data.label, test_size=0.25)
 
+    # Train the model
     model = RandomForestClassifier()
     model.fit(X_train, y_train)
 
-    system('clear')
-    print('With', without_max.label.max() + 1, 'labels, Accuracy:', model.score(X_test, y_test))
-    #This function should return the actual trained model for later use as well as a score to see how it did
+    if debug:
+        system('clear')
+        print('With', clustered_data.label.max() + 1, 'labels, Accuracy:', model.score(X_test, y_test))
+    # This function should return the actual trained model for later use as well as a score to see how it did
     return model, model.score(X_test, y_test)
 
 full_data = pd.read_csv('../data/weeklong.csv')
@@ -224,7 +231,9 @@ full_data = pd.read_csv('../data/weeklong.csv')
 # 18665217-4566-5790-809c-702e77bdbf89
 accuracy = 0.0
 for adid in tqdm(full_data['advertiser_id'].unique()):
-    model, test_accuracy = fit_predictor(adid, full_data)
+    clustered_data = double_cluster(adid, full_data)
+    model, test_accuracy = fit_predictor(clustered_data, debug=True)
     accuracy += test_accuracy
 mean_accuracy = accuracy / len(full_data.advertiser_id.unique())
 print('Average Accuracy:', mean_accuracy)
+
