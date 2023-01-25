@@ -12,25 +12,21 @@ import pandas as pd
 api = overpy.Overpass()
 
 df = pd.read_csv(
-  "../data/test_location_data_gh.csv"
+  "../data/weeklong.csv"
 )
-query = "node(around:1000, " + str(df['latitude'][0]) + ", " + str(df['longitude'][0]) + "); out body;"
-
-print(query)
-
-# fetch all ways and nodes
-result = api.query(query)
-
-print(result)
-
-print(len(result.ways))
-print(len(result.nodes))
-print(len(result.relations))
-
-# All of the named Nodes could be useful
-# We could grab all named Nodes and use that to pick out info that we need
-for node in result.nodes:
-    print("Name: %s" % node.tags.get("name", "n/a"))
-
-print("SUCCESS")
+def get_node(row):
+    range = 25
+    query = "node(around:" + str(range) + ", " + str(row.latitude) + ", " + str(row.longitude) + "); out body;"
+    print(query)
+    '''
+    print('found', len(result.ways), 'ways')
+    print('found', len(result.nodes), 'nodes')
+    print('found', len(result.relations), 'relations')
+    '''
+    result = api.query(query)
+    for node in result.nodes:
+        name = node.tags.get('name')
+        print(name)
+df.apply(get_node, axis=1)
+print(data_out)
 
