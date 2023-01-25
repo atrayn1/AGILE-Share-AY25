@@ -11,6 +11,7 @@ from datetime import datetime
 from math import cos, asin, sqrt, pi, atan2, sin
 from filtering import query_adid
 from tqdm import tqdm
+import os
 
 import matplotlib.pyplot as plt
 
@@ -178,6 +179,7 @@ def max_cluster(data, labels) -> int:
 
 full_data = pd.read_csv("../data/weeklong.csv")
 accuracy = 0.0
+c = 1
 # Full model pipeline
 for adid in tqdm(full_data['advertiser_id'].unique()):
     #Test for Lat and Long coordinates
@@ -246,7 +248,10 @@ for adid in tqdm(full_data['advertiser_id'].unique()):
     model.fit(X_train, y_train)
 
     #print(model.predict(X_test))
-    #print("With", without_max.label.max() +1, "labels, Accuracy:", model.score(X_test, y_test))
+    os.system('clear')
+    print("With", without_max.label.max() +1, "labels, Accuracy:", model.score(X_test, y_test))
     accuracy += model.score(X_test, y_test)
+    print("Average Accuracy:", accuracy / c)
+    c += 1 #counter
 
 print("Average Accuracy:", accuracy / len(full_data['advertiser_id'].unique()))
