@@ -13,6 +13,9 @@ from math import cos, asin, sqrt, pi, atan2, sin
 from filtering import query_adid
 from tqdm import tqdm
 from os import system
+import matplotlib.pyplot as plt
+
+pd.options.mode.chained_assignment = None
 
 # POL Algorithm
 
@@ -171,7 +174,7 @@ def max_cluster(data, labels) -> int:
     return max_label, without_max
 
 # Full model pipeline
-def get_accuracy(adid, data):
+def fit_predictor(adid, data):
     data = query_adid(adid, full_data)
     data = data.sort_values(by='datetime')
     data = speed_filter(data, 120)
@@ -181,7 +184,7 @@ def get_accuracy(adid, data):
 
     # Fail gracefully
     if without_max.empty:
-        return 0
+        return 0, 0
 
     new_labels = get_clusters(without_max)
 
@@ -211,7 +214,8 @@ def get_accuracy(adid, data):
 
     system('clear')
     print('With', without_max.label.max() + 1, 'labels, Accuracy:', model.score(X_test, y_test))
-    return model.score(X_test, y_test)
+    #This function should return the actual trained model for later use as well as a score to see how it did
+    return model, model.score(X_test, y_test)
 
 full_data = pd.read_csv('../data/weeklong.csv')
 # Some sample adids to try
@@ -220,7 +224,7 @@ full_data = pd.read_csv('../data/weeklong.csv')
 # 18665217-4566-5790-809c-702e77bdbf89
 accuracy = 0.0
 for adid in tqdm(full_data['advertiser_id'].unique()):
-    accuracy += get_accuracy(adid, full_data)
+    model, test_accuracy = fit_predictor(adid, full_data)
+    accuracy += test_accuracy
 mean_accuracy = accuracy / len(full_data.advertiser_id.unique())
 print('Average Accuracy:', mean_accuracy)
-
