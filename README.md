@@ -1,15 +1,21 @@
 # AGILE
-
 ## Advertising and Geolocation Information Logical Extractor
 
-### Team
+## Table of Contents
 
-- Samuel Chanow
-- Ernest Son
-- Katie Dessauer
+- [Background](#background)
+- [Dependencies](#dependencies)
+- [Install](#install)
+- [Usage](#usage)
+- [Contributing](#contributing)
 
-### Dependencies
+## Background
 
+The working repository for our 2023 Capstone Project. ADD MORE DESCRIPTION LATER.
+
+## Dependencies
+
+```
 - streamlit
 - proximitypyhash
 - pygeohash
@@ -21,15 +27,26 @@
 - geopy
 - scikit-learn==1.0.2
 - fpdf2
+```
+The dependencies are also contained within `agile/requirements.txt` for use with the docker image.
 
-### How do I run the demo?
+## Install
 
-```console
+```
+foo@bar:../AGILE/agile$ docker build -t "DOCKER IMAGE NAME" --build-arg SSH_PRIVATE_KEY="PRIVATE KEY HERE" .
+foo@bar:../AGILE/agile$ docker run -p 8501:8501 "DOCKER IMAGE NAME"
+```
+
+## Usage
+
+```
 foo@bar:../AGILE/agile$ streamlit run app.py
 ```
 
-## TODO
+## Contributing
 
-- Refine report formatting to be as easy to read as possible
-- Integrate with midn.cs.usna.edu database
+The coding team for AGILE:
 
+- SAMUEL CHANOW
+- ERNEST SON
+- KATIE DESSAUER
