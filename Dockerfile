@@ -22,8 +22,8 @@ RUN chmod -R 600 /root/.ssh/id_rsa
 RUN touch /root/.ssh/known_hosts
 RUN ssh-keyscan github.com >> /root/.ssh/known_hosts
 
-
-RUN git clone git@github.com:Sam-Chanow/AGILE.git
+# Remove the -branch when merged to main
+RUN git clone --branch docker git@github.com:Sam-Chanow/AGILE.git
 
 RUN pip3 install -r requirements.txt
 
