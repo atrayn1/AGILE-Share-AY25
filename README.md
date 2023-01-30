@@ -33,8 +33,8 @@ The dependencies are also contained within `agile/requirements.txt` for use with
 ## Install
 
 ```
-foo@bar:../AGILE/agile$ docker build -t "DOCKER IMAGE NAME" --build-arg SSH_PRIVATE_KEY="PRIVATE KEY HERE" .
-foo@bar:../AGILE/agile$ docker run -p 8501:8501 "DOCKER IMAGE NAME"
+foo@bar:../AGILE/agile$ docker build -t docker_image_name .
+foo@bar:../AGILE/agile$ docker run -p 8501:8501 docker_image_name
 ```
 
 ## Usage
