@@ -1,6 +1,7 @@
 from random import Random
 from itertools import islice
 from math import ceil
+import os
 
 def random_line(iterator):
     index1 = 1
@@ -22,3 +23,10 @@ def random_line(iterator):
         iterator = islice(iterator, offset - 1, None)
         index1 += offset
 
+# Dynamically find the path of a file given the file name
+# This is needed for containerization
+# Otherwise the image and names could not be loaded
+def find(name, path):
+    for root, dirs, files in os.walk(path):
+        if name in files:
+            return os.path.join(root, name)
