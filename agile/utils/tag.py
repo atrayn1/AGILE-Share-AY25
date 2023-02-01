@@ -4,7 +4,7 @@
 import overpy
 import pandas as pd
 
-'''
+
 # Give a single latitude and longitude and range
 # Return the named Overpass Nodes within the range from the point
 def overpassNearbyQuery(latitude, longitude, range):
@@ -16,7 +16,6 @@ def overpassNearbyQuery(latitude, longitude, range):
     result = api.query(query)
 
     return filter_node_list(results=result)
-'''
 
 # Given a list of latitude and longitudes and a range
 # Build a polygon that encompasses those points
