@@ -13,7 +13,7 @@ from streamlit_folium import st_folium
 from streamlit_folium import folium_static
 import folium
 
-from filtering import query_location, query_date, query_adid
+from filtering import query_location, query_date, query_adid, query_node
 from mapping import data_map 
 from locations import locations_of_interest
 from people import colocation
@@ -157,7 +157,7 @@ with sidebar:
         overpass_analysis = st.container()
         with overpass_analysis:
             st.subheader('Overpass Polyline Query') # This will be an Overpass API integration
-            overpass_form = st.form(key='overpass_adid')
+            overpass_form = st.form(key='polyline')
             with overpass_form:
                 adid = st.text_input('Advertiser ID')
                 radius = st.text_input('Radius')
@@ -165,6 +165,22 @@ with sidebar:
                     st.session_state.data = query_adid(adid, st.session_state.data) # Filter the data
                     res = polyline_nearby_query(query_adid(adid, st.session_state.data), radius)
                     results_c.write(res)
+
+        # Overpass specific node query
+        node_analysis = st.container()
+        with node_analysis:
+            st.subheader('Node Query')
+            node_form = st.form(key='node')
+            with node_form:
+                lat = st.text_input('Latitude')
+                long = st.text_input('Longitude')
+                radius = st.text_input('Radius')
+                node = st.text_input('Node')
+                if st.form_submit_button('Query'):
+                    node_data = query_node(lat, long, radius, node, st.session_state.data)
+                    data_map(results_c, data=node_data)
+                    results_c.write(node + ' found around ' + lat + ', ' + long + ' within a radius of ' + radius + ' meters:')
+                    results_c.write(node_data)
 
     # Analysis Expander
     with algorithms_ex:

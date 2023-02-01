@@ -15,10 +15,10 @@ import pandas as pd
 api = overpy.Overpass()
 
 df = pd.read_csv(
-  "../data/weeklong.csv"
+  "../data/test.csv"
 )
 def get_node(row):
-    range = 25
+    range = 1000
     query = "node(around:" + str(range) + ", " + str(row.latitude) + ", " + str(row.longitude) + "); out body;"
     print(query)
     result = api.query(query)
