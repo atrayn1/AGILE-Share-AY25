@@ -8,6 +8,7 @@ from matplotlib import pyplot as plt
 from sklearn.cluster import DBSCAN
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.neighbors import NearestCentroid
 from datetime import datetime
 from math import cos, asin, sqrt, pi, atan2, sin
 from filtering import query_adid
@@ -169,8 +170,10 @@ def get_clusters(data, debug=False) -> pd.DataFrame:
 def max_cluster(data, labels) -> int:
     data['label'] = labels
     data['label_sum'] = data.groupby('label').weights.transform('sum')
-    max_label = data.loc[data.label_sum == data.label_sum.max(), ['label', 'datetime', 'travel_time', 'distance', 'speed', 'weights', 'X', 'Y']]
-    without_max = data.loc[data.label_sum != data.label_sum.max(), ['label', 'datetime', 'travel_time', 'distance', 'speed', 'weights', 'X', 'Y']]
+    max_label = data.loc[data.label_sum == data.label_sum.max()]
+    without_max = data.loc[data.label_sum != data.label_sum.max()]
+    #max_label = data.loc[data.label_sum == data.label_sum.max(), ['label', 'datetime', 'travel_time', 'distance', 'speed', 'weights', 'X', 'Y']]
+    #without_max = data.loc[data.label_sum != data.label_sum.max(), ['label', 'datetime', 'travel_time', 'distance', 'speed', 'weights', 'X', 'Y']]
     return max_label, without_max
 
 def double_cluster(adid, full_data):
@@ -181,11 +184,9 @@ def double_cluster(adid, full_data):
     data = weighting(data)
     labels = get_clusters(data)
     max_group, without_max = max_cluster(data, labels)
-
     # Fail gracefully
     if without_max.empty:
         return None
-
     # Re-label and return new data
     new_labels = get_clusters(without_max)
     without_max['label'] = new_labels
@@ -193,6 +194,16 @@ def double_cluster(adid, full_data):
     max_group['label'] = max_new_label
     full_labeled_data = pd.concat([max_group, without_max])
     return full_labeled_data
+
+def get_top_N_clusters(data, N):
+    ordered_labels = data.sort_values(by='label_sum', ascending=False).drop_duplicates(subset=['label']).head(N).label
+    top_N_cluster_data = data[data.label.isin(ordered_labels)]
+    X = top_N_cluster_data[['latitude', 'longitude']]
+    y = top_N_cluster_data.label
+    clf = NearestCentroid()
+    clf.fit(X, y)
+    centroids = pd.DataFrame(clf.centroids_, columns=['latitude', 'longitude'])
+    return centroids
 
 # Full model pipeline
 def fit_predictor(clustered_data, debug=False):
@@ -219,16 +230,23 @@ def fit_predictor(clustered_data, debug=False):
     model.fit(X_train, y_train)
 
     if debug:
-        system('clear')
+        #system('clear')
         print('With', clustered_data.label.max() + 1, 'labels, Accuracy:', model.score(X_test, y_test))
     # This function should return the actual trained model for later use as well as a score to see how it did
     return model, model.score(X_test, y_test)
 
+'''
 full_data = pd.read_csv('../data/weeklong.csv')
 # Some sample adids to try
 # 81696261-3059-7d66-69cc-67688182f974
 # 54aa7153-1546-ce0d-5dc9-aa9e8e371f00
 # 18665217-4566-5790-809c-702e77bdbf89
+adid = '54aa7153-1546-ce0d-5dc9-aa9e8e371f00'
+clustered_data = double_cluster(adid, full_data)
+lois = get_top_N_clusters(clustered_data, 4)
+model, test_accuracy = fit_predictor(clustered_data, debug=True)
+'''
+'''
 accuracy = 0.0
 for adid in tqdm(full_data['advertiser_id'].unique()):
     clustered_data = double_cluster(adid, full_data)
@@ -236,4 +254,5 @@ for adid in tqdm(full_data['advertiser_id'].unique()):
     accuracy += test_accuracy
 mean_accuracy = accuracy / len(full_data.advertiser_id.unique())
 print('Average Accuracy:', mean_accuracy)
+'''
 
