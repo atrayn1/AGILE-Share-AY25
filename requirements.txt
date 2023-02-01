@@ -1,0 +1,11 @@
+streamlit
+proximitypyhash
+pygeohash
+pandas
+matplotlib
+Bokeh
+streamlit-folium
+overpy
+geopy
+scikit-learn==1.0.2
+fpdf2

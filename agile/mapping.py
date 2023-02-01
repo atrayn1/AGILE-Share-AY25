@@ -8,6 +8,8 @@ from streamlit_folium import folium_static
 import folium
 
 def data_map(container, data=None, lois=None):
+    if data is None and lois is None:
+        return
     data_size = len(lois.index) if data is None else len(data.index)
     if data_size > 0:
         first_point = lois.iloc[0] if data is None else data.iloc[0]

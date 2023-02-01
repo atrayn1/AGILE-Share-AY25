@@ -21,8 +21,12 @@ from locations import locations_of_interest
 from people import colocation
 from utils.tag import polyline_nearby_query
 from utils.geocode import reverse_geocode
+from utils.files import find
 from profile import Profile
 from report import Report
+
+# Make use of the whole screen
+#st.set_page_config(layout="wide")
 
 # Some session state variables that need to be maintained between reloads
 if 'data' not in st.session_state:
@@ -41,7 +45,7 @@ title_center.title('AGILE')
 title_center.subheader('Advertising and Geolocation Information Logical Extractor')
 
 # Logo Image
-title_left.image('../images/new_logo.png')
+title_left.image(find('AGILE_Black.png', '/'))
 
 # Main page sidebar
 sidebar = st.sidebar
