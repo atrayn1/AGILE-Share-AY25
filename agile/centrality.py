@@ -26,14 +26,17 @@ def visited_locations(data) -> list: return data['geohash'].unique()
 
 # Data is a dataframe that contains adids
 # Returns a list of all unique adids in data
-def people(data) ->list: return data['advertiser_id'].unique()
+def people_of_interest(data) ->list: return data['advertiser_id'].unique()
 
 # This funcion takes in a list of people and places (geohashes) and computes their centrality
 # It also requires the full data to create the adjacency matrix
 def centrality(people, locations, data) -> pd.DataFrame:
 
+    print("P", people)
+    print("L", locations)
+
     # Create interest list
-    interest = people + locations
+    interest = np.concatenate((people, locations), axis=0)
     size = len(interest)
 
     #Create an empty adjacency matrix
@@ -44,10 +47,13 @@ def centrality(people, locations, data) -> pd.DataFrame:
     # I know that this is weird and I am against using global vars like this in a function,
     # But I cant think of any other way right now
     def compute_adjacency(row):
-        A[interest.index(row.advertiser_id), interest.index(row.geohash)] = 1
+        # Not usre if this should be +1 or = 1 we will have to do some testing
+        A[np.where(interest == row.advertiser_id)[0], np.where(interest == row.geohash)[0]] += 1
+
+    print(A)
 
     # Take advantage of that pandas asynchronicity
-    data.apply(compute_adjacency)
+    data.apply(compute_adjacency, axis=1)
 
     # Build the graph
     G = nx.Graph(A)
@@ -55,12 +61,37 @@ def centrality(people, locations, data) -> pd.DataFrame:
     #Calculate the degress of centrality
     degree_centrality = nx.degree_centrality(G)
 
+    print(degree_centrality[0])
+
+    # Degree Centrality is mapped from index to centrality so we need to pull it out
+    centrality_values = [degree_centrality[i] for i in range(len(degree_centrality))]
+
     out_data = pd.DataFrame()
     out_data['id'] = interest
-    out_data['centrality'] = degree_centrality
+    out_data['centrality'] = centrality_values
 
-    return out_data
+    # Get rid of the data associated with the individuals and not the places
+    return out_data.iloc[len(people):]
 
 # Wrapper function to complete centrality computation from start to finish
 def compute_centrality(lat, long, radius, data) -> pd.DataFrame:
-    pass
+    data_of_interest = people_at_location(lat, long, radius, data)
+    visited = visited_locations(data_of_interest)
+    people = people_of_interest(data_of_interest)
+
+    return centrality(people, visited, data)
+
+# Test code for centrality calculations
+
+#data = pd.read_csv('../data/demo_2023-01-11.csv')
+
+#lat = 46.2642
+#lon = -119.2426
+#range_m = 1000
+
+#centrality_data = compute_centrality(lat, lon, range_m, data)
+#print(centrality_data)
+
+#centrality_data_sorted = centrality_data.sort_values('centrality')
+
+#print(centrality_data_sorted)
