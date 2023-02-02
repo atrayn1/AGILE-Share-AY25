@@ -10,6 +10,7 @@ import pandas as pd
 from locations import locations_of_interest
 from people import colocation
 from utils.files import random_line
+from utils.files import find
 from utils.geocode import reverse_geocode
 
 class Profile:
@@ -28,7 +29,8 @@ class Profile:
         self.coloc = self.__coloc_gen(data)
 
     def __name_gen(self) -> str:
-        with open('../names/first.txt') as F, open('../names/last.txt') as L:
+        # Updated the open to use the find function, so that file paths are located dynamically
+        with open(find('first.txt', '/')) as F, open(find('last.txt', '/')) as L:
             return random_line(F) + '-' + random_line(L)
 
     # generate the locations of interest for this ad_id
