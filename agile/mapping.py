@@ -26,10 +26,15 @@ def data_map(container, data=None, lois=None):
                     p += str(row.latitude)
                     p += ", "
                     p += str(row.longitude)
-                    p += " Timestamp: "
-                    p += str(row.datetime)
-                    p += "advertiser ID: "
-                    p += row.advertiser_id
+                    if 'node_name' in row:
+                        p += " Node Name: "
+                        p += row.node_name
+                    if 'datetime' in row:
+                        p += " Timestamp: "
+                        p += str(row.datetime)
+                    if 'advertiser_id' in row:
+                        p += "advertiser ID: "
+                        p += row.advertiser_id
                     M = folium.Marker([lat,long], popup = p)
                     M.add_to(m)
                 data.apply(add_datapoint, axis=1)

@@ -5,6 +5,7 @@
 import pandas as pd
 from proximitypyhash import get_geohash_radius_approximation
 from datetime import datetime as dt
+from overpy import Overpass
 
 def query_adid(adid, df):
     if adid == '' or df is None:
@@ -50,4 +51,27 @@ def query_date(start_date, start_time, end_date, end_time, df):
     print(parsed_df.head())
     print(len(parsed_df.index))
     return parsed_df
+
+def query_node(lat, long, radius, node_name, df):
+    api = Overpass()
+    # First we need to check that all the fields were filled out and then cast to floats
+    if lat == '' or long == '' or radius == '':
+        return None
+    lat = float(lat)
+    long = float(long)
+    radius = float(radius)
+    # We need to get the nodes in the given radius at the given point
+    # Now create the new smaller dataframe
+    query = "node(around:" + str(radius) + ", " + str(lat) + ", " + str(long) + "); out body;"
+    result = api.query(query)
+    nodes = pd.DataFrame()
+    for node in result.nodes:
+        name = node.tags.get('name')
+        node_lat = float(node.lat)
+        node_lon = float(node.lon)
+        if name == node_name or (node_name == '' and name is not None):
+            node_df = pd.DataFrame([[name, node_lat, node_lon]], columns=['node_name', 'latitude', 'longitude'])
+            nodes = pd.concat([nodes, node_df])
+    nodes = nodes.reset_index(drop=True)
+    return nodes
 

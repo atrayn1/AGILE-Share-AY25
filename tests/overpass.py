@@ -1,10 +1,13 @@
-# SAMUEL CHANOW
-# TESTING OVERPASS API
+# Playing around with overpass
 
 # Length in km of 1° of latitude = always 111.32 km
 # Length in km of 1° of longitude = 40075 km * cos( latitude ) / 360
 
+# example query:
 # node(around:150, 51.50069, -0.12458)[natural=tree];
+
+# There is some clunkiness involved with querying exact node names, but it's
+# a start.
 
 import overpy
 import pandas as pd
@@ -12,21 +15,17 @@ import pandas as pd
 api = overpy.Overpass()
 
 df = pd.read_csv(
-  "../data/weeklong.csv"
+  "../data/test.csv"
 )
 def get_node(row):
-    range = 25
+    range = 1000
     query = "node(around:" + str(range) + ", " + str(row.latitude) + ", " + str(row.longitude) + "); out body;"
     print(query)
-    '''
-    print('found', len(result.ways), 'ways')
-    print('found', len(result.nodes), 'nodes')
-    print('found', len(result.relations), 'relations')
-    '''
     result = api.query(query)
     for node in result.nodes:
         name = node.tags.get('name')
-        print(name)
+        if name is not None:
+            print(name)
 df.apply(get_node, axis=1)
 print(data_out)
 
