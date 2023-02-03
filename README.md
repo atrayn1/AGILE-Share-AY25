@@ -27,6 +27,7 @@ The working repository for our 2023 Capstone Project. ADD MORE DESCRIPTION LATER
 - geopy
 - scikit-learn==1.0.2
 - fpdf2
+- networkx
 ```
 The dependencies are also contained within `agile/requirements.txt` for use with the docker image.
 

@@ -195,18 +195,38 @@ def double_cluster(adid, full_data):
     full_labeled_data = pd.concat([max_group, without_max])
     return full_labeled_data
 
-def get_top_N_clusters(data, N):
-    ordered_labels = data.sort_values(by='label_sum', ascending=False).drop_duplicates(subset=['label']).head(N).label
-    top_N_cluster_data = data[data.label.isin(ordered_labels)]
-    X = top_N_cluster_data[['latitude', 'longitude']]
-    y = top_N_cluster_data.label
+# Cluster centroid calculations
+# These centroids need to be saved in a Profile for prediction
+# TODO we need to figure out how to use the weights when sent into the NearestCentroid classifier
+# TODO we need to make sure that the label coming out of this function is the same as the label 
+# being used for the classifier (Otherwise we are dead in the water)
+def get_cluster_centroids(data) -> pd.DataFrame:
+    # This should be passed something like full_labeled_data
+    X = data[['latitude', 'longitude']]
+    y = data.label
     clf = NearestCentroid()
     clf.fit(X, y)
     centroids = pd.DataFrame(clf.centroids_, columns=['latitude', 'longitude'])
+    # Adding a label column for clarity
+    centroids['label'] = clf.classes_ 
+
     return centroids
 
+def get_top_N_clusters(data, N) -> pd.DataFrame:
+    ordered_labels = data.sort_values(by='label_sum', ascending=False).drop_duplicates(subset=['label']).head(N).label
+    top_N_cluster_data = data[data.label.isin(ordered_labels)]
+
+    return get_cluster_centroids(top_N_cluster_data)
+
+    #X = top_N_cluster_data[['latitude', 'longitude']]
+    #y = top_N_cluster_data.label
+    #clf = NearestCentroid()
+    #clf.fit(X, y)
+    #centroids = pd.DataFrame(clf.centroids_, columns=['latitude', 'longitude'])
+    #return centroids
+
 # Full model pipeline
-def fit_predictor(clustered_data, debug=False):
+def fit_predictor(clustered_data, debug=False) -> RandomForestClassifier:
     if clustered_data is None:
         # No model, zero accuracy
         return None, 0
@@ -235,7 +255,7 @@ def fit_predictor(clustered_data, debug=False):
     # This function should return the actual trained model for later use as well as a score to see how it did
     return model, model.score(X_test, y_test)
 
-'''
+
 full_data = pd.read_csv('../data/weeklong.csv')
 # Some sample adids to try
 # 81696261-3059-7d66-69cc-67688182f974
@@ -244,8 +264,12 @@ full_data = pd.read_csv('../data/weeklong.csv')
 adid = '54aa7153-1546-ce0d-5dc9-aa9e8e371f00'
 clustered_data = double_cluster(adid, full_data)
 lois = get_top_N_clusters(clustered_data, 4)
+
+print(lois.head())
+
+centroids = get_cluster_centroids(clustered_data)
+#print(centroids.head())
 model, test_accuracy = fit_predictor(clustered_data, debug=True)
-'''
 '''
 accuracy = 0.0
 for adid in tqdm(full_data['advertiser_id'].unique()):

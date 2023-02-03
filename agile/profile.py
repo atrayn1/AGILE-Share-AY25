@@ -12,6 +12,7 @@ from people import colocation
 from utils.files import random_line
 from utils.files import find
 from utils.geocode import reverse_geocode
+import prediction as pred
 
 class Profile:
 
@@ -28,6 +29,24 @@ class Profile:
         self.lois = self.__loi_gen(data)
         self.coloc = self.__coloc_gen(data)
 
+        # Prediction model values
+        # If the model is untrained it will None
+        self.model = None
+        self.cluster_centroids = None
+        self.model_accuracy = None
+    
+    # Secondary constructor without the colocation and loi information requirements
+    # TODO we can figure out how to handle the rest of this later
+    def __init__(self, data, ad_id) -> None:
+        self.ad_id = ad_id
+        self.name = self.__name_gen()
+        self.data = data
+        # Prediction model values
+        # If the model is untrained it will None
+        self.model = None
+        self.cluster_centroids = None
+        self.model_accuracy = None
+
     def __name_gen(self) -> str:
         # Updated the open to use the find function, so that file paths are located dynamically
         with open(find('first.txt', '/')) as F, open(find('last.txt', '/')) as L:
@@ -41,6 +60,35 @@ class Profile:
     # generate the colocating ad_id Dataframe for this ad_id
     def __coloc_gen(self, data) -> pd.DataFrame:
         return colocation(data, self.lois, self.coloc_duration)
+    
+    # Public function to see if the profile has a trained model
+    def model_trained(self) -> bool:
+        return self.model != None
+    
+    # Train the profile's model on the data provided
+    # If no data is provided, it will default to the data provided to the profile 
+    # contructor
+    def model_train(self, data=None):
+        if data == None:
+            data = self.data
+        
+        clustered_data = pred.double_cluster(self.ad_id, data)
+        self.cluster_centroids = pred.get_cluster_centroids(clustered_data)
+        self.lois = pred.get_top_N_clusters(clustered_data, 5)
+        self.model, self.model_accuracy = pred.fit_predictor(clustered_data, False)
+
+        return self.model, self.model_accuracy
+
+    # Perform a single prediction on the provided time
+    # The time must be entered as the number of seconds since midnight on that day
+    def model_predict(self, time) -> int:
+        # Returns the label and the centroid associated
+        label = self.model.predict(time)[0]
+
+        print("Label:", label)
+
+        # TODO Getting a size mismatch error here
+        return label, self.cluster_centroids.loc[self.cluster_centroids['label'] == label]
 
 # test report
 #from report import Report

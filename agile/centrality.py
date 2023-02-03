@@ -4,6 +4,7 @@
 import pandas as pd
 import numpy as np
 import networkx as nx
+from pygeohash import decode
 from filtering import query_location
 
 # First step is identifying persons of interest and locations of interest
@@ -74,12 +75,25 @@ def centrality(people, locations, data) -> pd.DataFrame:
     return out_data.iloc[len(people):]
 
 # Wrapper function to complete centrality computation from start to finish
-def compute_centrality(lat, long, radius, data) -> pd.DataFrame:
+def compute_top_centrality(lat, long, radius, N, data) -> pd.DataFrame:
     data_of_interest = people_at_location(lat, long, radius, data)
     visited = visited_locations(data_of_interest)
     people = people_of_interest(data_of_interest)
 
-    return centrality(people, visited, data)
+    out_data = centrality(people, visited, data)
+
+    # Simple apply based wrapper for the pygeohash decode
+    def decode_geohash(row):
+        coord = decode(row['id'])
+        row['latitude'] = coord[0]
+        row['longitude'] = coord[1]
+        return row
+
+    out_data = out_data.apply(decode_geohash, axis=1)
+    ordered_out_data = out_data.sort_values(by='centrality', ascending=False).head(N)
+
+    return ordered_out_data
+
 
 # Test code for centrality calculations
 
@@ -87,7 +101,7 @@ def compute_centrality(lat, long, radius, data) -> pd.DataFrame:
 
 #lat = 46.2642
 #lon = -119.2426
-#range_m = 1000
+#range_m = 100
 
 #centrality_data = compute_centrality(lat, lon, range_m, data)
 #print(centrality_data)
