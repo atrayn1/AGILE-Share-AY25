@@ -12,6 +12,7 @@ from datetime import datetime as dt
 from streamlit_folium import st_folium
 from streamlit_folium import folium_static
 import folium
+import numpy as np
 
 from filtering import query_location, query_date, query_adid, query_node
 from mapping import data_map 
@@ -23,6 +24,7 @@ from utils.geocode import reverse_geocode
 from utils.files import find
 from profile import Profile
 from report import Report
+from centrality import compute_top_centrality
 
 # Make use of the whole screen
 #st.set_page_config(layout="wide")
@@ -182,6 +184,20 @@ with sidebar:
                     data_map(results_c, data=node_data)
                     results_c.write(node + ' found around ' + lat + ', ' + long + ' within a radius of ' + radius + ' meters:')
                     results_c.write(node_data)
+        
+        centrality_analysis = st.container()
+        with centrality_analysis:
+            st.subheader('Location Centrality Query')
+            centrality_form = st.form(key='centrality')
+            with centrality_form:
+                lat = st.text_input('Latitude')
+                long = st.text_input('Longitude')
+                radius = st.text_input('Radius')
+                if st.form_submit_button('Query'):
+                    centrality_data = compute_top_centrality(lat, long, radius, 5, st.session_state.data)
+                    data_map(results_c, lois=centrality_data)
+                    results_c.write('The locations with the highest centrality to the AdIDs at the entered location are:')
+                    results_c.write(centrality_data)
 
     # Analysis Expander
     with algorithms_ex:
@@ -242,6 +258,32 @@ with sidebar:
                     # Write Locations of Interest to the results container
                     results_c.write('Location of Interest Data')
                     results_c.write(loi_data)
+
+        pred_analysis = st.container()
+        with pred_analysis:
+            st.subheader('Movement Prediction')
+            pred_form = st.form('pred')
+            with pred_form:
+                adid = st.text_input('Advertiser ID')
+                start_time = st.time_input('Time:', key='time')
+                if st.form_submit_button('Predict'):
+                    st.session_state.profile = Profile(st.session_state.data, adid)
+                    if not st.session_state.profile.model_trained():
+                        st.session_state.profile.model_train()
+
+                    # Convert the time input to a datetime
+                    # str(dt.combine(start_date, start_time))
+                    # Using an arbitary date because this algorith monly cares about the time of day
+                    start_time = pd.to_datetime(str(dt.combine(pd.to_datetime('2018-01-01'), start_time)))
+
+                    start_time = np.array((start_time - start_time.replace(hour=0, minute=0, second=0, microsecond=0)).total_seconds()).reshape(-1, 1)
+                    print(start_time)
+                    print(start_time.shape)
+
+                    result_label, result_centroid = st.session_state.profile.model_predict(start_time)
+                    
+                    data_map(results_c, lois=result_centroid)
+
 
 # Preview container
 with preview_c:

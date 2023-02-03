@@ -9,3 +9,4 @@ overpy
 geopy
 scikit-learn==1.0.2
 fpdf2
+networkx
