@@ -256,20 +256,20 @@ def fit_predictor(clustered_data, debug=False) -> RandomForestClassifier:
     return model, model.score(X_test, y_test)
 
 
-full_data = pd.read_csv('../data/weeklong.csv')
+#full_data = pd.read_csv('../data/weeklong.csv')
 # Some sample adids to try
 # 81696261-3059-7d66-69cc-67688182f974
 # 54aa7153-1546-ce0d-5dc9-aa9e8e371f00
 # 18665217-4566-5790-809c-702e77bdbf89
-adid = '54aa7153-1546-ce0d-5dc9-aa9e8e371f00'
-clustered_data = double_cluster(adid, full_data)
-lois = get_top_N_clusters(clustered_data, 4)
+#adid = '54aa7153-1546-ce0d-5dc9-aa9e8e371f00'
+#clustered_data = double_cluster(adid, full_data)
+#lois = get_top_N_clusters(clustered_data, 4)
 
-print(lois.head())
+#print(lois.head())
 
-centroids = get_cluster_centroids(clustered_data)
+#centroids = get_cluster_centroids(clustered_data)
 #print(centroids.head())
-model, test_accuracy = fit_predictor(clustered_data, debug=True)
+#model, test_accuracy = fit_predictor(clustered_data, debug=True)
 '''
 accuracy = 0.0
 for adid in tqdm(full_data['advertiser_id'].unique()):
