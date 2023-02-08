@@ -82,8 +82,9 @@ with sidebar:
             reset_form = st.form(key='reset')
             with reset_form:
                 # This will reset the state variable resetting the data to uploaded state
-                if st.form_submit_button('RESET DATA'):
-                    st.session_state.data = pd.read_csv(raw_data, sep=',')
+                if raw_data:
+                    if st.form_submit_button('RESET DATA'):
+                        st.session_state.data = pd.read_csv(raw_data, sep=',')
 
     # Generate Report
     with report_sb:
