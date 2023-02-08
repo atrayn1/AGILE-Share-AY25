@@ -54,7 +54,7 @@ sidebar.title('Data Options')
 
 # Data Upload container (This is only for dev purposes)
 data_upload_sb = sidebar.container()
-report_sb = sidebar.container()
+report_sb = sidebar.expander('Report')
 filtering_ex = sidebar.expander('Filtering')
 locations_ex = sidebar.expander('Locations')
 algorithms_ex = sidebar.expander('Algorithms')
@@ -156,19 +156,6 @@ with sidebar:
 
     with locations_ex:
 
-        # Overpass API polyline
-        overpass_analysis = st.container()
-        with overpass_analysis:
-            st.subheader('Overpass Polyline Query') # This will be an Overpass API integration
-            overpass_form = st.form(key='polyline')
-            with overpass_form:
-                adid = st.text_input('Advertiser ID')
-                radius = st.text_input('Radius')
-                if st.form_submit_button('Query'):
-                    st.session_state.data = query_adid(adid, st.session_state.data) # Filter the data
-                    res = polyline_nearby_query(query_adid(adid, st.session_state.data), radius)
-                    results_c.write(res)
-
         # Overpass specific node query
         node_analysis = st.container()
         with node_analysis:
@@ -184,7 +171,8 @@ with sidebar:
                     data_map(results_c, data=node_data)
                     results_c.write(node + ' found around ' + lat + ', ' + long + ' within a radius of ' + radius + ' meters:')
                     results_c.write(node_data)
-        
+
+        # Centrality
         centrality_analysis = st.container()
         with centrality_analysis:
             st.subheader('Location Centrality Query')
@@ -198,6 +186,19 @@ with sidebar:
                     data_map(results_c, lois=centrality_data)
                     results_c.write('The locations with the highest centrality to the AdIDs at the entered location are:')
                     results_c.write(centrality_data)
+
+        # Overpass API polyline
+        overpass_analysis = st.container()
+        with overpass_analysis:
+            st.subheader('Overpass Polyline Query') # This will be an Overpass API integration
+            overpass_form = st.form(key='polyline')
+            with overpass_form:
+                adid = st.text_input('Advertiser ID')
+                radius = st.text_input('Radius')
+                if st.form_submit_button('Query'):
+                    st.session_state.data = query_adid(adid, st.session_state.data) # Filter the data
+                    res = polyline_nearby_query(query_adid(adid, st.session_state.data), radius)
+                    results_c.write(res)
 
     # Analysis Expander
     with algorithms_ex:
@@ -223,21 +224,6 @@ with sidebar:
                     results_c.write('Cluster Data')
                     results_c.write(loi_data)
 
-        # Colocation
-        colocation_analysis = st.container()
-        with colocation_analysis:
-            st.subheader('Colocation')
-            colocation_form = st.form(key='colocation_form')
-            with colocation_form:
-                search_time = st.slider('Search Time', min_value=1, max_value=12, value=2)
-                if st.form_submit_button('Query'):
-                    data = st.session_state.data
-                    loi_data = st.session_state.loi_data
-                    colocation_data = colocation(data, loi_data, duration=search_time)
-                    data_map(results_c, data=colocation_data, lois=loi_data)
-                    results_c.write('Colocation Data')
-                    results_c.write(colocation_data)
-
         # (Traditional) locations of interest
         loi_analysis = st.container()
         with loi_analysis:
@@ -258,6 +244,21 @@ with sidebar:
                     # Write Locations of Interest to the results container
                     results_c.write('Location of Interest Data')
                     results_c.write(loi_data)
+
+        # Colocation
+        colocation_analysis = st.container()
+        with colocation_analysis:
+            st.subheader('Colocation')
+            colocation_form = st.form(key='colocation_form')
+            with colocation_form:
+                search_time = st.slider('Search Time', min_value=1, max_value=12, value=2)
+                if st.form_submit_button('Query'):
+                    data = st.session_state.data
+                    loi_data = st.session_state.loi_data
+                    colocation_data = colocation(data, loi_data, duration=search_time)
+                    data_map(results_c, data=colocation_data, lois=loi_data)
+                    results_c.write('Colocation Data')
+                    results_c.write(colocation_data)
 
         pred_analysis = st.container()
         with pred_analysis:

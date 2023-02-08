@@ -255,7 +255,7 @@ def fit_predictor(clustered_data, debug=False) -> RandomForestClassifier:
     # This function should return the actual trained model for later use as well as a score to see how it did
     return model, model.score(X_test, y_test)
 
-
+'''
 full_data = pd.read_csv('../data/weeklong.csv')
 # Some sample adids to try
 # 81696261-3059-7d66-69cc-67688182f974
@@ -270,7 +270,6 @@ print(lois.head())
 centroids = get_cluster_centroids(clustered_data)
 #print(centroids.head())
 model, test_accuracy = fit_predictor(clustered_data, debug=True)
-'''
 accuracy = 0.0
 for adid in tqdm(full_data['advertiser_id'].unique()):
     clustered_data = double_cluster(adid, full_data)
