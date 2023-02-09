@@ -25,7 +25,7 @@ pd.options.mode.chained_assignment = None
 #   Weight each Datapoint based on timestamp, sampling rate, and distance
 #   Determine hyperparams for DBSCAN
 # Clustering
-#   Cluster with DBSCAN and return the top X clusters by summation of weights
+#   Cluster with DBSCAN and return the top X clusters by summation of weight
 # 2nd Clustering
 #   Cluster on the top X clusters from last step and output top Y clusters
 # Classification
@@ -85,23 +85,19 @@ def weighting(data) -> pd.DataFrame:
     # Find sampling rate of data
     sampling_rate = data.travel_time.median()
 
-    # Calculate the weights depending on distances between datapoints
-    data['weights'] = data.travel_time / sampling_rate
+    # Calculate the weight depending on distances between datapoints
+    data['weight'] = data.travel_time / sampling_rate
     # threshold is in km
     threshold = 0.05
     mask = data.distance <= threshold
-    data['weights'] = data.weights.where(mask, other=1)
+    data['weight'] = data.weight.where(mask, other=1)
 
-    # For easier graphing use later
-    data['X'] = data.latitude
-    data['Y'] = data.longitude
-
-    # Normalize the weights from 0 to 1
-    #data['weights'] = (data.weights - data.weights.min()) / (data.weights.max() - data.weights.min())
+    # Normalize the weight from 0 to 1
+    #data['weight'] = (data.weight - data.weight.min()) / (data.weight.max() - data.weight.min())
     return data
 
 # Cluster and return top X clusters
-# Top clusters determined by summation of weights
+# Top clusters determined by summation of weight
 def get_clusters(data) -> pd.DataFrame:
     # This now works with sklearn v1.2.1 (the latest version as of 2023-02-09)
     # epsilon values can be thought of as being measured in kilometers
@@ -119,14 +115,14 @@ def get_clusters(data) -> pd.DataFrame:
     thresh = epsilon / kms_per_degree
     model = AgglomerativeClustering(n_clusters=None, distance_threshold=thresh)
     '''
-    clusters = model.fit(data[['X', 'Y']])
+    clusters = model.fit(data[['latitude', 'longitude']])
     labels = clusters.labels_
     return labels
 
 def max_cluster(data, labels) -> int:
     data['label'] = labels
-    data['label_sum'] = data.groupby('label').weights.transform('sum')
-    relevant_features = ['label', 'datetime', 'travel_time', 'distance', 'speed', 'weights', 'X', 'Y']
+    data['label_sum'] = data.groupby('label').weight.transform('sum')
+    relevant_features = ['label', 'label_sum', 'datetime', 'travel_time', 'distance', 'speed', 'weight', 'latitude', 'longitude']
     has_max = data.label_sum == data.label_sum.max()
     max_label = data.loc[has_max, relevant_features]
     without_max = data.loc[~has_max, relevant_features]
@@ -151,35 +147,30 @@ def double_cluster(adid, full_data):
     full_labeled_data = pd.concat([max_group, without_max])
     return full_labeled_data
 
-# Cluster centroid calculations
+# Calculate the centroids for weighted lat/long data
+# We save the cluster label groups for each centroid
 # These centroids need to be saved in a Profile for prediction
-# TODO we need to figure out how to use the weights when sent into the NearestCentroid classifier
-# TODO we need to make sure that the label coming out of this function is the same as the label 
-# being used for the classifier (Otherwise we are dead in the water)
 def get_cluster_centroids(data) -> pd.DataFrame:
     # This should be passed something like full_labeled_data
-    X = data[['latitude', 'longitude']]
-    y = data.label
-    clf = NearestCentroid()
-    clf.fit(X, y)
-    centroids = pd.DataFrame(clf.centroids_, columns=['latitude', 'longitude'])
-    # Adding a label column for clarity
-    centroids['label'] = clf.classes_ 
-
-    return centroids
+    relevant_features = ['latitude', 'longitude', 'weight', 'label']
+    label_groups = data.groupby(by='label')
+    lat_long = ['latitude', 'longitude']
+    def calculate_centroids(group):
+        locations = group[lat_long].to_numpy()
+        weights = group.weight.tolist()
+        centroids = np.average(locations, axis=0, weights=weights)
+        return centroids
+    raw_centroids = label_groups.apply(calculate_centroids)
+    centroids = raw_centroids.tolist()
+    labels = raw_centroids.index
+    df = pd.DataFrame(centroids, index=labels, columns=lat_long).reset_index()
+    return df
 
 def get_top_N_clusters(data, N) -> pd.DataFrame:
-    ordered_labels = data.sort_values(by='label_sum', ascending=False).drop_duplicates(subset=['label']).head(N).label
+    ordered_data = data.sort_values(by='label_sum', ascending=False)
+    ordered_labels = ordered_data.drop_duplicates(subset='label').head(N).label
     top_N_cluster_data = data[data.label.isin(ordered_labels)]
-
     return get_cluster_centroids(top_N_cluster_data)
-
-    #X = top_N_cluster_data[['latitude', 'longitude']]
-    #y = top_N_cluster_data.label
-    #clf = NearestCentroid()
-    #clf.fit(X, y)
-    #centroids = pd.DataFrame(clf.centroids_, columns=['latitude', 'longitude'])
-    #return centroids
 
 # Full model pipeline
 def fit_predictor(clustered_data, debug=False) -> RandomForestClassifier:
@@ -208,9 +199,11 @@ def fit_predictor(clustered_data, debug=False) -> RandomForestClassifier:
 # 54aa7153-1546-ce0d-5dc9-aa9e8e371f00
 # 18665217-4566-5790-809c-702e77bdbf89
 full_data = pd.read_csv('../data/weeklong.csv')
-#adid = '54aa7153-1546-ce0d-5dc9-aa9e8e371f00'
-#clustered_data = double_cluster(adid, full_data)
+adid = '54aa7153-1546-ce0d-5dc9-aa9e8e371f00'
+clustered_data = double_cluster(adid, full_data)
+get_top_N_clusters(clustered_data, 5)
 #model, test_accuracy = fit_predictor(clustered_data, debug=True)
+'''
 accuracy = 0.0
 for adid in full_data['advertiser_id'].unique():
     clustered_data = double_cluster(adid, full_data)
@@ -218,3 +211,5 @@ for adid in full_data['advertiser_id'].unique():
     accuracy += test_accuracy
 mean_accuracy = accuracy / len(full_data.advertiser_id.unique())
 print('Average Accuracy:', mean_accuracy)
+'''
+
