@@ -12,18 +12,19 @@ from datetime import datetime as dt
 from streamlit_folium import st_folium
 from streamlit_folium import folium_static
 import folium
+import numpy as np
 
-from filtering import query_location
-from filtering import query_date
-from filtering import query_adid
+from filtering import query_location, query_date, query_adid, query_node
 from mapping import data_map 
 from locations import locations_of_interest
 from people import colocation
+from prediction import double_cluster, get_top_N_clusters
 from utils.tag import polyline_nearby_query
 from utils.geocode import reverse_geocode
 from utils.files import find
 from profile import Profile
 from report import Report
+from centrality import compute_top_centrality
 
 # Make use of the whole screen
 #st.set_page_config(layout="wide")
@@ -54,8 +55,9 @@ sidebar.title('Data Options')
 # Data Upload container (This is only for dev purposes)
 data_upload_sb = sidebar.container()
 report_sb = sidebar.container()
-filtering_ex = sidebar.expander('Data Filtering')
-analysis_ex = sidebar.expander('Data Analysis')
+filtering_ex = sidebar.expander('Filtering')
+locations_ex = sidebar.expander('Locations')
+algorithms_ex = sidebar.expander('Algorithms')
 
 # The data preview
 preview_c = st.container()
@@ -80,8 +82,9 @@ with sidebar:
             reset_form = st.form(key='reset')
             with reset_form:
                 # This will reset the state variable resetting the data to uploaded state
-                if st.form_submit_button('RESET DATA'):
-                    st.session_state.data = pd.read_csv(raw_data, sep=',')
+                if raw_data:
+                    if st.form_submit_button('RESET DATA'):
+                        st.session_state.data = pd.read_csv(raw_data, sep=',')
 
     # Generate Report
     with report_sb:
@@ -89,14 +92,14 @@ with sidebar:
         with report_c:
             report_form = st.form(key='report')
             with report_form:
-                ad_id = st.text_input('Advertiser ID')
+                adid = st.text_input('Advertiser ID')
                 exth = st.slider('Extended Stay Duration', min_value=1, max_value=24, value=7)
                 reph = st.slider('Time Between Repeat Visits', min_value=1, max_value=72, value=24)
                 colh = st.slider('Colocation Duration', min_value=1, max_value=24, value=2)
                 report_button = st.form_submit_button('Generate Report')
                 if report_button:
                     if st.session_state.uploaded:
-                        device = Profile(st.session_state.data, ad_id, exth, reph, colh)
+                        device = Profile(st.session_state.data, adid, exth, reph, colh)
                         Report(device)
                         results_c.write('Report generated!')
                     else:
@@ -111,11 +114,11 @@ with sidebar:
             st.subheader('Advertising ID Filtering')
             adid_form = st.form(key='adid_filter')
             with adid_form:
-                ad_id = st.text_input('Advertiser ID')
+                adid = st.text_input('Advertiser ID')
                 if st.form_submit_button('Query'):
-                    st.session_state.data = query_adid(ad_id, st.session_state.data)
+                    st.session_state.data = query_adid(adid, st.session_state.data)
                     data_map(results_c, data=st.session_state.data)
-                    results_c.write('Datapoints for ' + ad_id + ':')
+                    results_c.write('Datapoints for ' + adid + ':')
                     results_c.write(st.session_state.data)
 
         # Filter by lat/long
@@ -152,41 +155,73 @@ with sidebar:
                     results_c.write('Datapoints between ' + start + ' and ' + end + ':')
                     results_c.write(st.session_state.data)
 
-    # Data Analysis Expander
-    with analysis_ex:
+    with locations_ex:
 
         # Overpass API polyline
         overpass_analysis = st.container()
         with overpass_analysis:
-            st.subheader('Overpass Query') # This will be an Overpass API integration
-            overpass_form = st.form(key='overpass_adid')
+            st.subheader('Overpass Polyline Query') # This will be an Overpass API integration
+            overpass_form = st.form(key='polyline')
             with overpass_form:
-                ad_id = st.text_input('Advertiser ID')
+                adid = st.text_input('Advertiser ID')
                 radius = st.text_input('Radius')
                 if st.form_submit_button('Query'):
-                    st.session_state.data = query_adid(ad_id, st.session_state.data) # Filter the data
-                    res = polyline_nearby_query(query_adid(ad_id, st.session_state.data), radius)
+                    st.session_state.data = query_adid(adid, st.session_state.data) # Filter the data
+                    res = polyline_nearby_query(query_adid(adid, st.session_state.data), radius)
                     results_c.write(res)
 
-        # Locations of interest
-        loi_analysis = st.container()
-        with loi_analysis:
-            st.subheader('Locations of Interest')
-            loi_form = st.form(key='loi_form')
-            with loi_form:
+        # Overpass specific node query
+        node_analysis = st.container()
+        with node_analysis:
+            st.subheader('Node Query')
+            node_form = st.form(key='node')
+            with node_form:
+                lat = st.text_input('Latitude')
+                long = st.text_input('Longitude')
+                radius = st.text_input('Radius')
+                node = st.text_input('Node')
+                if st.form_submit_button('Query'):
+                    node_data = query_node(lat, long, radius, node, st.session_state.data)
+                    data_map(results_c, data=node_data)
+                    results_c.write(node + ' found around ' + lat + ', ' + long + ' within a radius of ' + radius + ' meters:')
+                    results_c.write(node_data)
+        
+        centrality_analysis = st.container()
+        with centrality_analysis:
+            st.subheader('Location Centrality Query')
+            centrality_form = st.form(key='centrality')
+            with centrality_form:
+                lat = st.text_input('Latitude')
+                long = st.text_input('Longitude')
+                radius = st.text_input('Radius')
+                if st.form_submit_button('Query'):
+                    centrality_data = compute_top_centrality(lat, long, radius, 5, st.session_state.data)
+                    data_map(results_c, lois=centrality_data)
+                    results_c.write('The locations with the highest centrality to the AdIDs at the entered location are:')
+                    results_c.write(centrality_data)
+
+    # Analysis Expander
+    with algorithms_ex:
+
+        # (Clustering) locations of interest
+        cluster_analysis = st.container()
+        with cluster_analysis:
+            st.subheader('Top Clusters')
+            cluster_form = st.form(key='cluster_form')
+            with cluster_form:
                 loi_data = None
-                ad_id = st.text_input('Advertiser ID')
-                ext_h = st.slider('Extended Stay Duration', min_value=1, max_value=24, value=7)
-                rep_h = st.slider('Time Between Repeat Visits', min_value=1, max_value=72, value=24)
+                adid = st.text_input('Advertiser ID')
+                num_clusters = st.slider('Number of Clusters', min_value=1, max_value=10, value=4)
                 if st.form_submit_button('Query'):
                     # We need to filter by adid and then perform loi analysis
                     data = st.session_state.data
-                    loi_data = locations_of_interest(data, ad_id, ext_h, rep_h)
+                    cluster_data = double_cluster(adid, data)
+                    loi_data = get_top_N_clusters(cluster_data, num_clusters)
                     st.session_state.loi_data = loi_data
                     # Here we need to make a map and pass the optional parameter for these location points
                     data_map(results_c, lois=st.session_state.loi_data)
                     # Write Locations of Interest to the results container
-                    results_c.write('Location of Interest Data')
+                    results_c.write('Cluster Data')
                     results_c.write(loi_data)
 
         # Colocation
@@ -203,6 +238,53 @@ with sidebar:
                     data_map(results_c, data=colocation_data, lois=loi_data)
                     results_c.write('Colocation Data')
                     results_c.write(colocation_data)
+
+        # (Traditional) locations of interest
+        loi_analysis = st.container()
+        with loi_analysis:
+            st.subheader('Locations of Interest')
+            loi_form = st.form(key='loi_form')
+            with loi_form:
+                loi_data = None
+                adid = st.text_input('Advertiser ID')
+                ext_h = st.slider('Extended Stay Duration', min_value=1, max_value=24, value=7)
+                rep_h = st.slider('Time Between Repeat Visits', min_value=1, max_value=72, value=24)
+                if st.form_submit_button('Query'):
+                    # We need to filter by adid and then perform loi analysis
+                    data = st.session_state.data
+                    loi_data = locations_of_interest(data, adid, ext_h, rep_h)
+                    st.session_state.loi_data = loi_data
+                    # Here we need to make a map and pass the optional parameter for these location points
+                    data_map(results_c, lois=st.session_state.loi_data)
+                    # Write Locations of Interest to the results container
+                    results_c.write('Location of Interest Data')
+                    results_c.write(loi_data)
+
+        pred_analysis = st.container()
+        with pred_analysis:
+            st.subheader('Movement Prediction')
+            pred_form = st.form('pred')
+            with pred_form:
+                adid = st.text_input('Advertiser ID')
+                start_time = st.time_input('Time:', key='time')
+                if st.form_submit_button('Predict'):
+                    st.session_state.profile = Profile(st.session_state.data, adid)
+                    if not st.session_state.profile.model_trained():
+                        st.session_state.profile.model_train()
+
+                    # Convert the time input to a datetime
+                    # str(dt.combine(start_date, start_time))
+                    # Using an arbitary date because this algorith monly cares about the time of day
+                    start_time = pd.to_datetime(str(dt.combine(pd.to_datetime('2018-01-01'), start_time)))
+
+                    start_time = np.array((start_time - start_time.replace(hour=0, minute=0, second=0, microsecond=0)).total_seconds()).reshape(-1, 1)
+                    print(start_time)
+                    print(start_time.shape)
+
+                    result_label, result_centroid = st.session_state.profile.model_predict(start_time)
+                    
+                    data_map(results_c, lois=result_centroid)
+
 
 # Preview container
 with preview_c:

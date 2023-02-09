@@ -9,6 +9,7 @@ from matplotlib import pyplot as plt
 from sklearn.cluster import DBSCAN
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.neighbors import NearestCentroid
 from datetime import datetime
 from math import cos, asin, sqrt, pi, atan2, sin
 from filtering import query_adid
@@ -126,8 +127,9 @@ def max_cluster(data, labels) -> int:
     data['label'] = labels
     data['label_sum'] = data.groupby('label').weights.transform('sum')
     relevant_features = ['label', 'datetime', 'travel_time', 'distance', 'speed', 'weights', 'X', 'Y']
-    max_label = data.loc[data.label_sum == data.label_sum.max(), relevant_features]
-    without_max = data.loc[data.label_sum != data.label_sum.max(), relevant_features]
+    has_max = data.label_sum == data.label_sum.max()
+    max_label = data.loc[has_max, relevant_features]
+    without_max = data.loc[~has_max, relevant_features]
     return max_label, without_max
 
 def double_cluster(adid, full_data):
@@ -149,8 +151,38 @@ def double_cluster(adid, full_data):
     full_labeled_data = pd.concat([max_group, without_max])
     return full_labeled_data
 
+# Cluster centroid calculations
+# These centroids need to be saved in a Profile for prediction
+# TODO we need to figure out how to use the weights when sent into the NearestCentroid classifier
+# TODO we need to make sure that the label coming out of this function is the same as the label 
+# being used for the classifier (Otherwise we are dead in the water)
+def get_cluster_centroids(data) -> pd.DataFrame:
+    # This should be passed something like full_labeled_data
+    X = data[['latitude', 'longitude']]
+    y = data.label
+    clf = NearestCentroid()
+    clf.fit(X, y)
+    centroids = pd.DataFrame(clf.centroids_, columns=['latitude', 'longitude'])
+    # Adding a label column for clarity
+    centroids['label'] = clf.classes_ 
+
+    return centroids
+
+def get_top_N_clusters(data, N) -> pd.DataFrame:
+    ordered_labels = data.sort_values(by='label_sum', ascending=False).drop_duplicates(subset=['label']).head(N).label
+    top_N_cluster_data = data[data.label.isin(ordered_labels)]
+
+    return get_cluster_centroids(top_N_cluster_data)
+
+    #X = top_N_cluster_data[['latitude', 'longitude']]
+    #y = top_N_cluster_data.label
+    #clf = NearestCentroid()
+    #clf.fit(X, y)
+    #centroids = pd.DataFrame(clf.centroids_, columns=['latitude', 'longitude'])
+    #return centroids
+
 # Full model pipeline
-def fit_predictor(clustered_data, debug=False):
+def fit_predictor(clustered_data, debug=False) -> RandomForestClassifier:
     if clustered_data is None:
         # No model, zero accuracy
         return None, 0
@@ -186,4 +218,3 @@ for adid in full_data['advertiser_id'].unique():
     accuracy += test_accuracy
 mean_accuracy = accuracy / len(full_data.advertiser_id.unique())
 print('Average Accuracy:', mean_accuracy)
-
