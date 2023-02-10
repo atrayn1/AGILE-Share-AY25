@@ -12,7 +12,6 @@ from sklearn.neighbors import NearestCentroid
 from datetime import datetime
 from math import cos, asin, sqrt, pi, atan2, sin
 from filtering import query_adid
-from tqdm import tqdm
 from os import system
 import matplotlib.pyplot as plt
 
