@@ -5,6 +5,8 @@
 
 import streamlit as st
 import streamlit.components.v1 as components
+import csv
+import string
 import pandas as pd
 from datetime import datetime as dt
 #import proximitypyhash as pph
@@ -32,10 +34,8 @@ from centrality import compute_top_centrality
 # Some session state variables that need to be maintained between reloads
 if 'data' not in st.session_state:
     st.session_state.data = None
-
 if 'loi_data' not in st.session_state:
     st.session_state.loi_data = None
-
 if 'uploaded' not in st.session_state:
     st.session_state.uploaded = False
 
@@ -71,12 +71,16 @@ results_c.subheader('Analysis')
 with sidebar:
 
     # Upload data
+    relevant_features = ['geohash', 'datetime', 'latitude', 'longitude', 'advertiser_id']
     with data_upload_sb:
         raw_data = st.file_uploader('Upload Data File')
         # If a file has not yet been uploaded (this allows multiple form requests in unison)
         if raw_data and not st.session_state.uploaded:
-            st.session_state.data = pd.read_csv(raw_data, sep=',')
-            st.session_state.uploaded = True
+            try:
+                st.session_state.data = pd.read_csv(raw_data, sep=',', usecols=relevant_features)
+                st.session_state.uploaded = True
+            except:
+                results_c.write('Invalid file format. Please upload a valid .csv file.')
         reset_c = st.container()
         with reset_c:
             reset_form = st.form(key='reset')
@@ -84,7 +88,11 @@ with sidebar:
                 # This will reset the state variable resetting the data to uploaded state
                 if raw_data:
                     if st.form_submit_button('RESET DATA'):
-                        st.session_state.data = pd.read_csv(raw_data, sep=',')
+                        try:
+                            st.session_state.data = pd.read_csv(raw_data, sep=',', usecols=relevant_features)
+                            st.session_state.uploaded = True
+                        except:
+                            results_c.write('Invalid file format. Please upload a valid .csv file.')
 
     # Data Filtering Expander
     with filtering_ex:
