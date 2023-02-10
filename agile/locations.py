@@ -8,11 +8,6 @@ from overpy import Overpass as api
 from pygeohash import encode
 from datetime import timedelta
 
-# TODO
-# Naming locations of interest will probably require the use of the Overpass API
-# in order to distinguish the types of the nearest geographic nodes.
-# (residences, offices, malls, grocery stores, etc.)
-
 # Potential dwell locations
 def get_dwell(lois, debug=False) ->pd.DataFrame:
     lois['potential_dwell'] = lois.datetime.isin(lois.set_index('datetime').between_time('20:00', '5:00').index)

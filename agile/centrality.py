@@ -1,6 +1,5 @@
 # Applying Graph Theory Centrality to ADIDs at a specific location
 
-#TODO Update required libraries in docker files to include networkx as a dependency
 import pandas as pd
 import numpy as np
 import networkx as nx

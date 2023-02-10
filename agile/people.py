@@ -6,12 +6,6 @@ import pandas as pd
 import pygeohash as gh
 from datetime import datetime, timedelta
 
-# TODO
-# the idea is solid but there is room for improvement
-# for a "real" data set you might get a ton of pings for a single location
-# of interest, we should have more robust ways to distinguish somebody as a
-# colocated actor
-
 # ASSUMPTIONS
 #   - data is already geohashed to sufficient precision (current value 10)
 #   - locations of interest are from the same data set
