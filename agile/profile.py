@@ -71,30 +71,18 @@ class Profile:
     def model_train(self, data=None):
         if data == None:
             data = self.data
-        
         clustered_data = pred.double_cluster(self.ad_id, data)
         self.cluster_centroids = pred.get_cluster_centroids(clustered_data)
         self.lois = pred.get_top_N_clusters(clustered_data, 5)
         self.model, self.model_accuracy = pred.fit_predictor(clustered_data, False)
-
         return self.model, self.model_accuracy
 
     # Perform a single prediction on the provided time
     # The time must be entered as the number of seconds since midnight on that day
-    def model_predict(self, time) -> int:
+    def model_predict(self, time, day) -> int:
         # Returns the label and the centroid associated
-        label = self.model.predict(time)[0]
-
-        print("Label:", label)
-
+        X = pd.DataFrame([[time, day]], columns=['seconds', 'dayofweek'])
+        label = self.model.predict(X)[0]
         # TODO Getting a size mismatch error here
         return label, self.cluster_centroids.loc[self.cluster_centroids['label'] == label]
-
-# test report
-#from report import Report
-# so if you try to make a report using this dataset, it takes a really long time to finish... curious
-#data = pd.read_csv("../data/_54aa7153-1546-ce0d-5dc9-aa9e8e371f00_weeklong_gh.csv")
-#data = pd.read_csv("../data/weeklong_gh.csv")
-#ubl = Profile(data, "54aa7153-1546-ce0d-5dc9-aa9e8e371f00", 10, 7, 24, 2)
-#Report(ubl)
 

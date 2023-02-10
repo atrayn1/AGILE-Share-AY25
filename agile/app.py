@@ -267,6 +267,7 @@ with sidebar:
             with pred_form:
                 adid = st.text_input('Advertiser ID')
                 start_time = st.time_input('Time:', key='time')
+                start_day = st.slider('Day:', min_value=0, max_value=6, value=2)
                 if st.form_submit_button('Predict'):
                     st.session_state.profile = Profile(st.session_state.data, adid)
                     if not st.session_state.profile.model_trained():
@@ -276,12 +277,8 @@ with sidebar:
                     # str(dt.combine(start_date, start_time))
                     # Using an arbitary date because this algorith monly cares about the time of day
                     start_time = pd.to_datetime(str(dt.combine(pd.to_datetime('2018-01-01'), start_time)))
-
                     start_time = np.array((start_time - start_time.replace(hour=0, minute=0, second=0, microsecond=0)).total_seconds()).reshape(-1, 1)
-                    print(start_time)
-                    print(start_time.shape)
-
-                    result_label, result_centroid = st.session_state.profile.model_predict(start_time)
+                    result_label, result_centroid = st.session_state.profile.model_predict(start_time, start_day)
                     
                     data_map(results_c, lois=result_centroid)
 
