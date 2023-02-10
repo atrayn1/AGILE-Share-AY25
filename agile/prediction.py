@@ -10,11 +10,13 @@ from sklearn.cluster import DBSCAN
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.neighbors import NearestCentroid
+from sklearn.mixture import GaussianMixture
 from datetime import datetime
 from math import cos, asin, sqrt, pi, atan2, sin
 from filtering import query_adid
 from os import system
 import matplotlib.pyplot as plt
+from random import sample
 
 pd.options.mode.chained_assignment = None
 
@@ -119,6 +121,23 @@ def get_clusters(data) -> pd.DataFrame:
     labels = clusters.labels_
     return labels
 
+# Clustering the data with GaussianMixture Model for testing purposes
+def get_clusters_GM(data) -> pd.DataFrame:
+
+    def since_midnight(now) -> int:
+        return (now - now.replace(hour=0, minute=0, second=0, microsecond=0)).total_seconds()
+    data['seconds'] = data.datetime.apply(since_midnight)
+
+    model = GaussianMixture(n_components=300 if data.shape[0] >= 300 else data.shape[0], 
+                            covariance_type='full',
+                            max_iter=200,
+                            init_params='random',
+                            verbose=0)
+    clusters = model.fit(data[['latitude', 'longitude', 'seconds']])
+    labels = model.predict(data[['latitude', 'longitude', 'seconds']])
+
+    return labels
+
 def max_cluster(data, labels) -> int:
     data['label'] = labels
     data['label_sum'] = data.groupby('label').weight.transform('sum')
@@ -128,19 +147,23 @@ def max_cluster(data, labels) -> int:
     without_max = data.loc[~has_max, relevant_features]
     return max_label, without_max
 
-def double_cluster(adid, full_data):
+def double_cluster(adid, full_data, gm=False):
     # Basic pre-processing
     data = query_adid(adid, full_data)
     data = data.sort_values(by='datetime')
     data = speed_filter(data, 120)
     data = weighting(data)
-    labels = get_clusters(data)
+    labels = get_clusters_GM(data) if gm == True else get_clusters(data)# GM
     max_group, without_max = max_cluster(data, labels)
     # Fail gracefully
     if without_max.empty:
         return None
+
+    # Protecting GM
+    if len(without_max) < 3:
+        return None
     # Re-label and return new data
-    new_labels = get_clusters(without_max)
+    new_labels = get_clusters_GM(without_max) if gm == True else get_clusters(without_max)# GM
     without_max['label'] = new_labels
     max_new_label = without_max.label.max() + 1
     max_group['label'] = max_new_label
@@ -198,18 +221,46 @@ def fit_predictor(clustered_data, debug=False) -> RandomForestClassifier:
 # 81696261-3059-7d66-69cc-67688182f974
 # 54aa7153-1546-ce0d-5dc9-aa9e8e371f00
 # 18665217-4566-5790-809c-702e77bdbf89
-'''
 full_data = pd.read_csv('../data/weeklong.csv')
-adid = '54aa7153-1546-ce0d-5dc9-aa9e8e371f00'
-clustered_data = double_cluster(adid, full_data)
-get_top_N_clusters(clustered_data, 5)
+#adid = '54aa7153-1546-ce0d-5dc9-aa9e8e371f00'
+#clustered_data = double_cluster(adid, full_data)
+#get_top_N_clusters(clustered_data, 5)
 #model, test_accuracy = fit_predictor(clustered_data, debug=True)
-accuracy = 0.0
-for adid in full_data['advertiser_id'].unique():
+
+# Making some more verbose testing here
+# Grabbing a random sample from the dataset and testing the predictor on it
+
+# All unique AdIDs
+adids = list(full_data['advertiser_id'].unique())
+test_adids = sample(adids, 30)
+print("TEST IDS:", test_adids)
+
+accuracy = [0.0, 0.0, 0.0]
+for adid in test_adids:
+
+    print("Iteration")
+
     clustered_data = double_cluster(adid, full_data)
     model, test_accuracy = fit_predictor(clustered_data, debug=True)
-    accuracy += test_accuracy
-mean_accuracy = accuracy / len(full_data.advertiser_id.unique())
-print('Average Accuracy:', mean_accuracy)
-'''
+
+    clustered_data = double_cluster(adid, full_data, gm=True)
+    model_gm, test_accuracy_gm = fit_predictor(clustered_data, debug=True)
+
+    # Default they use gm accuracies
+    model_hyb, test_accuracy_hyb = model_gm, test_accuracy_gm
+
+    if test_accuracy_hyb < 0.75 and test_accuracy_hyb < test_accuracy:
+        clustered_data = double_cluster(adid, full_data)
+        model_hyb, test_accuracy_hyb = fit_predictor(clustered_data, debug=True)
+    
+    print("---------")
+
+    accuracy[0] += test_accuracy
+    accuracy[1] += test_accuracy_gm
+    accuracy[2] += test_accuracy_hyb
+
+accuracy = [acc / len(test_adids) for acc in accuracy]
+print("Accuracies (DB, GM, Hybrid):", accuracy)
+#mean_accuracy = accuracy / len(full_data.advertiser_id.unique())
+#print('Average Accuracy:', mean_accuracy)
 
