@@ -54,10 +54,10 @@ sidebar.title('Data Options')
 
 # Data Upload container (This is only for dev purposes)
 data_upload_sb = sidebar.container()
-report_sb = sidebar.container()
 filtering_ex = sidebar.expander('Filtering')
 locations_ex = sidebar.expander('Locations')
 algorithms_ex = sidebar.expander('Algorithms')
+report_sb = sidebar.expander('Report')
 
 # The data preview
 preview_c = st.container()
@@ -85,25 +85,6 @@ with sidebar:
                 if raw_data:
                     if st.form_submit_button('RESET DATA'):
                         st.session_state.data = pd.read_csv(raw_data, sep=',')
-
-    # Generate Report
-    with report_sb:
-        report_c = st.container()
-        with report_c:
-            report_form = st.form(key='report')
-            with report_form:
-                adid = st.text_input('Advertiser ID')
-                exth = st.slider('Extended Stay Duration', min_value=1, max_value=24, value=7)
-                reph = st.slider('Time Between Repeat Visits', min_value=1, max_value=72, value=24)
-                colh = st.slider('Colocation Duration', min_value=1, max_value=24, value=2)
-                report_button = st.form_submit_button('Generate Report')
-                if report_button:
-                    if st.session_state.uploaded:
-                        device = Profile(st.session_state.data, adid, exth, reph, colh)
-                        Report(device)
-                        results_c.write('Report generated!')
-                    else:
-                        results_c.write('Upload data first!')
 
     # Data Filtering Expander
     with filtering_ex:
@@ -186,6 +167,7 @@ with sidebar:
                     results_c.write(node + ' found around ' + lat + ', ' + long + ' within a radius of ' + radius + ' meters:')
                     results_c.write(node_data)
         
+        # Centrality analysis
         centrality_analysis = st.container()
         with centrality_analysis:
             st.subheader('Location Centrality Query')
@@ -224,21 +206,6 @@ with sidebar:
                     results_c.write('Cluster Data')
                     results_c.write(loi_data)
 
-        # Colocation
-        colocation_analysis = st.container()
-        with colocation_analysis:
-            st.subheader('Colocation')
-            colocation_form = st.form(key='colocation_form')
-            with colocation_form:
-                search_time = st.slider('Search Time', min_value=1, max_value=12, value=2)
-                if st.form_submit_button('Query'):
-                    data = st.session_state.data
-                    loi_data = st.session_state.loi_data
-                    colocation_data = colocation(data, loi_data, duration=search_time)
-                    data_map(results_c, data=colocation_data, lois=loi_data)
-                    results_c.write('Colocation Data')
-                    results_c.write(colocation_data)
-
         # (Traditional) locations of interest
         loi_analysis = st.container()
         with loi_analysis:
@@ -260,6 +227,22 @@ with sidebar:
                     results_c.write('Location of Interest Data')
                     results_c.write(loi_data)
 
+        # Colocation
+        colocation_analysis = st.container()
+        with colocation_analysis:
+            st.subheader('Colocation')
+            colocation_form = st.form(key='colocation_form')
+            with colocation_form:
+                search_time = st.slider('Search Time', min_value=1, max_value=12, value=2)
+                if st.form_submit_button('Query'):
+                    data = st.session_state.data
+                    loi_data = st.session_state.loi_data
+                    colocation_data = colocation(data, loi_data, duration=search_time)
+                    data_map(results_c, data=colocation_data, lois=loi_data)
+                    results_c.write('Colocation Data')
+                    results_c.write(colocation_data)
+
+        # Prediction
         pred_analysis = st.container()
         with pred_analysis:
             st.subheader('Movement Prediction')
@@ -272,15 +255,32 @@ with sidebar:
                     st.session_state.profile = Profile(st.session_state.data, adid)
                     if not st.session_state.profile.model_trained():
                         st.session_state.profile.model_train()
-
                     # Convert the time input to a datetime
                     # str(dt.combine(start_date, start_time))
                     # Using an arbitary date because this algorith monly cares about the time of day
                     start_time = pd.to_datetime(str(dt.combine(pd.to_datetime('2018-01-01'), start_time)))
                     start_time = np.array((start_time - start_time.replace(hour=0, minute=0, second=0, microsecond=0)).total_seconds()).reshape(-1, 1)
                     result_label, result_centroid = st.session_state.profile.model_predict(start_time, start_day)
-                    
                     data_map(results_c, lois=result_centroid)
+
+    # Generate Report
+    with report_sb:
+        report_c = st.container()
+        with report_c:
+            report_form = st.form(key='report')
+            with report_form:
+                adid = st.text_input('Advertiser ID')
+                exth = st.slider('Extended Stay Duration', min_value=1, max_value=24, value=7)
+                reph = st.slider('Time Between Repeat Visits', min_value=1, max_value=72, value=24)
+                colh = st.slider('Colocation Duration', min_value=1, max_value=24, value=2)
+                report_button = st.form_submit_button('Generate Report')
+                if report_button:
+                    if st.session_state.uploaded:
+                        device = Profile(st.session_state.data, adid, exth, reph, colh)
+                        Report(device)
+                        results_c.write('Report generated!')
+                    else:
+                        results_c.write('Upload data first!')
 
 
 # Preview container
