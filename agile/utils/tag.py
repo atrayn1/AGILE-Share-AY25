@@ -37,9 +37,6 @@ def polyline_nearby_query(data, range):
     # To build the polygon I am thinking of looping through the list frontways and then backways.
     # Effectively creating a long line
 
-    # TODO
-    # WE NEED TO PROBABLY take in the DF AND SORT BY TIME SO IT IS AN ACCURATE POLYLINE###
-    #data['dates'] = pd.to_datetime(data['datetime'])
     data.loc[:, ('dates')] = pd.to_datetime(data['datetime']) # No setting with copy error
     data.sort_values(by="dates")
 
