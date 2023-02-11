@@ -202,8 +202,7 @@ def fit_predictor(clustered_data, debug=False) -> RandomForestClassifier:
 full_data = pd.read_csv('../data/weeklong.csv')
 adid = '54aa7153-1546-ce0d-5dc9-aa9e8e371f00'
 clustered_data = double_cluster(adid, full_data)
-get_top_N_clusters(clustered_data, 5)
-#model, test_accuracy = fit_predictor(clustered_data, debug=True)
+
 accuracy = 0.0
 for adid in full_data['advertiser_id'].unique():
     clustered_data = double_cluster(adid, full_data)
@@ -212,4 +211,3 @@ for adid in full_data['advertiser_id'].unique():
 mean_accuracy = accuracy / len(full_data.advertiser_id.unique())
 print('Average Accuracy:', mean_accuracy)
 '''
-
