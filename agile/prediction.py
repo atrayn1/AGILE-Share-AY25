@@ -241,8 +241,6 @@ test_adids = sample(test_adids, 50)
 db_score, gm_score = 0, 0
 for adid in test_adids:
     print('For ' + adid + ':')
-
-    # DBSCAN
     clustered_data = double_cluster(adid, full_data)
     n_labels = clustered_data.label.max() + 1
     model, test_accuracy = fit_predictor(clustered_data, debug=True)
@@ -270,4 +268,3 @@ print('DBSCAN average score:', db_score_avg)
 print('GM average score:', gm_score_avg)
 print(('GM' if db_score < gm_score else 'DB'), 'is better overall')
 '''
-
