@@ -148,7 +148,7 @@ def max_cluster(data, labels) -> int:
     return max_label, without_max
 
 def double_cluster(adid, full_data, gm=True):
-    print('Using Gaussian Mixture:' if gm else 'Using DBSCAN:')
+    #print('Using Gaussian Mixture:' if gm else 'Using DBSCAN:')
 
     # Basic pre-processing
     data = query_adid(adid, full_data)
