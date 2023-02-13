@@ -1,0 +1,454 @@
+For f6e83770-ae29-2381-57af-19232d2980d1:
+Using DBSCAN:
+With 254 labels, Accuracy: 0.8438228438228438
+Using Gaussian Mixture:
+With 300 labels, Accuracy: 0.9277389277389277
+-----------------------------------------
+For 82753786-15c1-46c5-4303-770fa8802eb3:
+Using DBSCAN:
+With 243 labels, Accuracy: 0.8348214285714286
+Using Gaussian Mixture:
+With 301 labels, Accuracy: 0.9375
+-----------------------------------------
+For 53578967-974f-1664-85d8-851d3b215a81:
+Using DBSCAN:
+With 223 labels, Accuracy: 0.9469387755102041
+Using Gaussian Mixture:
+With 301 labels, Accuracy: 0.8948979591836734
+-----------------------------------------
+For 387ef50d-2500-60d3-6f53-10379b778422:
+Using DBSCAN:
+With 133 labels, Accuracy: 0.8972809667673716
+Using Gaussian Mixture:
+With 276 labels, Accuracy: 0.9848942598187311
+-----------------------------------------
+For 95175906-1466-5d7a-25d3-2d693d706928:
+Using DBSCAN:
+With 62 labels, Accuracy: 0.9486652977412731
+Using Gaussian Mixture:
+With 298 labels, Accuracy: 0.9455852156057495
+-----------------------------------------
+For c34a1675-fbba-d014-6691-75557a157878:
+Using DBSCAN:
+With 107 labels, Accuracy: 0.8834688346883469
+Using Gaussian Mixture:
+With 301 labels, Accuracy: 0.8590785907859079
+-----------------------------------------
+For 255c5923-3051-5af8-8183-f201e4485698:
+Using DBSCAN:
+With 102 labels, Accuracy: 0.9209932279909706
+Using Gaussian Mixture:
+With 298 labels, Accuracy: 0.8465011286681715
+-----------------------------------------
+For a8802d20-4853-da96-3360-680d7d12474f:
+Using DBSCAN:
+With 34 labels, Accuracy: 0.9408866995073891
+Using Gaussian Mixture:
+With 300 labels, Accuracy: 0.8669950738916257
+-----------------------------------------
+For 18665217-4566-5790-809c-702e77bdbf89:
+Using DBSCAN:
+With 258 labels, Accuracy: 0.947239263803681
+Using Gaussian Mixture:
+With 300 labels, Accuracy: 0.9558282208588957
+-----------------------------------------
+For 774a0533-83b0-d639-7250-74b07086367e:
+Using DBSCAN:
+With 219 labels, Accuracy: 0.8403755868544601
+Using Gaussian Mixture:
+With 299 labels, Accuracy: 0.9061032863849765
+-----------------------------------------
+For 9147e021-0774-c206-6919-887d202e864b:
+Using DBSCAN:
+With 214 labels, Accuracy: 0.842911877394636
+Using Gaussian Mixture:
+With 301 labels, Accuracy: 0.9272030651340997
+-----------------------------------------
+For 938933f6-8d09-4e31-ddb8-6924574e3525:
+Using DBSCAN:
+With 95 labels, Accuracy: 0.8715083798882681
+Using Gaussian Mixture:
+With 297 labels, Accuracy: 0.8379888268156425
+-----------------------------------------
+For 32691393-7f93-87e6-770a-288333073865:
+Using DBSCAN:
+With 228 labels, Accuracy: 0.8249336870026526
+Using Gaussian Mixture:
+With 301 labels, Accuracy: 0.8806366047745358
+-----------------------------------------
+For 4ff254e2-283a-1a34-3b07-0105482864b1:
+Using DBSCAN:
+With 19 labels, Accuracy: 0.9568965517241379
+Using Gaussian Mixture:
+With 298 labels, Accuracy: 0.8836206896551724
+-----------------------------------------
+For 750e4147-bba1-c620-f48a-c94785af662a:
+Using DBSCAN:
+With 204 labels, Accuracy: 0.9113924050632911
+Using Gaussian Mixture:
+With 300 labels, Accuracy: 0.9430379746835443
+-----------------------------------------
+For 8104dad8-376f-0651-d727-924706e95102:
+Using DBSCAN:
+With 38 labels, Accuracy: 0.9230769230769231
+Using Gaussian Mixture:
+With 301 labels, Accuracy: 0.8413461538461539
+-----------------------------------------
+For 984d8bd0-375a-808e-f730-736433323350:
+Using DBSCAN:
+With 38 labels, Accuracy: 0.9945987654320988
+Using Gaussian Mixture:
+With 301 labels, Accuracy: 0.9513888888888888
+-----------------------------------------
+For d9aa2350-9849-1018-1106-474798605831:
+Using DBSCAN:
+With 216 labels, Accuracy: 0.8063241106719368
+Using Gaussian Mixture:
+With 299 labels, Accuracy: 0.8932806324110671
+-----------------------------------------
+For 4cc82338-9241-3256-27f2-ebf48076f140:
+Using DBSCAN:
+With 356 labels, Accuracy: 0.8668280871670703
+Using Gaussian Mixture:
+With 296 labels, Accuracy: 0.9394673123486683
+-----------------------------------------
+For ce314221-8718-fcc8-a995-e4c2383354d2:
+Using DBSCAN:
+With 191 labels, Accuracy: 0.9094922737306843
+Using Gaussian Mixture:
+With 299 labels, Accuracy: 0.9448123620309051
+-----------------------------------------
+For b9a72925-8377-a44f-63e7-404fe370a598:
+Using DBSCAN:
+With 95 labels, Accuracy: 0.8658536585365854
+Using Gaussian Mixture:
+With 281 labels, Accuracy: 0.8292682926829268
+-----------------------------------------
+For 38d47b48-0359-1769-312d-7543e6033540:
+Using DBSCAN:
+With 80 labels, Accuracy: 0.9686609686609686
+Using Gaussian Mixture:
+With 301 labels, Accuracy: 0.9116809116809117
+-----------------------------------------
+For 2cf01238-881f-56c9-3655-b72fc8f08765:
+Using DBSCAN:
+With 163 labels, Accuracy: 0.9136125654450262
+Using Gaussian Mixture:
+With 301 labels, Accuracy: 0.9267015706806283
+-----------------------------------------
+For 33a3a957-e464-f007-3731-9b1153569e59:
+Using DBSCAN:
+With 117 labels, Accuracy: 0.943609022556391
+Using Gaussian Mixture:
+With 297 labels, Accuracy: 0.9135338345864662
+-----------------------------------------
+For 96a232e6-1bcf-5025-6132-c4c991366190:
+Using DBSCAN:
+With 122 labels, Accuracy: 0.7215189873417721
+Using Gaussian Mixture:
+With 276 labels, Accuracy: 0.810126582278481
+-----------------------------------------
+For 704597da-6358-b546-3d2e-6d1d510d5696:
+Using DBSCAN:
+With 136 labels, Accuracy: 0.8449275362318841
+Using Gaussian Mixture:
+With 300 labels, Accuracy: 0.8101449275362319
+-----------------------------------------
+For 6b3444a7-2593-659a-de05-b21801867243:
+Using DBSCAN:
+With 35 labels, Accuracy: 0.8235294117647058
+Using Gaussian Mixture:
+With 191 labels, Accuracy: 0.7843137254901961
+-----------------------------------------
+For 7d883235-22da-7046-1a16-602c1a8b576e:
+Using DBSCAN:
+With 216 labels, Accuracy: 0.9355432780847146
+Using Gaussian Mixture:
+With 300 labels, Accuracy: 0.9539594843462247
+-----------------------------------------
+For 0c07a963-d753-7631-0898-db6564908480:
+Using DBSCAN:
+With 9 labels, Accuracy: 0.9952038369304557
+Using Gaussian Mixture:
+With 301 labels, Accuracy: 0.86810551558753
+-----------------------------------------
+For 30031616-3964-de33-7630-aa80bf614c5d:
+Using DBSCAN:
+With 192 labels, Accuracy: 0.9207708779443254
+Using Gaussian Mixture:
+With 301 labels, Accuracy: 0.9250535331905781
+-----------------------------------------
+For 55ab7168-7d96-e7d1-8671-b44888b9f510:
+Using DBSCAN:
+With 313 labels, Accuracy: 0.9373716632443532
+Using Gaussian Mixture:
+With 300 labels, Accuracy: 0.9548254620123203
+-----------------------------------------
+For 0d048c41-de8d-865b-1c39-599652133d47:
+Using DBSCAN:
+With 103 labels, Accuracy: 0.9533468559837728
+Using Gaussian Mixture:
+With 300 labels, Accuracy: 0.8438133874239351
+-----------------------------------------
+For 546b828f-87f0-1a42-3303-4610e060b152:
+Using DBSCAN:
+With 182 labels, Accuracy: 0.9144542772861357
+Using Gaussian Mixture:
+With 294 labels, Accuracy: 0.9616519174041298
+-----------------------------------------
+For c399015f-d804-d313-c869-b2e046886557:
+Using DBSCAN:
+With 120 labels, Accuracy: 0.9101941747572816
+Using Gaussian Mixture:
+With 301 labels, Accuracy: 0.8762135922330098
+-----------------------------------------
+For 5434237c-2002-7a0d-c940-d1d563114980:
+Using DBSCAN:
+With 47 labels, Accuracy: 0.9819819819819819
+Using Gaussian Mixture:
+With 301 labels, Accuracy: 0.8918918918918919
+-----------------------------------------
+For 35bd41d0-450c-3e6c-7565-745207ff3090:
+Using DBSCAN:
+With 215 labels, Accuracy: 0.9252669039145908
+Using Gaussian Mixture:
+With 301 labels, Accuracy: 0.9288256227758007
+-----------------------------------------
+For 85c60df2-1560-7a55-c2c8-0fdcc26224fb:
+Using DBSCAN:
+With 66 labels, Accuracy: 0.9121951219512195
+Using Gaussian Mixture:
+With 300 labels, Accuracy: 0.8682926829268293
+-----------------------------------------
+For 6a5696c6-9753-1f60-33b5-79293678f37f:
+Using DBSCAN:
+With 153 labels, Accuracy: 0.9512555391432792
+Using Gaussian Mixture:
+With 301 labels, Accuracy: 0.9276218611521418
+-----------------------------------------
+For 09996809-52d3-4d88-72c6-8bee989757d8:
+Using DBSCAN:
+With 91 labels, Accuracy: 0.9047619047619048
+Using Gaussian Mixture:
+With 300 labels, Accuracy: 0.8601190476190477
+-----------------------------------------
+For 66516953-51de-3b94-ccb6-177331322294:
+Using DBSCAN:
+With 52 labels, Accuracy: 0.9622641509433962
+Using Gaussian Mixture:
+With 300 labels, Accuracy: 0.9245283018867925
+-----------------------------------------
+For 5106683d-5036-0066-5760-94dec3033204:
+Using DBSCAN:
+With 232 labels, Accuracy: 0.9231974921630094
+Using Gaussian Mixture:
+With 301 labels, Accuracy: 0.9310344827586207
+-----------------------------------------
+For 5351334c-fe2e-2958-9444-8e28e9580057:
+Using DBSCAN:
+With 31 labels, Accuracy: 0.9722222222222222
+Using Gaussian Mixture:
+With 299 labels, Accuracy: 0.9555555555555556
+-----------------------------------------
+For bcac0159-24a9-0859-22f4-8f76407a0870:
+Using DBSCAN:
+With 49 labels, Accuracy: 0.875
+Using Gaussian Mixture:
+With 301 labels, Accuracy: 0.8269230769230769
+-----------------------------------------
+For a871dcc7-a735-2b67-4267-8f68979927d4:
+Using DBSCAN:
+With 194 labels, Accuracy: 0.901060070671378
+Using Gaussian Mixture:
+With 300 labels, Accuracy: 0.9187279151943463
+-----------------------------------------
+For 416711fb-a777-9378-0d7b-9409fd24b236:
+Using DBSCAN:
+With 64 labels, Accuracy: 0.9557522123893806
+Using Gaussian Mixture:
+With 299 labels, Accuracy: 0.8982300884955752
+-----------------------------------------
+For 528b335a-1900-a423-2e0a-501e84380bd4:
+Using DBSCAN:
+With 108 labels, Accuracy: 0.9162011173184358
+Using Gaussian Mixture:
+With 301 labels, Accuracy: 0.813780260707635
+-----------------------------------------
+For 33872930-f62d-9a5c-997d-488e86e55675:
+Using DBSCAN:
+With 130 labels, Accuracy: 0.9506172839506173
+Using Gaussian Mixture:
+With 301 labels, Accuracy: 0.9351851851851852
+-----------------------------------------
+For 610fc698-918b-ad51-91ab-21041a23d26b:
+Using DBSCAN:
+With 163 labels, Accuracy: 0.9430379746835443
+Using Gaussian Mixture:
+With 300 labels, Accuracy: 0.9514767932489452
+-----------------------------------------
+For 006d3344-2666-1b04-a9c1-8192406646a3:
+Using DBSCAN:
+With 271 labels, Accuracy: 0.8373205741626795
+Using Gaussian Mixture:
+With 301 labels, Accuracy: 0.9019138755980861
+-----------------------------------------
+For e8088b27-1777-1d83-4267-f46353873487:
+Using DBSCAN:
+With 10 labels, Accuracy: 0.6666666666666666
+Using Gaussian Mixture:
+With 13 labels, Accuracy: 0.6666666666666666
+-----------------------------------------
+For 78f6c1cb-ec96-4fcc-1144-7dff3763ac86:
+Using DBSCAN:
+With 76 labels, Accuracy: 0.9516616314199395
+Using Gaussian Mixture:
+With 298 labels, Accuracy: 0.8912386706948641
+-----------------------------------------
+For 3115549e-01dd-85a6-0563-1179080fec78:
+Using DBSCAN:
+With 204 labels, Accuracy: 0.9302325581395349
+Using Gaussian Mixture:
+With 300 labels, Accuracy: 0.9276485788113695
+-----------------------------------------
+For 2d7441cb-6010-7d94-7131-c85830a34683:
+Using DBSCAN:
+With 186 labels, Accuracy: 0.9016115351993215
+Using Gaussian Mixture:
+With 271 labels, Accuracy: 0.9660729431721798
+-----------------------------------------
+For dc544ee7-4208-5596-4332-3e55482620b4:
+Using DBSCAN:
+With 88 labels, Accuracy: 0.961218836565097
+Using Gaussian Mixture:
+With 301 labels, Accuracy: 0.8393351800554016
+-----------------------------------------
+For 21057c42-48a7-0646-8339-16338a64961f:
+Using DBSCAN:
+With 73 labels, Accuracy: 0.9849246231155779
+Using Gaussian Mixture:
+With 301 labels, Accuracy: 0.949748743718593
+-----------------------------------------
+For e6084cd0-9016-7481-5e80-bef8131e5e71:
+Using DBSCAN:
+With 143 labels, Accuracy: 0.9388888888888889
+Using Gaussian Mixture:
+With 301 labels, Accuracy: 0.9388888888888889
+-----------------------------------------
+For 78f0c848-c895-d614-b1c1-b60215567729:
+Using DBSCAN:
+With 214 labels, Accuracy: 0.8375
+Using Gaussian Mixture:
+With 299 labels, Accuracy: 0.9208333333333333
+-----------------------------------------
+For 6a971fcb-21a3-5b12-493f-ca91bc2f9424:
+Using DBSCAN:
+With 173 labels, Accuracy: 0.8375241779497099
+Using Gaussian Mixture:
+With 301 labels, Accuracy: 0.839458413926499
+-----------------------------------------
+For 1099500c-4073-6556-3e80-42c9d34bb154:
+Using DBSCAN:
+With 175 labels, Accuracy: 0.9613970588235294
+Using Gaussian Mixture:
+With 296 labels, Accuracy: 0.9852941176470589
+-----------------------------------------
+For 693b3b09-6516-4147-3702-24e1848c309d:
+Using DBSCAN:
+With 82 labels, Accuracy: 0.9293286219081273
+Using Gaussian Mixture:
+With 299 labels, Accuracy: 0.9222614840989399
+-----------------------------------------
+For 29195887-51b4-33f8-10ff-37003218b052:
+Using DBSCAN:
+With 280 labels, Accuracy: 0.9284403669724771
+Using Gaussian Mixture:
+With 301 labels, Accuracy: 0.9467889908256881
+-----------------------------------------
+For 0743465a-8332-5a65-2017-52d491de930e:
+Using DBSCAN:
+With 187 labels, Accuracy: 0.9191374663072777
+Using Gaussian Mixture:
+With 300 labels, Accuracy: 0.921832884097035
+-----------------------------------------
+For 61415224-7017-1ab8-2f38-7a05c29ac70e:
+Using DBSCAN:
+With 186 labels, Accuracy: 0.8992248062015504
+Using Gaussian Mixture:
+With 301 labels, Accuracy: 0.9271317829457364
+-----------------------------------------
+For 74a26712-6590-5144-0909-dd81a22a8622:
+Using DBSCAN:
+With 103 labels, Accuracy: 0.8754208754208754
+Using Gaussian Mixture:
+With 301 labels, Accuracy: 0.8417508417508418
+-----------------------------------------
+For 32167616-ad20-74d1-0c89-ab7029759eb9:
+Using DBSCAN:
+With 137 labels, Accuracy: 0.8908296943231441
+Using Gaussian Mixture:
+With 301 labels, Accuracy: 0.9563318777292577
+-----------------------------------------
+For d589163f-8298-b939-4612-48152f2a3573:
+Using DBSCAN:
+With 173 labels, Accuracy: 0.8148148148148148
+Using Gaussian Mixture:
+With 300 labels, Accuracy: 0.9259259259259259
+-----------------------------------------
+For 5874a280-d871-3268-14f7-1ad86a409271:
+Using DBSCAN:
+With 208 labels, Accuracy: 0.8341625207296849
+Using Gaussian Mixture:
+With 301 labels, Accuracy: 0.8723051409618574
+-----------------------------------------
+For ff2225ee-535c-50db-27e7-d95e10949467:
+Using DBSCAN:
+With 83 labels, Accuracy: 0.863013698630137
+Using Gaussian Mixture:
+With 301 labels, Accuracy: 0.8858447488584474
+-----------------------------------------
+For e100a310-5983-23ff-f32e-44ce63d67ba9:
+Using DBSCAN:
+With 212 labels, Accuracy: 0.8709677419354839
+Using Gaussian Mixture:
+With 301 labels, Accuracy: 0.9092741935483871
+-----------------------------------------
+For 708c1175-2f0d-8bb5-03d3-95619318971b:
+Using DBSCAN:
+With 126 labels, Accuracy: 0.875
+Using Gaussian Mixture:
+With 301 labels, Accuracy: 0.8422619047619048
+-----------------------------------------
+For ffb89a13-7702-3388-7f27-ac55e796b707:
+Using DBSCAN:
+With 191 labels, Accuracy: 0.8127208480565371
+Using Gaussian Mixture:
+With 301 labels, Accuracy: 0.8268551236749117
+-----------------------------------------
+For 60670673-2052-f998-ba54-b7ad8a138844:
+Using DBSCAN:
+With 54 labels, Accuracy: 0.9799749687108886
+Using Gaussian Mixture:
+With 300 labels, Accuracy: 0.9061326658322904
+-----------------------------------------
+For 46665742-9876-7653-d938-e7216a9a4173:
+Using DBSCAN:
+With 120 labels, Accuracy: 0.9083333333333333
+Using Gaussian Mixture:
+With 296 labels, Accuracy: 0.9388888888888889
+-----------------------------------------
+For 1158b938-a2bf-3875-35a7-395641783999:
+Using DBSCAN:
+With 337 labels, Accuracy: 0.9154302670623146
+Using Gaussian Mixture:
+With 300 labels, Accuracy: 0.9525222551928784
+-----------------------------------------
+For 8f642e52-c773-4ff3-cf44-86263773c827:
+Using DBSCAN:
+With 115 labels, Accuracy: 0.9565217391304348
+Using Gaussian Mixture:
+With 298 labels, Accuracy: 0.9499341238471674
+-----------------------------------------
+For 13980a3e-61d1-754e-8618-b5c952a77279:
+Using DBSCAN:
+With 190 labels, Accuracy: 0.9102564102564102
+Using Gaussian Mixture:
