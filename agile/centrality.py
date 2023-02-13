@@ -9,37 +9,34 @@ from filtering import query_location
 # First step is identifying persons of interest and locations of interest
 # This assumes that the file is already geohashed (which it should be)
 def people_at_location(lat, long, radius, data) -> pd.DataFrame:
-    #Basic filtering of points at a location
+
+    # Basic filtering of points at a location
     filtered_data = query_location(lat, long, radius, data)
 
-    # Get a list of unique adids that ppeared at this location
-    adids = filtered_data['advertiser_id'].unique()
+    # Get a list of unique adids that appeared at this location
+    adids = filtered_data.advertiser_id.unique()
 
-    # Return all of the data from the original dataframe of the peopel who viisted our 
-    # specified location
+    # Return all of the data from the original dataframe of the people who
+    # visited our specified location
     return data.loc[data.advertiser_id.isin(adids)]
-
 
 # Data is a dataframe containing adids and geohashes
 # Returns a list of all unique geohashes in data
-def visited_locations(data) -> list: return data['geohash'].unique()
+def visited_locations(data) -> list: return data.geohash.unique()
 
 # Data is a dataframe that contains adids
 # Returns a list of all unique adids in data
-def people_of_interest(data) ->list: return data['advertiser_id'].unique()
+def people_of_interest(data) ->list: return data.advertiser_id.unique()
 
-# This funcion takes in a list of people and places (geohashes) and computes their centrality
-# It also requires the full data to create the adjacency matrix
+# This function requires the full data to create the adjacency matrix and a list
+# of people and places (geohashes) and computes their centrality
 def centrality(people, locations, data) -> pd.DataFrame:
-
-    print("P", people)
-    print("L", locations)
 
     # Create interest list
     interest = np.concatenate((people, locations), axis=0)
     size = len(interest)
 
-    #Create an empty adjacency matrix
+    # Create an empty adjacency matrix
     A = np.zeros([size, size])
 
     # Fill in adjacency matrix
@@ -47,10 +44,8 @@ def centrality(people, locations, data) -> pd.DataFrame:
     # I know that this is weird and I am against using global vars like this in a function,
     # But I cant think of any other way right now
     def compute_adjacency(row):
-        # Not usre if this should be +1 or = 1 we will have to do some testing
+        # Not sure if this should be +1 or = 1 we will have to do some testing
         A[np.where(interest == row.advertiser_id)[0], np.where(interest == row.geohash)[0]] += 1
-
-    print(A)
 
     # Take advantage of that pandas asynchronicity
     data.apply(compute_adjacency, axis=1)
@@ -58,10 +53,8 @@ def centrality(people, locations, data) -> pd.DataFrame:
     # Build the graph
     G = nx.Graph(A)
 
-    #Calculate the degress of centrality
+    # Calculate the degress of centrality
     degree_centrality = nx.degree_centrality(G)
-
-    print(degree_centrality[0])
 
     # Degree Centrality is mapped from index to centrality so we need to pull it out
     centrality_values = [degree_centrality[i] for i in range(len(degree_centrality))]
@@ -81,7 +74,7 @@ def compute_top_centrality(lat, long, radius, N, data) -> pd.DataFrame:
 
     out_data = centrality(people, visited, data)
 
-    # Simple apply based wrapper for the pygeohash decode
+    # Simple apply() wrapper for the pygeohash decode
     def decode_geohash(row):
         coord = decode(row['id'])
         row['latitude'] = coord[0]
@@ -93,18 +86,16 @@ def compute_top_centrality(lat, long, radius, N, data) -> pd.DataFrame:
 
     return ordered_out_data
 
-
+'''
 # Test code for centrality calculations
 
-#data = pd.read_csv('../data/demo_2023-01-11.csv')
+data = pd.read_csv('../data/test.csv')
 
-#lat = 46.2642
-#lon = -119.2426
-#range_m = 100
+lat = 46.2642
+lon = -119.2426
+rad = 100
 
-#centrality_data = compute_centrality(lat, lon, range_m, data)
-#print(centrality_data)
-
-#centrality_data_sorted = centrality_data.sort_values('centrality')
-
-#print(centrality_data_sorted)
+centrality_data = compute_top_centrality(lat, lon, rad, 5, data)
+centrality_data_sorted = centrality_data.sort_values('centrality', ascending=False).reset_index(drop=True)
+print(centrality_data_sorted)
+'''
