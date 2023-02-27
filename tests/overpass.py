@@ -9,17 +9,18 @@
 # There is some clunkiness involved with querying exact node names, but it's
 # a start.
 
-import overpy
 import pandas as pd
+import requests
 
-api = overpy.Overpass()
+#import overpy
+#api = overpy.Overpass()
 
 df = pd.read_csv(
   "../data/test.csv"
 )
 def get_node(row):
     range = 1000
-    query = "node(around:" + str(range) + ", " + str(row.latitude) + ", " + str(row.longitude) + "); out body;"
+    #query = "node(around:" + str(range) + ", " + str(row.latitude) + ", " + str(row.longitude) + "); out body;"
     print(query)
     result = api.query(query)
     for node in result.nodes:
