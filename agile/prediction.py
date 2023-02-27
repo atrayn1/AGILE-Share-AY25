@@ -10,11 +10,13 @@ from sklearn.cluster import DBSCAN
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.neighbors import NearestCentroid
+from sklearn.mixture import GaussianMixture
 from datetime import datetime
 from math import cos, asin, sqrt, pi, atan2, sin
 from filtering import query_adid
 from os import system
 import matplotlib.pyplot as plt
+from random import sample
 
 pd.options.mode.chained_assignment = None
 
@@ -119,6 +121,23 @@ def get_clusters(data) -> pd.DataFrame:
     labels = clusters.labels_
     return labels
 
+# Clustering the data with GaussianMixture Model for testing purposes
+def get_clusters_GM(data) -> pd.DataFrame:
+
+    def since_midnight(now) -> int:
+        return (now - now.replace(hour=0, minute=0, second=0, microsecond=0)).total_seconds()
+    data['seconds'] = data.datetime.apply(since_midnight)
+
+    model = GaussianMixture(n_components=300 if data.shape[0] >= 300 else data.shape[0], 
+                            covariance_type='full',
+                            max_iter=200,
+                            init_params='random',
+                            verbose=0)
+    clusters = model.fit(data[['latitude', 'longitude', 'seconds']])
+    labels = model.predict(data[['latitude', 'longitude', 'seconds']])
+
+    return labels
+
 def max_cluster(data, labels) -> int:
     data['label'] = labels
     data['label_sum'] = data.groupby('label').weight.transform('sum')
@@ -128,19 +147,29 @@ def max_cluster(data, labels) -> int:
     without_max = data.loc[~has_max, relevant_features]
     return max_label, without_max
 
-def double_cluster(adid, full_data):
+def double_cluster(adid, full_data, gm=True):
+    #print('Using Gaussian Mixture:' if gm else 'Using DBSCAN:')
+
     # Basic pre-processing
     data = query_adid(adid, full_data)
     data = data.sort_values(by='datetime')
     data = speed_filter(data, 120)
     data = weighting(data)
-    labels = get_clusters(data)
+
+    # Get max weighted cluster
+    labels = get_clusters_GM(data) if gm == True else get_clusters(data)
     max_group, without_max = max_cluster(data, labels)
+
     # Fail gracefully
     if without_max.empty:
         return None
+
+    # Protecting GM
+    if len(without_max) < 3:
+        return None
+
     # Re-label and return new data
-    new_labels = get_clusters(without_max)
+    new_labels = get_clusters_GM(without_max) if gm == True else get_clusters(without_max)
     without_max['label'] = new_labels
     max_new_label = without_max.label.max() + 1
     max_group['label'] = max_new_label
@@ -189,10 +218,12 @@ def fit_predictor(clustered_data, debug=False) -> RandomForestClassifier:
     # Train the model
     model = RandomForestClassifier()
     model.fit(X_train, y_train)
+    n_labels = clustered_data.label.max() + 1
+    model_accuracy = model.score(X_test, y_test)
     if debug:
-        print('With', clustered_data.label.max() + 1, 'labels, Accuracy:', model.score(X_test, y_test))
+        print('With', n_labels, 'labels, Accuracy:', model_accuracy)
     # This function should return the actual trained model for later use as well as a score to see how it did
-    return model, model.score(X_test, y_test)
+    return model, model_accuracy
 
 # Some sample adids to try
 # 81696261-3059-7d66-69cc-67688182f974
@@ -200,16 +231,40 @@ def fit_predictor(clustered_data, debug=False) -> RandomForestClassifier:
 # 18665217-4566-5790-809c-702e77bdbf89
 '''
 full_data = pd.read_csv('../data/weeklong.csv')
-adid = '54aa7153-1546-ce0d-5dc9-aa9e8e371f00'
-clustered_data = double_cluster(adid, full_data)
-get_top_N_clusters(clustered_data, 5)
-#model, test_accuracy = fit_predictor(clustered_data, debug=True)
-accuracy = 0.0
-for adid in full_data['advertiser_id'].unique():
-    clustered_data = double_cluster(adid, full_data)
-    model, test_accuracy = fit_predictor(clustered_data, debug=True)
-    accuracy += test_accuracy
-mean_accuracy = accuracy / len(full_data.advertiser_id.unique())
-print('Average Accuracy:', mean_accuracy)
-'''
 
+# Making some more verbose testing here
+# Grabbing a random sample from the dataset and testing the predictor on it
+test_adids = list(full_data.advertiser_id.unique())
+test_adids = sample(test_adids, 50)
+#print("TEST IDS:", test_adids)
+
+db_score, gm_score = 0, 0
+for adid in test_adids:
+    print('For ' + adid + ':')
+    clustered_data = double_cluster(adid, full_data)
+    n_labels = clustered_data.label.max() + 1
+    model, test_accuracy = fit_predictor(clustered_data, debug=True)
+
+    # GaussianMixture
+    clustered_data = double_cluster(adid, full_data, gm=True)
+    n_labels_gm = clustered_data.label.max() + 1
+    model_gm, test_accuracy_gm = fit_predictor(clustered_data, debug=True)
+
+    useful_labels = test_accuracy * n_labels
+    useful_labels_gm = test_accuracy_gm * n_labels_gm
+    db_score += useful_labels
+    gm_score += useful_labels_gm
+    gm_is_better = False
+    if useful_labels < useful_labels_gm:
+        gm_is_better = True
+    if gm_is_better:
+        print('GM is better')
+    else:
+        print('DBSCAN is better')
+    print('-----------------------------------------')
+db_score_avg = db_score / len(test_adids)
+gm_score_avg = gm_score / len(test_adids)
+print('DBSCAN average score:', db_score_avg)
+print('GM average score:', gm_score_avg)
+print(('GM' if db_score < gm_score else 'DB'), 'is better overall')
+'''
