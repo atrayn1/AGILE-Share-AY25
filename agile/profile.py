@@ -37,7 +37,8 @@ class Profile:
         self.model = None
         self.cluster_centroids = None
         self.model_accuracy = None
-    
+
+    '''
     # Secondary constructor without the colocation and loi information requirements
     # TODO we can figure out how to handle the rest of this later
     def __init__(self, data, ad_id) -> None:
@@ -49,6 +50,7 @@ class Profile:
         self.model = None
         self.cluster_centroids = None
         self.model_accuracy = None
+    '''
 
     def __name_gen(self) -> str:
         # Updated the open to use the find function, so that file paths are located dynamically
