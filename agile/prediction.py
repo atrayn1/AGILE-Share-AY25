@@ -13,10 +13,11 @@ from sklearn.neighbors import NearestCentroid
 from sklearn.mixture import GaussianMixture
 from datetime import datetime
 from math import cos, asin, sqrt, pi, atan2, sin
-from filtering import query_adid
 from os import system
 import matplotlib.pyplot as plt
 from random import sample
+
+from .filtering import query_adid
 
 pd.options.mode.chained_assignment = None
 

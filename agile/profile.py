@@ -7,12 +7,15 @@
 
 import random
 import pandas as pd
-from locations import locations_of_interest
-from people import colocation
-from utils.files import random_line
-from utils.files import find
-from utils.geocode import reverse_geocode
-import prediction as pred
+from .locations import locations_of_interest
+from .people import colocation
+from .utils.files import random_line
+from .utils.files import find
+from .utils.geocode import reverse_geocode
+from .prediction import double_cluster
+from .prediction import get_cluster_centroids
+from .prediction import get_top_N_clusters
+from .prediction import fit_predictor
 
 class Profile:
 
@@ -71,10 +74,10 @@ class Profile:
     def model_train(self, data=None):
         if data == None:
             data = self.data
-        clustered_data = pred.double_cluster(self.ad_id, data)
-        self.cluster_centroids = pred.get_cluster_centroids(clustered_data)
-        self.lois = pred.get_top_N_clusters(clustered_data, 5)
-        self.model, self.model_accuracy = pred.fit_predictor(clustered_data, False)
+        clustered_data = double_cluster(self.ad_id, data)
+        self.cluster_centroids = get_cluster_centroids(clustered_data)
+        self.lois = get_top_N_clusters(clustered_data, 5)
+        self.model, self.model_accuracy = fit_predictor(clustered_data, False)
         return self.model, self.model_accuracy
 
     # Perform a single prediction on the provided time

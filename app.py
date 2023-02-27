@@ -16,17 +16,17 @@ from streamlit_folium import folium_static
 import folium
 import numpy as np
 
-from filtering import query_location, query_date, query_adid, query_node
-from mapping import data_map 
-from locations import locations_of_interest
-from people import colocation
-from prediction import double_cluster, get_top_N_clusters
-from utils.tag import polyline_nearby_query
-from utils.geocode import reverse_geocode
-from utils.files import find
-from profile import Profile
-from report import Report
-from centrality import compute_top_centrality
+from agile.filtering import query_location, query_date, query_adid, query_node
+from agile.mapping import data_map 
+from agile.locations import locations_of_interest
+from agile.people import colocation
+from agile.prediction import double_cluster, get_top_N_clusters
+from agile.utils.tag import polyline_nearby_query
+from agile.utils.geocode import reverse_geocode
+from agile.utils.files import find
+from agile.profile import Profile
+from agile.report import Report
+from agile.centrality import compute_top_centrality
 
 # Make use of the whole screen
 #st.set_page_config(layout="wide")
