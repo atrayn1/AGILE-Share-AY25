@@ -83,6 +83,7 @@ def locations_of_interest(data, ad_id, extended_duration, repeated_duration, deb
         geohash_dict[row.geohash] = row.datetime
         return row
     data = data.apply(repeated_visits, axis=1)
+    repeated_visits_df = None
     if 'remove' in data.columns:
         repeated_visits_df = data.loc[data.remove == False].drop(columns=['remove'])
     data_out = pd.concat([data_out, repeated_visits_df], ignore_index=True)
