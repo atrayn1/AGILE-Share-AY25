@@ -20,7 +20,7 @@ from .prediction import fit_predictor
 class Profile:
 
     # Constructor with specific parameters
-    def __init__(self, data, ad_id, ext_duration, rep_duration, coloc_duration) -> None:
+    def __init__(self, data, ad_id, ext_duration=7, rep_duration=24, coloc_duration=2) -> None:
         self.ad_id = ad_id
         self.name = self.__name_gen()
         # We need to somehow store this information in here so that it can be relayed on the report
