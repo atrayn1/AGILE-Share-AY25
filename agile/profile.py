@@ -34,6 +34,7 @@ class Profile:
 
         # Prediction model values
         # If the model is untrained it will None
+        self.data = data
         self.model = None
         self.cluster_centroids = None
         self.model_accuracy = None
