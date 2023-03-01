@@ -207,12 +207,15 @@ with sidebar:
                     data = st.session_state.data
                     cluster_data = double_cluster(adid, data)
                     loi_data = get_top_N_clusters(cluster_data, num_clusters)
-                    st.session_state.loi_data = loi_data
-                    # Here we need to make a map and pass the optional parameter for these location points
-                    data_map(results_c, lois=st.session_state.loi_data)
-                    # Write Locations of Interest to the results container
-                    results_c.write('Cluster Data')
-                    results_c.write(loi_data)
+                    if loi_data is None:
+                        results_c.write('No Clusters Found')
+                    else:
+                        st.session_state.loi_data = loi_data
+                        # Here we need to make a map and pass the optional parameter for these location points
+                        data_map(results_c, lois=st.session_state.loi_data)
+                        # Write Locations of Interest to the results container
+                        results_c.write('Cluster Data')
+                        results_c.write(loi_data)
 
         # (Traditional) locations of interest
         loi_analysis = st.container()

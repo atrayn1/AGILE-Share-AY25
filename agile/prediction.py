@@ -197,6 +197,8 @@ def get_cluster_centroids(data) -> pd.DataFrame:
     return df
 
 def get_top_N_clusters(data, N) -> pd.DataFrame:
+    if data is None:
+        return None
     ordered_data = data.sort_values(by='label_sum', ascending=False)
     ordered_labels = ordered_data.drop_duplicates(subset='label').head(N).label
     top_N_cluster_data = data[data.label.isin(ordered_labels)]
