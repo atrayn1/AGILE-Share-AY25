@@ -27,7 +27,6 @@ The working repository for our 2023 Capstone Project. ADD MORE DESCRIPTION LATER
 - scikit-learn==1.2.1
 - fpdf2==2.6.1
 - networkx==3.0
-- overpy==0.6
 ```
 The dependencies are also contained within `agile/requirements.txt` for use with the docker image.
 
