@@ -44,7 +44,7 @@ if 'uploaded' not in st.session_state:
 # Replace Sidebar with data options Menu
 # This will equal the value of the string selected
 nav_bar = option_menu(None, ['Data', 'Filtering', 'Locations', 'Algorithms', 'Report'],
-                      icons=['gear', 'gear', 'gear', 'gear', 'gear'],
+                      icons=['file-earmark-fill', 'funnel-fill', 'pin-map-fill', 'layer-forward', 'stack'],
                       menu_icon="cast", default_index=0, orientation="horizontal",
                     )
 
