@@ -13,10 +13,11 @@ from sklearn.neighbors import NearestCentroid
 from sklearn.mixture import GaussianMixture
 from datetime import datetime
 from math import cos, asin, sqrt, pi, atan2, sin
-from filtering import query_adid
 from os import system
 import matplotlib.pyplot as plt
 from random import sample
+
+from .filtering import query_adid
 
 pd.options.mode.chained_assignment = None
 
@@ -196,6 +197,8 @@ def get_cluster_centroids(data) -> pd.DataFrame:
     return df
 
 def get_top_N_clusters(data, N) -> pd.DataFrame:
+    if data is None:
+        return None
     ordered_data = data.sort_values(by='label_sum', ascending=False)
     ordered_labels = ordered_data.drop_duplicates(subset='label').head(N).label
     top_N_cluster_data = data[data.label.isin(ordered_labels)]
@@ -221,50 +224,40 @@ def fit_predictor(clustered_data, debug=False) -> RandomForestClassifier:
     n_labels = clustered_data.label.max() + 1
     model_accuracy = model.score(X_test, y_test)
     if debug:
-        print('With', n_labels, 'labels, Accuracy:', model_accuracy)
+        rounded_accuracy = round(100 * model_accuracy, 2)
+        print('With', n_labels, 'labels, Accuracy:', rounded_accuracy)
+        # outlier detection
+        testing_data = X_test
+        testing_data['pred'] = model.predict(X_test)
+        testing_data['real'] = y_test
+        testing_data['outlier'] = testing_data.real != testing_data.pred
+        n_outliers = testing_data.outlier.sum()
+        outlier_percent = round(100 * n_outliers / len(testing_data), 2)
+        ops = '(' + str(outlier_percent) + '%)'
+        print(n_outliers, 'possible outliers detected in a set of', len(testing_data), 'test data points', ops)
+        print()
+
     # This function should return the actual trained model for later use as well as a score to see how it did
     return model, model_accuracy
 
+'''
 # Some sample adids to try
 # 81696261-3059-7d66-69cc-67688182f974
 # 54aa7153-1546-ce0d-5dc9-aa9e8e371f00
 # 18665217-4566-5790-809c-702e77bdbf89
-'''
 full_data = pd.read_csv('../data/weeklong.csv')
 
 # Making some more verbose testing here
 # Grabbing a random sample from the dataset and testing the predictor on it
 test_adids = list(full_data.advertiser_id.unique())
-test_adids = sample(test_adids, 50)
+#test_adids = sample(test_adids, 50)
 #print("TEST IDS:", test_adids)
 
-db_score, gm_score = 0, 0
 for adid in test_adids:
     print('For ' + adid + ':')
+    # cluster, GM is default
     clustered_data = double_cluster(adid, full_data)
     n_labels = clustered_data.label.max() + 1
     model, test_accuracy = fit_predictor(clustered_data, debug=True)
-
-    # GaussianMixture
-    clustered_data = double_cluster(adid, full_data, gm=True)
-    n_labels_gm = clustered_data.label.max() + 1
-    model_gm, test_accuracy_gm = fit_predictor(clustered_data, debug=True)
-
-    useful_labels = test_accuracy * n_labels
-    useful_labels_gm = test_accuracy_gm * n_labels_gm
-    db_score += useful_labels
-    gm_score += useful_labels_gm
-    gm_is_better = False
-    if useful_labels < useful_labels_gm:
-        gm_is_better = True
-    if gm_is_better:
-        print('GM is better')
-    else:
-        print('DBSCAN is better')
-    print('-----------------------------------------')
-db_score_avg = db_score / len(test_adids)
-gm_score_avg = gm_score / len(test_adids)
-print('DBSCAN average score:', db_score_avg)
-print('GM average score:', gm_score_avg)
-print(('GM' if db_score < gm_score else 'DB'), 'is better overall')
 '''
+

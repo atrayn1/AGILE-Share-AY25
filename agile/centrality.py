@@ -4,7 +4,7 @@ import pandas as pd
 import numpy as np
 import networkx as nx
 from pygeohash import decode
-from filtering import query_location
+from .filtering import query_location
 
 # First step is identifying persons of interest and locations of interest
 # This assumes that the file is already geohashed (which it should be)
