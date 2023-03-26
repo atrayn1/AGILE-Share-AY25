@@ -47,6 +47,7 @@ title_center.subheader('Advertising and Geolocation Information Logical Extracto
 
 # Logo Image
 #title_left.image(find('AGILE_Black.png', '/'))
+# Path relative to files.py
 title_left.image(find('../images/AGILE_Black.png'))
 
 # Main page sidebar
