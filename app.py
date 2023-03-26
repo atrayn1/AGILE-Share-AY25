@@ -28,8 +28,10 @@ from agile.profile import Profile
 from agile.report import Report
 from agile.centrality import compute_top_centrality
 
+from streamlit_option_menu import option_menu
+
 # Make use of the whole screen
-#st.set_page_config(layout="wide")
+st.set_page_config(layout="wide")
 
 # Some session state variables that need to be maintained between reloads
 if 'data' not in st.session_state:
@@ -38,6 +40,13 @@ if 'loi_data' not in st.session_state:
     st.session_state.loi_data = None
 if 'uploaded' not in st.session_state:
     st.session_state.uploaded = False
+
+# Replace Sidebar with data options Menu
+# This will equal the value of the string selected
+nav_bar = option_menu(None, ['Data', 'Filtering', 'Locations', 'Algorithms', 'Report'],
+                      icons=['gear', 'gear', 'gear', 'gear', 'gear'],
+                      menu_icon="cast", default_index=0, orientation="horizontal",
+                    )
 
 # Title container
 title_c = st.container()
@@ -52,14 +61,6 @@ title_left.image(find('../images/AGILE_Black.png'))
 
 # Main page sidebar
 sidebar = st.sidebar
-sidebar.title('Data Options')
-
-# Data Upload container (This is only for dev purposes)
-data_upload_sb = sidebar.container()
-filtering_ex = sidebar.expander('Filtering')
-locations_ex = sidebar.expander('Locations')
-algorithms_ex = sidebar.expander('Algorithms')
-report_sb = sidebar.expander('Report')
 
 # The data preview
 preview_c = st.container()
@@ -69,8 +70,11 @@ preview_c.subheader('Total Data Preview')
 results_c = st.container()
 results_c.subheader('Analysis')
 
-# Dynamic content
-with sidebar:
+# Based on what option is selected on the Nav Bar, a different container/expander will be displayed in the sidebar
+if nav_bar == 'Data':
+    # Data Upload container (This is only for dev purposes)
+    sidebar.title('Data Options')
+    data_upload_sb = sidebar.container()
 
     # Upload data
     relevant_features = ['geohash', 'datetime', 'latitude', 'longitude', 'advertiser_id']
@@ -96,7 +100,11 @@ with sidebar:
                         except:
                             results_c.write('Invalid file format. Please upload a valid .csv file.')
 
-    # Data Filtering Expander
+
+elif nav_bar == 'Filtering':
+
+    filtering_ex = sidebar.container() #'Filtering'
+
     with filtering_ex:
 
         # Filter by advertising ID
@@ -146,6 +154,9 @@ with sidebar:
                     results_c.write('Datapoints between ' + start + ' and ' + end + ':')
                     results_c.write(st.session_state.data)
 
+elif nav_bar == 'Locations':
+    locations_ex = sidebar.container() #'Locations'
+
     with locations_ex:
 
         # Overpass specific node query
@@ -192,7 +203,9 @@ with sidebar:
                     res = find_all_nearby_nodes(st.session_state.data, radius)
                     results_c.write(res)
 
-    # Analysis Expander
+elif nav_bar == 'Algorithms':
+    algorithms_ex = sidebar.container() #'Algorithms'
+
     with algorithms_ex:
 
         # (Clustering) locations of interest
@@ -275,8 +288,8 @@ with sidebar:
                     start_time = np.array((start_time - start_time.replace(hour=0, minute=0, second=0, microsecond=0)).total_seconds()).reshape(-1, 1)
                     result_label, result_centroid = st.session_state.profile.model_predict(start_time, start_day)
                     data_map(results_c, lois=result_centroid)
-
-    # Generate Report
+elif nav_bar == 'Report':
+    report_sb = sidebar.container() #'Report'
     with report_sb:
         report_c = st.container()
         with report_c:
@@ -294,6 +307,15 @@ with sidebar:
                         results_c.write('Report generated!')
                     else:
                         results_c.write('Upload data first!')
+else:
+    pass #Nothing should happen, it should never be here
+
+# Dynamic content
+#with sidebar:
+    # Data Filtering Expander
+    # Analysis Expander
+
+    # Generate Report
 
 
 # Preview container
