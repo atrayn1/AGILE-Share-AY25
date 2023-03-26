@@ -73,7 +73,8 @@ results_c.subheader('Analysis')
 # Based on what option is selected on the Nav Bar, a different container/expander will be displayed in the sidebar
 if nav_bar == 'Data':
     # Data Upload container (This is only for dev purposes)
-    sidebar.title('Data Options')
+    sidebar.title('Data')
+    sidebar.write("The modules below import data from a file/database into the app.")
     data_upload_sb = sidebar.container()
 
     # Upload data
@@ -103,14 +104,20 @@ if nav_bar == 'Data':
 
 elif nav_bar == 'Filtering':
 
+    sidebar.title('Filtering')
+
     filtering_ex = sidebar.container() #'Filtering'
 
     with filtering_ex:
+
+        st.write("The modules below filter the data by Advertising ID, Location, or Time. These changes will remain until \
+                 the data is reset in the 'Data' section.")
 
         # Filter by advertising ID
         adid_filter_c = st.container()
         with adid_filter_c:
             st.subheader('Advertising ID Filtering')
+
             adid_form = st.form(key='adid_filter')
             with adid_form:
                 adid = st.text_input('Advertiser ID')
@@ -155,9 +162,14 @@ elif nav_bar == 'Filtering':
                     results_c.write(st.session_state.data)
 
 elif nav_bar == 'Locations':
+
+    sidebar.title('Locations')
+
     locations_ex = sidebar.container() #'Locations'
 
     with locations_ex:
+
+        st.write("The modules below provide more information about a specific location in the data.")
 
         # Overpass specific node query
         node_analysis = st.container()
@@ -204,9 +216,14 @@ elif nav_bar == 'Locations':
                     results_c.write(res)
 
 elif nav_bar == 'Algorithms':
+
+    sidebar.title('Algorithms')
+
     algorithms_ex = sidebar.container() #'Algorithms'
 
     with algorithms_ex:
+
+        st.write("The modules below provide more information about a single advertiser ID (a single device) in the data.")
 
         # (Clustering) locations of interest
         cluster_analysis = st.container()
@@ -289,6 +306,12 @@ elif nav_bar == 'Algorithms':
                     result_label, result_centroid = st.session_state.profile.model_predict(start_time, start_day)
                     data_map(results_c, lois=result_centroid)
 elif nav_bar == 'Report':
+
+    sidebar.title('Report')
+
+    sidebar.write("The module below generates a report in PDF format about a single adverter ID (a single device) in the data.")
+
+    sidebar.subheader('Generate Report')
     report_sb = sidebar.container() #'Report'
     with report_sb:
         report_c = st.container()
