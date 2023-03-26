@@ -118,8 +118,11 @@ elif nav_bar == 'Filtering':
         with adid_filter_c:
             st.subheader('Advertising ID Filtering')
 
+            st.write("Filter the data by advertising ID, i.e. a single device.")
+
             adid_form = st.form(key='adid_filter')
             with adid_form:
+
                 adid = st.text_input('Advertiser ID')
                 if st.form_submit_button('Query'):
                     st.session_state.data = query_adid(adid, st.session_state.data)
@@ -131,12 +134,14 @@ elif nav_bar == 'Filtering':
         location_filter_c = st.container()
         with location_filter_c:
             st.subheader('Location Filtering')
+            st.write('Filter the data by location, given as latitude and longitude. The range is the radius around the latitude \
+                     and longitude in which to filter the data.')
             location_form = st.form(key='location_filter')
             with location_form:
                 # We need lat, long, and radius
                 lat = st.text_input('Latitude')
                 long = st.text_input('Longitude')
-                radius = st.text_input('Radius')
+                radius = st.text_input('Radius (meters)')
                 if st.form_submit_button('Query'):
                     st.session_state.data = query_location(lat, long, radius, st.session_state.data)
                     data_map(results_c, data=st.session_state.data)
@@ -147,6 +152,7 @@ elif nav_bar == 'Filtering':
         time_filter = st.container()
         with time_filter:
             st.subheader('Time Filtering')
+            st.write("Filter the data by timestamp.")
             time_form = st.form(key='time_filter')
             with time_form:
                 start_date = st.date_input('Start Date')
