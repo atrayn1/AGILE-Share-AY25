@@ -16,14 +16,13 @@ The working repository for our 2023 Capstone Project. ADD MORE DESCRIPTION LATER
 ## Dependencies
 
 ```
-- streamlit==1.17.0
+- streamlit==1.20.0
 - proximitypyhash==0.2.1
 - pygeohash==1.2.0
 - pandas==1.5.2
 - matplotlib==3.6.2
 - Bokeh==3.0.2
 - streamlit-folium==0.7.0
-- overpy==0.6
 - geopy==2.3.0
 - scikit-learn==1.2.1
 - fpdf2==2.6.1

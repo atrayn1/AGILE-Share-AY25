@@ -26,9 +26,9 @@ def data_map(container, data=None, lois=None):
                     p += str(row.latitude)
                     p += ", "
                     p += str(row.longitude)
-                    if 'node_name' in row:
+                    if 'name' in row:
                         p += " Node Name: "
-                        p += row.node_name
+                        p += str(row.name)
                     if 'datetime' in row:
                         p += " Timestamp: "
                         p += str(row.datetime)
