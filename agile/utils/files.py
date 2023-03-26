@@ -3,6 +3,8 @@ from itertools import islice
 from math import ceil
 import os
 
+ROOT_DIR = os.path.realpath(os.path.join(os.path.dirname(__file__), '..'))
+
 def random_line(iterator):
     index1 = 1
     result = None
@@ -26,7 +28,5 @@ def random_line(iterator):
 # Dynamically find the path of a file given the file name
 # This is needed for containerization
 # Otherwise the image and names could not be loaded
-def find(name, path):
-    for root, dirs, files in os.walk(path):
-        if name in files:
-            return os.path.join(root, name)
+def find(relative_path):
+    return os.path.join(ROOT_DIR, relative_path)

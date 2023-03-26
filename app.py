@@ -46,7 +46,8 @@ title_center.title('AGILE')
 title_center.subheader('Advertising and Geolocation Information Logical Extractor')
 
 # Logo Image
-title_left.image(find('AGILE_Black.png', '/'))
+#title_left.image(find('AGILE_Black.png', '/'))
+title_left.image(find('../images/AGILE_Black.png'))
 
 # Main page sidebar
 sidebar = st.sidebar
