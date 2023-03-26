@@ -2,7 +2,7 @@
 
 echo "INSTALLING DEPENDENCIES"
 
-pip install streamlit==1.17.0
+pip install streamlit==1.20.0
 pip install proximitypyhash==0.2.1
 pip install pygeohash==1.2.0
 pip install pandas==1.5.2

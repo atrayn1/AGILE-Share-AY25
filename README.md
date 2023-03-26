@@ -16,7 +16,7 @@ The working repository for our 2023 Capstone Project. ADD MORE DESCRIPTION LATER
 ## Dependencies
 
 ```
-- streamlit==1.17.0
+- streamlit==1.20.0
 - proximitypyhash==0.2.1
 - pygeohash==1.2.0
 - pandas==1.5.2
