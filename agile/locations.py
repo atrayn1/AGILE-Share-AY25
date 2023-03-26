@@ -4,7 +4,7 @@
 
 import numpy as np
 import pandas as pd
-from overpy import Overpass as api
+#from overpy import Overpass as api
 from pygeohash import encode
 from datetime import timedelta
 
