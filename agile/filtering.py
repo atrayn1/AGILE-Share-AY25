@@ -79,6 +79,10 @@ def query_node(lat, lon, rad, name):
     data = response.json()
     df = pd.json_normalize(data['elements'])
 
+    # Fail gracefully when no nodes are found, return empty dataframe
+    if data.empty:
+        return pd.DataFrame()
+
     # Filter the dataframe to only include named nodes
     df = df[df['tags.name'].notnull()]
 
