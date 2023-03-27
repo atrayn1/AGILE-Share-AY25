@@ -326,16 +326,17 @@ elif nav_bar == 'Algorithms':
                 start_time = st.time_input('Time:', key='time')
                 start_day = st.slider('Day (0 = Saturday, 6 = Sunday):', min_value=0, max_value=6, value=2)
                 if st.form_submit_button('Predict'):
-                    st.session_state.profile = Profile(st.session_state.data, adid)
-                    if not st.session_state.profile.model_trained():
-                        st.session_state.profile.model_train()
-                    # Convert the time input to a datetime
-                    # str(dt.combine(start_date, start_time))
-                    # Using an arbitary date because this algorith monly cares about the time of day
-                    start_time = pd.to_datetime(str(dt.combine(pd.to_datetime('2018-01-01'), start_time)))
-                    start_time = np.array((start_time - start_time.replace(hour=0, minute=0, second=0, microsecond=0)).total_seconds()).reshape(-1, 1)
-                    result_label, result_centroid = st.session_state.profile.model_predict(start_time, start_day)
-                    data_map(results_c, lois=result_centroid)
+                    with st.spinner(text="Computing..."):
+                        st.session_state.profile = Profile(st.session_state.data, adid)
+                        if not st.session_state.profile.model_trained():
+                            st.session_state.profile.model_train()
+                        # Convert the time input to a datetime
+                        # str(dt.combine(start_date, start_time))
+                        # Using an arbitary date because this algorith monly cares about the time of day
+                        start_time = pd.to_datetime(str(dt.combine(pd.to_datetime('2018-01-01'), start_time)))
+                        start_time = np.array((start_time - start_time.replace(hour=0, minute=0, second=0, microsecond=0)).total_seconds()).reshape(-1, 1)
+                        result_label, result_centroid = st.session_state.profile.model_predict(start_time, start_day)
+                        data_map(results_c, lois=result_centroid)
 elif nav_bar == 'Report':
 
     sidebar.title('Report')
