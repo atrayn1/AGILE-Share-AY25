@@ -118,7 +118,7 @@ elif nav_bar == 'Filtering':
         with adid_filter_c:
             st.subheader('Advertising ID Filtering')
 
-            st.write("Filter the data by advertising ID, i.e. a single device.")
+            st.info("Filter the data by advertising ID, i.e. a single device.")
 
             adid_form = st.form(key='adid_filter')
             with adid_form:
@@ -134,7 +134,7 @@ elif nav_bar == 'Filtering':
         location_filter_c = st.container()
         with location_filter_c:
             st.subheader('Location Filtering')
-            st.write('Filter the data by location, given as latitude and longitude. The range is the radius around the latitude \
+            st.info('Filter the data by location, given as latitude and longitude. The range is the radius around the latitude \
                      and longitude in which to filter the data.')
             location_form = st.form(key='location_filter')
             with location_form:
@@ -152,7 +152,7 @@ elif nav_bar == 'Filtering':
         time_filter = st.container()
         with time_filter:
             st.subheader('Time Filtering')
-            st.write("Filter the data by timestamp.")
+            st.info("Filter the data by timestamp.")
             time_form = st.form(key='time_filter')
             with time_form:
                 start_date = st.date_input('Start Date')
@@ -181,12 +181,14 @@ elif nav_bar == 'Locations':
         node_analysis = st.container()
         with node_analysis:
             st.subheader('Node Query')
+            st.info('Query the Overpass API for named locations within a certain circular radius of a given latitude and longitude.\
+                     The radius is in meters. To search for a specific type of location, enter the location mname into the Node field below.')
             node_form = st.form(key='node')
             with node_form:
                 lat = st.text_input('Latitude')
                 long = st.text_input('Longitude')
-                radius = st.text_input('Radius')
-                node = st.text_input('Node')
+                radius = st.text_input('Radius (meters)')
+                node = st.text_input('Node (name)')
                 if st.form_submit_button('Query'):
                     node_data = query_node(lat, long, radius, node)
                     data_map(results_c, data=node_data)
@@ -197,11 +199,14 @@ elif nav_bar == 'Locations':
         centrality_analysis = st.container()
         with centrality_analysis:
             st.subheader('Location Centrality Query')
+            # TODO I think this description needs work from someone who is not me (sam)
+            st.info('Determine the most visited locations for the advertising IDs found at the given latitude and longitude \
+                     within a certain radius in meters.')
             centrality_form = st.form(key='centrality')
             with centrality_form:
                 lat = st.text_input('Latitude')
                 long = st.text_input('Longitude')
-                radius = st.text_input('Radius')
+                radius = st.text_input('Radius (meters)')
                 if st.form_submit_button('Query'):
                     centrality_data = compute_top_centrality(lat, long, radius, 5, st.session_state.data)
                     data_map(results_c, lois=centrality_data)
@@ -212,10 +217,12 @@ elif nav_bar == 'Locations':
         overpass_analysis = st.container()
         with overpass_analysis:
             st.subheader('Overpass Polyline Query') # This will be an Overpass API integration
+            st.info('Query the Overpass API for points of interest along the path of a single advertising ID. The radius is the \
+                    circular radius around each point for the advertising ID to search for these points of interest. The radius is in meters.')
             overpass_form = st.form(key='polyline')
             with overpass_form:
                 adid = st.text_input('Advertiser ID')
-                radius = st.text_input('Radius')
+                radius = st.text_input('Radius (meters)')
                 if st.form_submit_button('Query'):
                     st.session_state.data = query_adid(adid, st.session_state.data) # Filter the data
                     res = find_all_nearby_nodes(st.session_state.data, radius)
@@ -235,6 +242,9 @@ elif nav_bar == 'Algorithms':
         cluster_analysis = st.container()
         with cluster_analysis:
             st.subheader('Top Clusters')
+            st.info('Determine the top N locations of interest for a single Advertising ID. The top cluster is usually the \
+                    home location, wheras the second and third cluster are usually work and frequently visited locations. Results vary \
+                    based on data size and consistency.')
             cluster_form = st.form(key='cluster_form')
             with cluster_form:
                 loi_data = None
@@ -259,6 +269,10 @@ elif nav_bar == 'Algorithms':
         loi_analysis = st.container()
         with loi_analysis:
             st.subheader('Locations of Interest')
+            st.info('Determine the top locations of interest for a single Advertising ID. This algorithm does not use AI/ML, \
+                    it instead flags locations based on time spent at the location. The Extended Stay Duration is the length of time \
+                    required at a single location (without leaving) to be flagged. The Time Between Repeat Visits is the lenght of time \
+                    between two data points at the same location for them to be considered wo separate visits.')
             loi_form = st.form(key='loi_form')
             with loi_form:
                 loi_data = None
@@ -280,9 +294,12 @@ elif nav_bar == 'Algorithms':
         colocation_analysis = st.container()
         with colocation_analysis:
             st.subheader('Colocation')
+            st.info('Identify other advertising IDs that show up at any of the locations of interest within a certain time frame. \
+                    One of the two algorithms above MUST be run before using this algorithm. Search Time is the allowable difference between \
+                    Location of Interest datapoint and the other advertising IDs datapoint\'s time stamp')
             colocation_form = st.form(key='colocation_form')
             with colocation_form:
-                search_time = st.slider('Search Time', min_value=1, max_value=12, value=2)
+                search_time = st.slider('Search Time (hr)', min_value=1, max_value=12, value=2)
                 if st.form_submit_button('Query'):
                     data = st.session_state.data
                     loi_data = st.session_state.loi_data
@@ -295,11 +312,13 @@ elif nav_bar == 'Algorithms':
         pred_analysis = st.container()
         with pred_analysis:
             st.subheader('Movement Prediction')
+            st.info('Predict the location of an advertising ID at a certain day of the week, and time of day. One of the locations of Interest \
+                    algorithms MUST be run before using this module.')
             pred_form = st.form('pred')
             with pred_form:
                 adid = st.text_input('Advertiser ID')
                 start_time = st.time_input('Time:', key='time')
-                start_day = st.slider('Day:', min_value=0, max_value=6, value=2)
+                start_day = st.slider('Day (0 = Saturday, 6 = Sunday):', min_value=0, max_value=6, value=2)
                 if st.form_submit_button('Predict'):
                     st.session_state.profile = Profile(st.session_state.data, adid)
                     if not st.session_state.profile.model_trained():
