@@ -29,19 +29,19 @@ The working repository for our 2023 Capstone Project. ADD MORE DESCRIPTION LATER
 - networkx==3.0
 - streamlit-option-menu==0.3.2
 ```
-The dependencies are also contained within `agile/requirements.txt` for use with the docker image.
+The dependencies are also contained within `AGILE/requirements.txt` for use with the docker image.
 
 ## Install
 
 ```
-foo@bar:../AGILE/agile$ docker build -t docker_image_name .
-foo@bar:../AGILE/agile$ docker run -p 8501:8501 docker_image_name
+foo@bar:../AGILE$ docker build -t docker_image_name .
+foo@bar:../AGILE$ docker run -p 8501:8501 docker_image_name
 ```
 
 ## Usage
 
 ```
-foo@bar:../AGILE/agile$ streamlit run app.py
+foo@bar:../AGILE$ streamlit run app.py
 ```
 
 ## Contributing
