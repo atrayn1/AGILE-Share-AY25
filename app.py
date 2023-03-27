@@ -190,10 +190,11 @@ elif nav_bar == 'Locations':
                 radius = st.text_input('Radius (meters)')
                 node = st.text_input('Node (name)')
                 if st.form_submit_button('Query'):
-                    node_data = query_node(lat, long, radius, node)
-                    data_map(results_c, data=node_data)
-                    results_c.write(node + ' found around ' + lat + ', ' + long + ' within a radius of ' + radius + ' meters:')
-                    results_c.write(node_data)
+                    with st.spinner(text="Computing..."):
+                        node_data = query_node(lat, long, radius, node)
+                        data_map(results_c, data=node_data)
+                        results_c.write(node + ' found around ' + lat + ', ' + long + ' within a radius of ' + radius + ' meters:')
+                        results_c.write(node_data)
 
         # Centrality analysis
         centrality_analysis = st.container()
@@ -208,10 +209,11 @@ elif nav_bar == 'Locations':
                 long = st.text_input('Longitude')
                 radius = st.text_input('Radius (meters)')
                 if st.form_submit_button('Query'):
-                    centrality_data = compute_top_centrality(lat, long, radius, 5, st.session_state.data)
-                    data_map(results_c, lois=centrality_data)
-                    results_c.write('The locations with the highest centrality to the AdIDs at the entered location are:')
-                    results_c.write(centrality_data)
+                    with st.spinner(text="Computing..."):
+                        centrality_data = compute_top_centrality(lat, long, radius, 5, st.session_state.data)
+                        data_map(results_c, lois=centrality_data)
+                        results_c.write('The locations with the highest centrality to the AdIDs at the entered location are:')
+                        results_c.write(centrality_data)
 
         # Overpass API polyline
         overpass_analysis = st.container()
@@ -224,9 +226,10 @@ elif nav_bar == 'Locations':
                 adid = st.text_input('Advertiser ID')
                 radius = st.text_input('Radius (meters)')
                 if st.form_submit_button('Query'):
-                    st.session_state.data = query_adid(adid, st.session_state.data) # Filter the data
-                    res = find_all_nearby_nodes(st.session_state.data, radius)
-                    results_c.write(res)
+                    with st.spinner(text="Computing..."):
+                        st.session_state.data = query_adid(adid, st.session_state.data) # Filter the data
+                        res = find_all_nearby_nodes(st.session_state.data, radius)
+                        results_c.write(res)
 
 elif nav_bar == 'Algorithms':
 
@@ -251,19 +254,20 @@ elif nav_bar == 'Algorithms':
                 adid = st.text_input('Advertiser ID')
                 num_clusters = st.slider('Number of Clusters', min_value=1, max_value=10, value=4)
                 if st.form_submit_button('Query'):
-                    # We need to filter by adid and then perform loi analysis
-                    data = st.session_state.data
-                    cluster_data = double_cluster(adid, data)
-                    loi_data = get_top_N_clusters(cluster_data, num_clusters)
-                    if loi_data is None:
-                        results_c.write('No Clusters Found')
-                    else:
-                        st.session_state.loi_data = loi_data
-                        # Here we need to make a map and pass the optional parameter for these location points
-                        data_map(results_c, lois=st.session_state.loi_data)
-                        # Write Locations of Interest to the results container
-                        results_c.write('Cluster Data')
-                        results_c.write(loi_data)
+                    with st.spinner(text="Computing..."):
+                        # We need to filter by adid and then perform loi analysis
+                        data = st.session_state.data
+                        cluster_data = double_cluster(adid, data)
+                        loi_data = get_top_N_clusters(cluster_data, num_clusters)
+                        if loi_data is None:
+                            results_c.write('No Clusters Found')
+                        else:
+                            st.session_state.loi_data = loi_data
+                            # Here we need to make a map and pass the optional parameter for these location points
+                            data_map(results_c, lois=st.session_state.loi_data)
+                            # Write Locations of Interest to the results container
+                            results_c.write('Cluster Data')
+                            results_c.write(loi_data)
 
         # (Traditional) locations of interest
         loi_analysis = st.container()
@@ -280,15 +284,16 @@ elif nav_bar == 'Algorithms':
                 ext_h = st.slider('Extended Stay Duration', min_value=1, max_value=24, value=7)
                 rep_h = st.slider('Time Between Repeat Visits', min_value=1, max_value=72, value=24)
                 if st.form_submit_button('Query'):
-                    # We need to filter by adid and then perform loi analysis
-                    data = st.session_state.data
-                    loi_data = locations_of_interest(data, adid, ext_h, rep_h)
-                    st.session_state.loi_data = loi_data
-                    # Here we need to make a map and pass the optional parameter for these location points
-                    data_map(results_c, lois=st.session_state.loi_data)
-                    # Write Locations of Interest to the results container
-                    results_c.write('Location of Interest Data')
-                    results_c.write(loi_data)
+                    with st.spinner(text="Computing..."):
+                        # We need to filter by adid and then perform loi analysis
+                        data = st.session_state.data
+                        loi_data = locations_of_interest(data, adid, ext_h, rep_h)
+                        st.session_state.loi_data = loi_data
+                        # Here we need to make a map and pass the optional parameter for these location points
+                        data_map(results_c, lois=st.session_state.loi_data)
+                        # Write Locations of Interest to the results container
+                        results_c.write('Location of Interest Data')
+                        results_c.write(loi_data)
 
         # Colocation
         colocation_analysis = st.container()
@@ -301,12 +306,13 @@ elif nav_bar == 'Algorithms':
             with colocation_form:
                 search_time = st.slider('Search Time (hr)', min_value=1, max_value=12, value=2)
                 if st.form_submit_button('Query'):
-                    data = st.session_state.data
-                    loi_data = st.session_state.loi_data
-                    colocation_data = colocation(data, loi_data, duration=search_time)
-                    data_map(results_c, data=colocation_data, lois=loi_data)
-                    results_c.write('Colocation Data')
-                    results_c.write(colocation_data)
+                    with st.spinner(text="Computing..."):
+                        data = st.session_state.data
+                        loi_data = st.session_state.loi_data
+                        colocation_data = colocation(data, loi_data, duration=search_time)
+                        data_map(results_c, data=colocation_data, lois=loi_data)
+                        results_c.write('Colocation Data')
+                        results_c.write(colocation_data)
 
         # Prediction
         pred_analysis = st.container()
