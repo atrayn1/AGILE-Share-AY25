@@ -7,17 +7,20 @@
 
 import random
 import pandas as pd
-from locations import locations_of_interest
-from people import colocation
-from utils.files import random_line
-from utils.files import find
-from utils.geocode import reverse_geocode
-import prediction as pred
+from .locations import locations_of_interest
+from .people import colocation
+from .utils.files import random_line
+from .utils.files import find
+from .utils.geocode import reverse_geocode
+from .prediction import double_cluster
+from .prediction import get_cluster_centroids
+from .prediction import get_top_N_clusters
+from .prediction import fit_predictor
 
 class Profile:
 
     # Constructor with specific parameters
-    def __init__(self, data, ad_id, ext_duration, rep_duration, coloc_duration) -> None:
+    def __init__(self, data, ad_id, ext_duration=7, rep_duration=24, coloc_duration=2) -> None:
         self.ad_id = ad_id
         self.name = self.__name_gen()
         # We need to somehow store this information in here so that it can be relayed on the report
@@ -31,18 +34,7 @@ class Profile:
 
         # Prediction model values
         # If the model is untrained it will None
-        self.model = None
-        self.cluster_centroids = None
-        self.model_accuracy = None
-    
-    # Secondary constructor without the colocation and loi information requirements
-    # TODO we can figure out how to handle the rest of this later
-    def __init__(self, data, ad_id) -> None:
-        self.ad_id = ad_id
-        self.name = self.__name_gen()
         self.data = data
-        # Prediction model values
-        # If the model is untrained it will None
         self.model = None
         self.cluster_centroids = None
         self.model_accuracy = None
@@ -71,10 +63,10 @@ class Profile:
     def model_train(self, data=None):
         if data == None:
             data = self.data
-        clustered_data = pred.double_cluster(self.ad_id, data)
-        self.cluster_centroids = pred.get_cluster_centroids(clustered_data)
-        self.lois = pred.get_top_N_clusters(clustered_data, 5)
-        self.model, self.model_accuracy = pred.fit_predictor(clustered_data, False)
+        clustered_data = double_cluster(self.ad_id, data)
+        self.cluster_centroids = get_cluster_centroids(clustered_data)
+        self.lois = get_top_N_clusters(clustered_data, 5)
+        self.model, self.model_accuracy = fit_predictor(clustered_data, False)
         return self.model, self.model_accuracy
 
     # Perform a single prediction on the provided time

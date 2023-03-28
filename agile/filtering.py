@@ -5,7 +5,7 @@
 import pandas as pd
 from proximitypyhash import get_geohash_radius_approximation
 from datetime import datetime as dt
-from overpy import Overpass
+import requests
 
 def query_adid(adid, df):
     if adid == '' or df is None:
@@ -52,26 +52,48 @@ def query_date(start_date, start_time, end_date, end_time, df):
     print(len(parsed_df.index))
     return parsed_df
 
-def query_node(lat, long, radius, node_name, df):
-    api = Overpass()
-    # First we need to check that all the fields were filled out and then cast to floats
-    if lat == '' or long == '' or radius == '':
+# Find named nodes within a specified radius of a given latitude and longitude.
+def query_node(lat, lon, rad, name):
+
+    # Check that all fields were filled out and convert to floats
+    if not all([lat, lon, rad]):
         return None
-    lat = float(lat)
-    long = float(long)
-    radius = float(radius)
-    # We need to get the nodes in the given radius at the given point
-    # Now create the new smaller dataframe
-    query = "node(around:" + str(radius) + ", " + str(lat) + ", " + str(long) + "); out body;"
-    result = api.query(query)
-    nodes = pd.DataFrame()
-    for node in result.nodes:
-        name = node.tags.get('name')
-        node_lat = float(node.lat)
-        node_lon = float(node.lon)
-        if name == node_name or (node_name == '' and name is not None):
-            node_df = pd.DataFrame([[name, node_lat, node_lon]], columns=['node_name', 'latitude', 'longitude'])
-            nodes = pd.concat([nodes, node_df])
-    nodes = nodes.reset_index(drop=True)
-    return nodes
+    lat, lon, rad = map(float, [lat, lon, rad])
+
+    # Define query to look for named nodes within the specified radius
+    overpass_url = "http://overpass-api.de/api/interpreter"
+    overpass_query = """
+    [out:json];
+    node(around:{rad},{lat},{lon})[name];
+    out center;
+    """
+    query = overpass_query.format(rad=rad, lat=lat, lon=lon)
+
+    # Send the query to the Overpass API
+    response = requests.get(overpass_url, params={'data': query})
+
+    # Raises exception when not a 2xx response
+    response.raise_for_status()
+
+    # Parse the JSON response
+    data = response.json()
+    df = pd.json_normalize(data['elements'])
+
+    # Fail gracefully when no nodes are found, return None object
+    if df.empty:
+        return None
+
+    # Filter the dataframe to only include named nodes
+    df = df[df['tags.name'].notnull()]
+
+    # Extract the name, latitude, and longitude of each named node
+    df = df[['tags.name', 'lat', 'lon']].reset_index(drop=True)
+
+    # Get only the nodes with the specific name we want, if specified
+    if name:
+        df = df[df['tags.name'] == name].reset_index(drop=True)
+
+    # Make sure names are consistent for the mapping function
+    df = df.rename(columns={'tags.name':'name', 'lat':'latitude', 'lon':'longitude'})
+    return df
 
