@@ -41,7 +41,7 @@ class Profile:
 
     def __name_gen(self) -> str:
         # Updated the open to use the find function, so that file paths are located dynamically
-        with open(find('first.txt', '/')) as F, open(find('last.txt', '/')) as L:
+        with open(find('../names/first.txt')) as F, open(find('../names/last.txt')) as L:
             return random_line(F) + '-' + random_line(L)
 
     # generate the locations of interest for this ad_id

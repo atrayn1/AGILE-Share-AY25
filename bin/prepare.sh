@@ -13,5 +13,6 @@ pip install geopy==2.3.0
 pip install scikit-learn==1.2.1
 pip install fpdf2==2.6.1
 pip install networkx==3.0
+pip install streamlit-option-menu==0.3.2
 
 echo "DONE"
