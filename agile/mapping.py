@@ -1,52 +1,53 @@
-# Mapping function for the webapp demo
-# Ernest Son
-# Sam Chanow
-
 import pandas as pd
 import proximitypyhash as pph
-from streamlit_folium import folium_static
 import folium
+from streamlit_folium import folium_static
 
 def data_map(container, data=None, lois=None):
+    """
+    Display a map in a Streamlit container.
+
+    Parameters:
+        container: Streamlit container to display map
+        data: Pandas DataFrame of data points to display on map
+        lois: Pandas DataFrame of locations of interest to display on map
+    """
     if data is None and lois is None:
         return
-    data_size = len(lois.index) if data is None else len(data.index)
+
+    # Determine size of data to be displayed
+    data_size = len(lois) if data is None else len(data)
+
     if data_size > 0:
+        # Get coordinates of first data point
         first_point = lois.iloc[0] if data is None else data.iloc[0]
-        lat = first_point.latitude
-        long = first_point.longitude
+        lat, long = first_point.latitude, first_point.longitude
+
         with container:
+            # Create the map
             m = folium.Map(location=[lat, long], zoom_start=10)
+
+            # Add data points to map
             if data is not None:
-                # Each marker will have a nice description
-                def add_datapoint(row):
-                    lat = row.latitude
-                    long = row.longitude
-                    p = "Location: "
-                    p += str(row.latitude)
-                    p += ", "
-                    p += str(row.longitude)
-                    if 'name' in row:
-                        p += " Node Name: "
-                        p += str(row.name)
-                    if 'datetime' in row:
-                        p += " Timestamp: "
-                        p += str(row.datetime)
-                    if 'advertiser_id' in row:
-                        p += "advertiser ID: "
-                        p += row.advertiser_id
-                    M = folium.Marker([lat,long], popup = p)
-                    M.add_to(m)
-                data.apply(add_datapoint, axis=1)
-            # Add the LOI raster overlay to map
+                data.apply(lambda row: folium.Marker(
+                    location=[row.latitude, row.longitude],
+                    popup=f"Location: {row.latitude}, {row.longitude}"
+                          + (f" Node Name: {row.name}" if 'name' in row else "")
+                          + (f" Timestamp: {row.datetime}" if 'datetime' in row else "")
+                          + (f" Advertiser ID: {row.advertiser_id}" if 'advertiser_id' in row else "")
+                ).add_to(m), axis=1)
+
+            # Add locations of interest to map
             if lois is not None:
-                def add_loi(row):
-                    lat = row.latitude
-                    long = row.longitude
-                    C = folium.CircleMarker([lat,long], radius=30, popup="LOI")
-                    C.add_to(m)
-                lois.apply(add_loi, axis=1)
-            st_data = folium_static(m, width=725)
+                lois.apply(lambda row: folium.CircleMarker(
+                    location=[row.latitude, row.longitude],
+                    radius=30,
+                    popup="LOI"
+                ).add_to(m), axis=1)
+
+            # Display the map
+            folium_static(m, width=725)
+
     else:
         container.write("No Data Points Available")
 
