@@ -86,16 +86,3 @@ def compute_top_centrality(lat, long, radius, N, data) -> pd.DataFrame:
 
     return ordered_out_data
 
-'''
-# Test code for centrality calculations
-
-data = pd.read_csv('../data/test.csv')
-
-lat = 46.2642
-lon = -119.2426
-rad = 100
-
-centrality_data = compute_top_centrality(lat, lon, rad, 5, data)
-centrality_data_sorted = centrality_data.sort_values('centrality', ascending=False).reset_index(drop=True)
-print(centrality_data_sorted)
-'''

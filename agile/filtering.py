@@ -1,26 +1,28 @@
-# Functions for filtering an advertising data set
-# Ernest Son
-# Sam Chanow
-
 import pandas as pd
 from proximitypyhash import get_geohash_radius_approximation
 from datetime import datetime as dt
 import requests
 
-def query_adid(adid, df):
-    if adid == '' or df is None:
-        return
+def query_adid(adid: str, df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Filter dataframe by advertiser_id and return a new dataframe.
+    """
+    if not adid or df.empty:
+        return None
     parsed_df = df.loc[df.advertiser_id == adid]
     return parsed_df
 
-def query_location(lat, long, radius, df):
-    # First we need to check that all the fields were filled out and then cast to floats
-    if lat == '' or long == '' or radius == '':
+def query_location(lat: str, long: str, radius: str, df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Filter dataframe by latitude, longitude, and radius, and return a new dataframe.
+    """
+    if not lat or not long or not radius or df.empty:
         return None
     lat = float(lat)
     long = float(long)
     radius = float(radius)
-    # We need to get the geohashes in the given radius at the given point
+
+    # Get geohashes in the given radius at the given point
     geohashes = get_geohash_radius_approximation(
         latitude=lat,
         longitude=long,
@@ -29,31 +31,41 @@ def query_location(lat, long, radius, df):
         georaptor_flag=False,
         minlevel=1,
         maxlevel=12)
-    # Now create the new smaller dataframe
+
+    # Create a new smaller dataframe
     parsed_df = df.loc[df.geohash.isin(geohashes)]
     return parsed_df
 
-def query_date(start_date, start_time, end_date, end_time, df):
-    # Combine dates and times together for optimal filtering
-    start = dt.combine(start_date, start_time)
-    end = dt.combine(end_date, end_time)
-    if start_date == '' or end_date == '':
-        return
-    # convert string to datetime
-    df['date'] = pd.to_datetime(df['datetime'])
-    start_date = pd.to_datetime(start)
-    end_date = pd.to_datetime(end)
+def query_date(start_date: str, start_time: str, end_date: str, end_time: str, df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Filter dataframe by date range and return a new dataframe.
+    """
+    if not start_date or not end_date or df.empty:
+        return None
+
+    # Combine dates and times
+    start = dt.combine(pd.to_datetime(start_date).date(), pd.to_datetime(start_time).time())
+    end = dt.combine(pd.to_datetime(end_date).date(), pd.to_datetime(end_time).time())
+
     # Parse the df by datetime
-    date_filter = (df['date'] >= start) & (df['date'] <= end)
-    parsed_df = df.loc[date_filter]
-    print(parsed_df.head())
-    parsed_df['datetime'] = parsed_df['datetime'].astype(str)
-    print(parsed_df.head())
-    print(len(parsed_df.index))
+    df['datetime'] = pd.to_datetime(df['datetime'])
+    date_filter = (df['datetime'] >= start) & (df['datetime'] <= end)
+    parsed_df = df.loc[date_filter].copy()
     return parsed_df
 
-# Find named nodes within a specified radius of a given latitude and longitude.
-def query_node(lat, lon, rad, name):
+def query_node(lat: float, lon: float, rad: float, name: str = '') -> pd.DataFrame:
+    """
+    Find named nodes within a specified radius of a given latitude and longitude.
+
+    Parameters:
+        lat (float): latitude of the center point
+        lon (float): longitude of the center point
+        rad (float): radius in meters to search around the center point
+        name (str, optional): name of the node to filter by, default is '' which returns all named nodes
+
+    Returns:
+        pd.DataFrame: a DataFrame with columns 'name', 'latitude', and 'longitude' for each named node within the specified radius and (optionally) with the given name
+    """
 
     # Check that all fields were filled out and convert to floats
     if not all([lat, lon, rad]):
