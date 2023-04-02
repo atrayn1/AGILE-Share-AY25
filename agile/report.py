@@ -10,7 +10,7 @@ class PDF(FPDF):
         self.set_font('Arial', '', 12)
         self.cell(0, 8, 'A.G.I.L.E. Device Activity Report', 0, 1, 'C')
         # The (copyright-free!!) logo
-        #self.pdf.image("../images/new_logo.png", w=75, h=100, x=70, y=150)
+        #self.pdf.image("../img/new_logo.png", w=75, h=100, x=70, y=150)
 
     def footer(self):
         self.set_y(-15)
