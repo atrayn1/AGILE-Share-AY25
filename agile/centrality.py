@@ -1,88 +1,56 @@
-# Applying Graph Theory Centrality to ADIDs at a specific location
-
 import pandas as pd
 import numpy as np
 import networkx as nx
 from pygeohash import decode
 from .filtering import query_location
 
-# First step is identifying persons of interest and locations of interest
-# This assumes that the file is already geohashed (which it should be)
-def people_at_location(lat, long, radius, data) -> pd.DataFrame:
+def people_at_location(lat: float, long: float, radius: float, data: pd.DataFrame) -> pd.DataFrame:
+    """Returns a DataFrame of all the people who visited a specified location."""
 
-    # Basic filtering of points at a location
     filtered_data = query_location(lat, long, radius, data)
-
-    # Get a list of unique adids that appeared at this location
     adids = filtered_data.advertiser_id.unique()
-
-    # Return all of the data from the original dataframe of the people who
-    # visited our specified location
     return data.loc[data.advertiser_id.isin(adids)]
 
-# Data is a dataframe containing adids and geohashes
-# Returns a list of all unique geohashes in data
-def visited_locations(data) -> list: return data.geohash.unique()
+def visited_locations(data: pd.DataFrame) -> np.ndarray:
+    """Returns an array of all unique geohashes in the given DataFrame."""
 
-# Data is a dataframe that contains adids
-# Returns a list of all unique adids in data
-def people_of_interest(data) ->list: return data.advertiser_id.unique()
+    return data.geohash.unique()
 
-# This function requires the full data to create the adjacency matrix and a list
-# of people and places (geohashes) and computes their centrality
-def centrality(people, locations, data) -> pd.DataFrame:
+def people_of_interest(data: pd.DataFrame) -> np.ndarray:
+    """Returns an array of all unique advertiser IDs in the given DataFrame."""
 
-    # Create interest list
-    interest = np.concatenate((people, locations), axis=0)
-    size = len(interest)
+    return data.advertiser_id.unique()
 
-    # Create an empty adjacency matrix
-    A = np.zeros([size, size])
+def compute_adjacency(row: pd.Series, A: np.ndarray, interest: np.ndarray) -> None:
+    """Updates the adjacency matrix using the given row."""
 
-    # Fill in adjacency matrix
-    # We can do this easily with a janky apply function
-    # I know that this is weird and I am against using global vars like this in a function,
-    # But I cant think of any other way right now
-    def compute_adjacency(row):
-        # Not sure if this should be +1 or = 1 we will have to do some testing
-        A[np.where(interest == row.advertiser_id)[0], np.where(interest == row.geohash)[0]] += 1
+    A[np.where(interest == row.advertiser_id)[0], np.where(interest == row.geohash)[0]] += 1
 
-    # Take advantage of that pandas asynchronicity
-    data.apply(compute_adjacency, axis=1)
+def centrality(people: np.ndarray, locations: np.ndarray, data: pd.DataFrame) -> pd.DataFrame:
+    """Returns a DataFrame of the centrality of each location given a list of people and places."""
 
-    # Build the graph
+    interest = np.concatenate((people, locations))
+    A = np.zeros((len(interest), len(interest)))
+
+    data.apply(lambda row: compute_adjacency(row, A, interest), axis=1)
+
     G = nx.Graph(A)
-
-    # Calculate the degress of centrality
     degree_centrality = nx.degree_centrality(G)
-
-    # Degree Centrality is mapped from index to centrality so we need to pull it out
     centrality_values = [degree_centrality[i] for i in range(len(degree_centrality))]
 
-    out_data = pd.DataFrame()
-    out_data['id'] = interest
-    out_data['centrality'] = centrality_values
+    out_data = pd.DataFrame({'id': interest, 'centrality': centrality_values})
+    out_data = out_data.iloc[len(people):]
 
-    # Get rid of the data associated with the individuals and not the places
-    return out_data.iloc[len(people):]
+    out_data[['latitude', 'longitude']] = pd.DataFrame(out_data['id'].apply(decode).tolist(), index=out_data.index)
 
-# Wrapper function to complete centrality computation from start to finish
-def compute_top_centrality(lat, long, radius, N, data) -> pd.DataFrame:
+    return out_data.sort_values(by='centrality', ascending=False).head()
+
+def compute_top_centrality(lat: float, long: float, radius: float, N: int, data: pd.DataFrame) -> pd.DataFrame:
+    """Returns a DataFrame of the top N most central locations given a latitude, longitude, radius, and DataFrame of data."""
+
     data_of_interest = people_at_location(lat, long, radius, data)
     visited = visited_locations(data_of_interest)
     people = people_of_interest(data_of_interest)
 
-    out_data = centrality(people, visited, data)
-
-    # Simple apply() wrapper for the pygeohash decode
-    def decode_geohash(row):
-        coord = decode(row['id'])
-        row['latitude'] = coord[0]
-        row['longitude'] = coord[1]
-        return row
-
-    out_data = out_data.apply(decode_geohash, axis=1)
-    ordered_out_data = out_data.sort_values(by='centrality', ascending=False).head(N)
-
-    return ordered_out_data
+    return centrality(people, visited, data)
 
