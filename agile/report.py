@@ -1,24 +1,24 @@
 import pandas as pd
 from fpdf import FPDF
-# PDF Report class for AGILE Device Activity Rreports
-# Ernest Son
-# Sam Chanow
 
 class PDF(FPDF):
+
     def __init__(self):
         super().__init__()
+
     def header(self):
         self.set_font('Arial', '', 12)
         self.cell(0, 8, 'A.G.I.L.E. Device Activity Report', 0, 1, 'C')
         # The (copyright-free!!) logo
         #self.pdf.image("../images/new_logo.png", w=75, h=100, x=70, y=150)
+
     def footer(self):
         self.set_y(-15)
         self.set_font('Arial', '', 12)
         self.cell(0, 8, f'Page {self.page_no()}', 0, 0, 'C')
 
-# Generate PDF
 class Report:
+
     def __init__(self, profile):
         self.pdf = PDF()
         self.profile = profile
@@ -27,6 +27,7 @@ class Report:
         self.save_pdf()
 
     def tldr_report(self):
+
         # cell height
         ch = 8
         self.pdf.add_page()
@@ -48,6 +49,7 @@ class Report:
         self.pdf.ln(ch)
         self.pdf.set_font('Arial', 'B', 16)
         self.pdf.cell(w=0, h=ch, txt="Locations of Interest:", ln=1)
+
         # We only care about addresses for the summary page
         self.pdf.set_font('Arial', '', 10)
         loi_addresses = pd.DataFrame(self.profile.lois.address.unique(), columns=['address'])
@@ -65,26 +67,10 @@ class Report:
         self.pdf.set_font('Arial', 'B', 16)
         self.pdf.cell(w=0, h=ch, txt="Pattern of Life:", ln=1)
         self.pdf.set_font('Arial', '', 16)
-        potential_dwells = self.profile.lois[self.profile.lois.potential_dwell == True]
-        potential_dwells = pd.DataFrame(potential_dwells.address.unique(), columns=['address'])
-        potential_workplaces = self.profile.lois[self.profile.lois.potential_workplace == True]
-        potential_workplaces = pd.DataFrame(potential_workplaces.address.unique(), columns=['address'])
         self.pdf.set_font('Arial', '', 10)
-        self.pdf.cell(w=0, h=ch, txt="Potential dwell locations:", ln=1)
-        self.display_dataframe(potential_dwells, w=160)
-        self.pdf.cell(w=0, h=ch, txt="Potential workplaces:", ln=1)
-        self.display_dataframe(potential_workplaces, w=160)
-
-        # Here's an example of a dashed line in fpdf.
-        # In practice, we're probably just going to force a new page, but we
-        # might play around with pretty-printing a literal "tear-line."
-
-        # Adds a dashed line beginning at point (10,30),
-        #  ending at point (110,30) with a
-        #  dash length of 1 and a space length of 10.
-        #self.pdf.dashed_line(10, 30, 110, 30, 1, 10)
 
     def full_report(self):
+
         # cell height
         ch = 8
         self.pdf.add_page()
@@ -126,14 +112,6 @@ class Report:
         self.pdf.cell(w=0, h=ch, txt="Co-located Devices:", ln=1)
         self.pdf.set_font('Arial', '', 16)
         self.display_dataframe(self.profile.coloc.advertiser_id.to_frame(), w=160)
-
-        # Pattern of life
-        self.pdf.ln(ch)
-        self.pdf.set_font('Arial', 'B', 16)
-        self.pdf.cell(w=0, h=ch, txt="Pattern of Life:", ln=1)
-        self.pdf.set_font('Arial', '', 16)
-        named_locations = ['latitude', 'longitude', 'potential_dwell', 'potential_workplace']
-        self.display_dataframe(self.profile.lois[named_locations])
 
     # TODO
     # fix this so we can save where we want to

@@ -1,7 +1,3 @@
-# Beginning to work on pattern of life analysis
-# Ernest Son
-# Sam Chanow
-
 import pandas as pd
 import numpy as np
 from matplotlib import pyplot as plt
@@ -239,25 +235,4 @@ def fit_predictor(clustered_data, debug=False) -> RandomForestClassifier:
 
     # This function should return the actual trained model for later use as well as a score to see how it did
     return model, model_accuracy
-
-'''
-# Some sample adids to try
-# 81696261-3059-7d66-69cc-67688182f974
-# 54aa7153-1546-ce0d-5dc9-aa9e8e371f00
-# 18665217-4566-5790-809c-702e77bdbf89
-full_data = pd.read_csv('../data/weeklong.csv')
-
-# Making some more verbose testing here
-# Grabbing a random sample from the dataset and testing the predictor on it
-test_adids = list(full_data.advertiser_id.unique())
-#test_adids = sample(test_adids, 50)
-#print("TEST IDS:", test_adids)
-
-for adid in test_adids:
-    print('For ' + adid + ':')
-    # cluster, GM is default
-    clustered_data = double_cluster(adid, full_data)
-    n_labels = clustered_data.label.max() + 1
-    model, test_accuracy = fit_predictor(clustered_data, debug=True)
-'''
 
