@@ -1,40 +1,33 @@
-# Ernest Son
 from geopy.geocoders import Nominatim
 from geopy.point import Point
 import pandas as pd
 import numpy as np
 from requests import head, ConnectionError
 
-# need to specify a user agent or the api bitches at you
+# Create a geolocator object with a user agent
 geolocator = Nominatim(user_agent='usna')
 
-def reverse_geocoding(lat, lon):
+def reverse_geocoding(lat: float, lon: float) -> str:
     try:
-        api_status_url = 'https://nominatim.openstreetmap.org/status.php'
-        r = head(api_status_url)
-        if r.status_code != 200:
-            print('api down')
+        # Check if the API is up and running
+        if head('https://nominatim.openstreetmap.org/status.php').status_code != 200:
+            print('API down')
             return None
+        # Reverse geocode the given latitude and longitude
         location = geolocator.reverse(Point(lat, lon))
         return location.raw['display_name']
     except ConnectionError:
-        print('failed to connect')
+        print('Failed to connect')
         return None
 
-# This dataframe must contain 'latitude' 'longitude' 'datetime'
-def reverse_geocode(df):
-    # Fail gracefully if nothing is provided
-    # Make the address column anyway
+# This function takes a DataFrame containing columns 'latitude', 'longitude', and 'datetime'
+# and adds a new column 'address' containing the reverse geocoded address for each row
+def reverse_geocode(df: pd.DataFrame) -> pd.DataFrame:
+    # If the DataFrame is empty, just add an empty 'address' column
     if df.empty:
         df['address'] = pd.Series(dtype='string')
         return df
+    # Otherwise, use vectorization to apply the reverse_geocoding function to each row
     df['address'] = np.vectorize(reverse_geocoding)(df.latitude, df.longitude)
     return df
 
-# testing
-'''
-# head -1000 test_location_data_gh.csv > small_test.csv
-data = pd.read_csv("../data/small_test.csv")
-test = reverse_geocode(data)
-print(test['address'].unique())
-'''

@@ -1,12 +1,5 @@
-# Beginning to work on pattern of life analysis
-# Ernest Son
-# Sam Chanow
-
 import pandas as pd
 import numpy as np
-from matplotlib import pyplot as plt
-#from sklearn.cluster import AgglomerativeClustering
-from sklearn.cluster import DBSCAN
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.neighbors import NearestCentroid
@@ -14,30 +7,13 @@ from sklearn.mixture import GaussianMixture
 from datetime import datetime
 from math import cos, asin, sqrt, pi, atan2, sin
 from os import system
-import matplotlib.pyplot as plt
 from random import sample
 
 from .filtering import query_adid
 
 pd.options.mode.chained_assignment = None
 
-# POL Algorithm
-
-# Preprocessing
-#   Remove Anomolous Data (Too Quick)
-#   Weight each Datapoint based on timestamp, sampling rate, and distance
-#   Determine hyperparams for DBSCAN
-# Clustering
-#   Cluster with DBSCAN and return the top X clusters by summation of weight
-# 2nd Clustering
-#   Cluster on the top X clusters from last step and output top Y clusters
-# Classification
-#   Label Test Data Tampstamp -> Cluster Label
-
 # Given two latitude and longitude points return the distance in kilometers
-# TODO:
-# using the numpy math functions seems to have a weird sigfig error
-# investigate further...
 def haversine(lat1, lon1, lat2, lon2):
     r = pi / 180
     dlat = lat2 - lat1
@@ -48,13 +24,6 @@ def haversine(lat1, lon1, lat2, lon2):
     km = 2 * earth_radius * c
     return km
 
-# data:
-#   a dataframe that contains at least ad_id, datetime, lat, long, and timestamp
-#   timestamp is assumed to be a string
-# speed:
-#   is the cutoff speed (km/hr)
-# This Dataframe must be sorted by time!!!
-# Sorting is expensive... don't do it more than you have to.
 def speed_filter(data, speed) -> pd.DataFrame:
     filtered_data = data.copy(deep=True)
     filtered_data['datetime'] = pd.to_datetime(data.datetime)
@@ -99,31 +68,8 @@ def weighting(data) -> pd.DataFrame:
     #data['weight'] = (data.weight - data.weight.min()) / (data.weight.max() - data.weight.min())
     return data
 
-# Cluster and return top X clusters
-# Top clusters determined by summation of weight
-def get_clusters(data) -> pd.DataFrame:
-    # This now works with sklearn v1.2.1 (the latest version as of 2023-02-09)
-    # epsilon values can be thought of as being measured in kilometers
-    epsilon = 0.117
-    kms_per_degree = 111.32
-    threshold = epsilon / kms_per_degree
-    # DBSCAN still generally works better than AgglomerativeClustering, but we
-    # should keep fiddling with the AgglomerativeClustering hyperparameters
-    # Results may not reflect reality either, since we're validating with a
-    # limited synthetic data set
-    model = DBSCAN(eps=threshold, min_samples=1, algorithm='ball_tree', metric='haversine')
-    '''
-    epsilon = 0.4
-    kms_per_degree = 111.32
-    thresh = epsilon / kms_per_degree
-    model = AgglomerativeClustering(n_clusters=None, distance_threshold=thresh)
-    '''
-    clusters = model.fit(data[['latitude', 'longitude']])
-    labels = clusters.labels_
-    return labels
-
 # Clustering the data with GaussianMixture Model for testing purposes
-def get_clusters_GM(data) -> pd.DataFrame:
+def get_clusters(data) -> pd.DataFrame:
 
     def since_midnight(now) -> int:
         return (now - now.replace(hour=0, minute=0, second=0, microsecond=0)).total_seconds()
@@ -148,9 +94,7 @@ def max_cluster(data, labels) -> int:
     without_max = data.loc[~has_max, relevant_features]
     return max_label, without_max
 
-def double_cluster(adid, full_data, gm=True):
-    #print('Using Gaussian Mixture:' if gm else 'Using DBSCAN:')
-
+def double_cluster(adid, full_data):
     # Basic pre-processing
     data = query_adid(adid, full_data)
     data = data.sort_values(by='datetime')
@@ -158,7 +102,7 @@ def double_cluster(adid, full_data, gm=True):
     data = weighting(data)
 
     # Get max weighted cluster
-    labels = get_clusters_GM(data) if gm == True else get_clusters(data)
+    labels = get_clusters(data)
     max_group, without_max = max_cluster(data, labels)
 
     # Fail gracefully
@@ -170,16 +114,13 @@ def double_cluster(adid, full_data, gm=True):
         return None
 
     # Re-label and return new data
-    new_labels = get_clusters_GM(without_max) if gm == True else get_clusters(without_max)
+    new_labels = get_clusters(without_max)
     without_max['label'] = new_labels
     max_new_label = without_max.label.max() + 1
     max_group['label'] = max_new_label
     full_labeled_data = pd.concat([max_group, without_max])
     return full_labeled_data
 
-# Calculate the centroids for weighted lat/long data
-# We save the cluster label groups for each centroid
-# These centroids need to be saved in a Profile for prediction
 def get_cluster_centroids(data) -> pd.DataFrame:
     # This should be passed something like full_labeled_data
     relevant_features = ['latitude', 'longitude', 'weight', 'label']
@@ -239,25 +180,4 @@ def fit_predictor(clustered_data, debug=False) -> RandomForestClassifier:
 
     # This function should return the actual trained model for later use as well as a score to see how it did
     return model, model_accuracy
-
-'''
-# Some sample adids to try
-# 81696261-3059-7d66-69cc-67688182f974
-# 54aa7153-1546-ce0d-5dc9-aa9e8e371f00
-# 18665217-4566-5790-809c-702e77bdbf89
-full_data = pd.read_csv('../data/weeklong.csv')
-
-# Making some more verbose testing here
-# Grabbing a random sample from the dataset and testing the predictor on it
-test_adids = list(full_data.advertiser_id.unique())
-#test_adids = sample(test_adids, 50)
-#print("TEST IDS:", test_adids)
-
-for adid in test_adids:
-    print('For ' + adid + ':')
-    # cluster, GM is default
-    clustered_data = double_cluster(adid, full_data)
-    n_labels = clustered_data.label.max() + 1
-    model, test_accuracy = fit_predictor(clustered_data, debug=True)
-'''
 
