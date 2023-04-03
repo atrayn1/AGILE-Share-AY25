@@ -1,67 +1,56 @@
-# Class File for Profile Class
-# Contains information about an individual advertising ID
-# This can contain stuff such as LOIs, timestamped data, etc
-
-# Sam Chanow
-# Ernest Son
-
-import random
 import pandas as pd
 from .locations import locations_of_interest
 from .people import colocation
-from .utils.files import random_line
-from .utils.files import find
+from .utils.files import random_line, find
 from .utils.geocode import reverse_geocode
-from .prediction import double_cluster
-from .prediction import get_cluster_centroids
-from .prediction import get_top_N_clusters
-from .prediction import fit_predictor
+from .prediction import double_cluster, get_cluster_centroids, get_top_N_clusters, fit_predictor
 
 class Profile:
+    def __init__(self, data: pd.DataFrame, ad_id: int, ext_duration: int = 7, rep_duration: int = 24, coloc_duration: int = 2) -> None:
+        """
+        Constructs a Profile object with given parameters.
 
-    # Constructor with specific parameters
-    def __init__(self, data, ad_id, ext_duration=7, rep_duration=24, coloc_duration=2) -> None:
+        Parameters:
+        data (pd.DataFrame): Dataframe containing data for multiple advertising IDs.
+        ad_id (int): Advertising ID for which the profile is being created.
+        ext_duration (int): Time period (in days) for which locations of interest will be considered for the profile.
+        rep_duration (int): Time period (in hours) for which locations of interest will be considered repeatedly for the profile.
+        coloc_duration (int): Time period (in hours) for which other advertising IDs co-located with this advertising ID will be considered for the profile.
+        """
         self.ad_id = ad_id
         self.name = self.__name_gen()
-        # We need to somehow store this information in here so that it can be relayed on the report
-        # These are the default values
-        self.ext_duration = ext_duration
-        self.rep_duration = rep_duration
-        self.coloc_duration = coloc_duration
-        # these need to be generated after the parameters are defined
-        self.lois = self.__loi_gen(data)
-        self.coloc = self.__coloc_gen(data)
-
-        # Prediction model values
-        # If the model is untrained it will None
-        self.data = data
-        self.model = None
-        self.cluster_centroids = None
-        self.model_accuracy = None
+        self.ext_duration, self.rep_duration, self.coloc_duration = ext_duration, rep_duration, coloc_duration
+        self.lois = reverse_geocode(locations_of_interest(data, ad_id, ext_duration, rep_duration))
+        self.coloc = colocation(data, self.lois, coloc_duration)
+        self.data, self.model, self.cluster_centroids, self.model_accuracy = data, None, None, None
 
     def __name_gen(self) -> str:
-        # Updated the open to use the find function, so that file paths are located dynamically
+        """
+        Generates a random name for the profile.
+        """
         with open(find('../names/first.txt')) as F, open(find('../names/last.txt')) as L:
             return random_line(F) + '-' + random_line(L)
 
-    # generate the locations of interest for this ad_id
-    def __loi_gen(self, data) -> pd.DataFrame:
-        lois = locations_of_interest(data, self.ad_id, self.ext_duration, self.rep_duration)
-        return reverse_geocode(lois)
-
-    # generate the colocating ad_id Dataframe for this ad_id
-    def __coloc_gen(self, data) -> pd.DataFrame:
-        return colocation(data, self.lois, self.coloc_duration)
-    
-    # Public function to see if the profile has a trained model
     def model_trained(self) -> bool:
-        return self.model != None
+        """
+        Checks whether the profile's model is trained or not.
+
+        Returns:
+        bool: True if the model is trained, False otherwise.
+        """
+        return self.model is not None
     
-    # Train the profile's model on the data provided
-    # If no data is provided, it will default to the data provided to the profile 
-    # contructor
-    def model_train(self, data=None):
-        if data == None:
+    def model_train(self, data: pd.DataFrame = None) -> tuple:
+        """
+        Trains the profile's model on the provided data.
+
+        Parameters:
+        data (pd.DataFrame, optional): Dataframe containing data for multiple advertising IDs. If not provided, the profile's default data is used.
+
+        Returns:
+        tuple: A tuple containing the trained model and its accuracy score.
+        """
+        if data is None:
             data = self.data
         clustered_data = double_cluster(self.ad_id, data)
         self.cluster_centroids = get_cluster_centroids(clustered_data)
@@ -69,12 +58,19 @@ class Profile:
         self.model, self.model_accuracy = fit_predictor(clustered_data, False)
         return self.model, self.model_accuracy
 
-    # Perform a single prediction on the provided time
-    # The time must be entered as the number of seconds since midnight on that day
-    def model_predict(self, time, day) -> int:
-        # Returns the label and the centroid associated
+    def model_predict(self, time: int, day: int) -> tuple:
+        """
+        Performs a single prediction on the provided time.
+
+        Parameters:
+        time (int): The time of the day (in seconds since midnight).
+        day (int): The day of the week (0-6, where 0 is Monday).
+
+        Returns:
+        tuple: A tuple containing the predicted label and its associated centroid.
+        """
         X = pd.DataFrame([[time, day]], columns=['seconds', 'dayofweek'])
         label = self.model.predict(X)[0]
-        # TODO Getting a size mismatch error here
-        return label, self.cluster_centroids.loc[self.cluster_centroids['label'] == label]
+        centroid = self.cluster_centroids.loc[self.cluster_centroids['label'] == label]
+        return label, centroid
 
