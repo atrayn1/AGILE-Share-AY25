@@ -29,6 +29,7 @@ def colocation(data: pd.DataFrame, lois: pd.DataFrame, duration: int) -> pd.Data
         return row
 
     filtered = filtered.apply(time_filter, axis=1)
+    data_out = None
     if 'remove' in filtered.columns:
         data_out = filtered.loc[filtered.remove == False].drop(columns=['remove'])
 
