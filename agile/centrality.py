@@ -8,6 +8,7 @@ def people_at_location(lat: float, long: float, radius: float, data: pd.DataFram
     """Returns a DataFrame of all the people who visited a specified location."""
 
     filtered_data = query_location(lat, long, radius, data)
+
     adids = filtered_data.advertiser_id.unique()
     return data.loc[data.advertiser_id.isin(adids)]
 
@@ -32,6 +33,8 @@ def centrality(people: np.ndarray, locations: np.ndarray, data: pd.DataFrame) ->
     interest = np.concatenate((people, locations))
     A = np.zeros((len(interest), len(interest)))
 
+    print(interest)
+
     data.apply(lambda row: compute_adjacency(row, A, interest), axis=1)
 
     G = nx.Graph(A)
@@ -40,7 +43,6 @@ def centrality(people: np.ndarray, locations: np.ndarray, data: pd.DataFrame) ->
 
     out_data = pd.DataFrame({'id': interest, 'centrality': centrality_values})
     out_data = out_data.iloc[len(people):]
-
     out_data[['latitude', 'longitude']] = pd.DataFrame(out_data['id'].apply(decode).tolist(), index=out_data.index)
 
     return out_data.sort_values(by='centrality', ascending=False).head()
@@ -49,6 +51,7 @@ def compute_top_centrality(lat: float, long: float, radius: float, N: int, data:
     """Returns a DataFrame of the top N most central locations given a latitude, longitude, radius, and DataFrame of data."""
 
     data_of_interest = people_at_location(lat, long, radius, data)
+
     visited = visited_locations(data_of_interest)
     people = people_of_interest(data_of_interest)
 
