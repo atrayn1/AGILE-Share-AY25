@@ -40,7 +40,6 @@ def centrality(people: np.ndarray, locations: np.ndarray, data: pd.DataFrame) ->
 
     out_data = pd.DataFrame({'id': interest, 'centrality': centrality_values})
     out_data = out_data.iloc[len(people):]
-
     out_data[['latitude', 'longitude']] = pd.DataFrame(out_data['id'].apply(decode).tolist(), index=out_data.index)
 
     return out_data.sort_values(by='centrality', ascending=False).head()

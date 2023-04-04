@@ -15,6 +15,7 @@ def query_adid(adid: str, df: pd.DataFrame) -> pd.DataFrame:
 def query_location(lat: str, long: str, radius: str, df: pd.DataFrame) -> pd.DataFrame:
     """
     Filter dataframe by latitude, longitude, and radius, and return a new dataframe.
+    MUST HAVE GEOHASH PRECISION 10 or this will not work
     """
     if not lat or not long or not radius or df.empty:
         return None
