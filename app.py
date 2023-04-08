@@ -29,6 +29,7 @@ from agile.report import Report
 from agile.centrality import compute_top_centrality
 
 from streamlit_option_menu import option_menu
+import pygeohash as gh
 
 # Make use of the whole screen
 st.set_page_config(layout="wide")
@@ -78,16 +79,28 @@ if nav_bar == 'Data':
     data_upload_sb = sidebar.container()
 
     # Upload data
-    relevant_features = ['geohash', 'datetime', 'latitude', 'longitude', 'advertiser_id']
+    #relevant_features = ['datetime', 'latitude', 'longitude', 'advertiser_id']
     with data_upload_sb:
         raw_data = st.file_uploader('Upload Data File')
         # If a file has not yet been uploaded (this allows multiple form requests in unison)
         if raw_data and not st.session_state.uploaded:
             try:
-                st.session_state.data = pd.read_csv(raw_data, sep=',', usecols=relevant_features)
+                st.session_state.data = pd.read_csv(raw_data, sep=',')
                 st.session_state.uploaded = True
+
+                # Check to make sure the uploaded data has geohashes
+
+                # If it does not, generate them on the fly
+                if not 'geohash' in st.session_state.data.columns or not len(st.session_state.data['geohash'].iloc[0]) == 10:
+                    # Something is wrong, either the column does not exist
+                    # Or it is the wrong precision geohash
+                    # So we genertae it manually
+
+                    with st.spinner("Geohashing the data..."):
+                        st.session_state.data['geohash'] = st.session_state.data.apply(lambda d : gh.encode(d.latitude, d.longitude, precision=10), axis=1)
+
             except:
-                results_c.write('Invalid file format. Please upload a valid .csv file.')
+                results_c.error('Invalid file format. Please upload a valid .csv file that contains latitude and longitude columns.')
         reset_c = st.container()
         with reset_c:
             reset_form = st.form(key='reset')
@@ -96,8 +109,17 @@ if nav_bar == 'Data':
                 if raw_data:
                     if st.form_submit_button('RESET DATA'):
                         try:
-                            st.session_state.data = pd.read_csv(raw_data, sep=',', usecols=relevant_features)
+                            st.session_state.data = pd.read_csv(raw_data, sep=',')
                             st.session_state.uploaded = True
+
+                            if not 'geohash' in st.session_state.data.columns or not len(st.session_state.data['geohash'].iloc[0]) == 10:
+                                # Something is wrong, either the column does not exist
+                                # Or it is the wrong precision geohash
+                                # So we genertae it manually
+
+                                with st.spinner("Geohashing the data..."):
+                                    st.session_state.data['geohash'] = st.session_state.data.apply(lambda d : gh.encode(d.latitude, d.longitude, precision=10), axis=1)
+
                         except:
                             results_c.write('Invalid file format. Please upload a valid .csv file.')
 
