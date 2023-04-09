@@ -359,6 +359,13 @@ elif nav_bar == 'Algorithms':
                         start_time = np.array((start_time - start_time.replace(hour=0, minute=0, second=0, microsecond=0)).total_seconds()).reshape(-1, 1)
                         result_label, result_centroid = st.session_state.profile.model_predict(start_time, start_day)
                         data_map(results_c, lois=result_centroid)
+            # TODO Give some visual or text showing the accuracy of the model that was trained
+            try:
+                st.write('Model Accuracy ' + str(st.session_state.profile.model_accuracy * 100) + "%")
+                st.progress(st.session_state.profile.model_accuracy)
+            except:
+                st.write('No Model Trained Yet')
+                
 elif nav_bar == 'Report':
 
     sidebar.title('Report')
