@@ -361,8 +361,11 @@ elif nav_bar == 'Algorithms':
                         data_map(results_c, lois=result_centroid)
             # TODO Give some visual or text showing the accuracy of the model that was trained
             try:
-                st.write('Model Accuracy ' + str(st.session_state.profile.model_accuracy * 100) + "%")
+                st.write('Model Accuracy: ' + str(st.session_state.profile.model_accuracy * 100) + "%")
                 st.progress(st.session_state.profile.model_accuracy)
+
+                st.write('Model Reliability: ' + str(st.session_state.profile.reliability()))
+                st.progress(st.session_state.profile.reliability())
             except:
                 st.write('No Model Trained Yet')
                 
