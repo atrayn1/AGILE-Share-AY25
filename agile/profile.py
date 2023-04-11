@@ -4,6 +4,7 @@ from .people import colocation
 from .utils.files import random_line, find
 from .utils.geocode import reverse_geocode
 from .prediction import double_cluster, get_cluster_centroids, get_top_N_clusters, fit_predictor
+import math
 
 class Profile:
     def __init__(self, data: pd.DataFrame, ad_id: int, ext_duration: int = 7, rep_duration: int = 24, coloc_duration: int = 2) -> None:
@@ -20,9 +21,19 @@ class Profile:
         self.ad_id = ad_id
         self.name = self.__name_gen()
         self.ext_duration, self.rep_duration, self.coloc_duration = ext_duration, rep_duration, coloc_duration
-        self.lois = reverse_geocode(locations_of_interest(data, ad_id, ext_duration, rep_duration))
+        try:
+            # Check if Nominatim is down, and if it is do not reverse Geocode the data (allows for most algorithms to run more reliably)
+            self.lois = reverse_geocode(locations_of_interest(data, ad_id, ext_duration, rep_duration))
+        except:
+            self.lois = locations_of_interest(data, ad_id, ext_duration, rep_duration)
         self.coloc = colocation(data, self.lois, coloc_duration)
         self.data, self.model, self.cluster_centroids, self.model_accuracy = data, None, None, None
+    
+    def reliability(self) -> float:
+        n = len(self.cluster_centroids)
+        acc = self.model_accuracy
+
+        return acc * math.log(n) / math.log(301)
 
     def __name_gen(self) -> str:
         """
@@ -54,6 +65,7 @@ class Profile:
             data = self.data
         clustered_data = double_cluster(self.ad_id, data)
         self.cluster_centroids = get_cluster_centroids(clustered_data)
+        print(len(self.cluster_centroids))
         self.lois = get_top_N_clusters(clustered_data, 5)
         self.model, self.model_accuracy = fit_predictor(clustered_data, False)
         return self.model, self.model_accuracy

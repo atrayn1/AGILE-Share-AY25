@@ -125,6 +125,7 @@ def get_cluster_centroids(data) -> pd.DataFrame:
     # This should be passed something like full_labeled_data
     relevant_features = ['latitude', 'longitude', 'weight', 'label']
     label_groups = data.groupby(by='label')
+
     lat_long = ['latitude', 'longitude']
     def calculate_centroids(group):
         locations = group[lat_long].to_numpy()
