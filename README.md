@@ -48,6 +48,8 @@ foo@bar:../AGILE$ docker build -t docker_image_name .
 foo@bar:../AGILE$ docker run -p 8501:8501 docker_image_name
 ```
 
+NOTE: You may have to run either set of install commands with root permissions if using a docker version <19.03 or running from WSL.
+
 ## Usage (Without Docker)
 
 ```
