@@ -8,6 +8,7 @@ from datetime import datetime
 from math import cos, asin, sqrt, pi, atan2, sin
 from os import system
 from random import sample
+import pygeohash as gh
 
 from .filtering import query_adid
 
@@ -88,7 +89,7 @@ def get_clusters(data) -> pd.DataFrame:
 def max_cluster(data, labels) -> int:
     data['label'] = labels
     data['label_sum'] = data.groupby('label').weight.transform('sum')
-    relevant_features = ['label', 'label_sum', 'datetime', 'travel_time', 'distance', 'speed', 'weight', 'latitude', 'longitude']
+    relevant_features = ['label', 'label_sum', 'datetime', 'travel_time', 'distance', 'speed', 'weight', 'latitude', 'longitude', 'geohash']
     has_max = data.label_sum == data.label_sum.max()
     max_label = data.loc[has_max, relevant_features]
     without_max = data.loc[~has_max, relevant_features]
@@ -123,19 +124,29 @@ def double_cluster(adid, full_data):
 
 def get_cluster_centroids(data) -> pd.DataFrame:
     # This should be passed something like full_labeled_data
-    relevant_features = ['latitude', 'longitude', 'weight', 'label']
+    relevant_features = ['latitude', 'longitude', 'weight', 'label', 'geohash', 'datetime', 'advertiser_id']
     label_groups = data.groupby(by='label')
 
     lat_long = ['latitude', 'longitude']
     def calculate_centroids(group):
         locations = group[lat_long].to_numpy()
+
+        mean_date = pd.to_datetime(group['datetime']).mean()
+
         weights = group.weight.tolist()
         centroids = np.average(locations, axis=0, weights=weights)
+
+        centroids = np.insert(centroids, 2, mean_date, 0)
+
         return centroids
     raw_centroids = label_groups.apply(calculate_centroids)
     centroids = raw_centroids.tolist()
     labels = raw_centroids.index
-    df = pd.DataFrame(centroids, index=labels, columns=lat_long).reset_index()
+    df = pd.DataFrame(centroids, index=labels, columns=lat_long + ['datetime']).reset_index()
+
+    # Geohash the centroids
+    df['geohash'] = df.apply(lambda d : gh.encode(d.latitude, d.longitude, precision=10), axis=1)
+    df['advertiser_id'] = data['advertiser_id']
     return df
 
 def get_top_N_clusters(data, N) -> pd.DataFrame:
