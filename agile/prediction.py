@@ -8,7 +8,7 @@ from datetime import datetime
 from math import cos, asin, sqrt, pi, atan2, sin
 from os import system
 from random import sample
-import pygeohash as gh
+from pygeohash import encode
 
 from .filtering import query_adid
 
@@ -89,7 +89,7 @@ def get_clusters(data) -> pd.DataFrame:
 def max_cluster(data, labels) -> int:
     data['label'] = labels
     data['label_sum'] = data.groupby('label').weight.transform('sum')
-    relevant_features = ['label', 'label_sum', 'datetime', 'travel_time', 'distance', 'speed', 'weight', 'latitude', 'longitude', 'geohash']
+    relevant_features = ['geohash', 'advertiser_id', 'label', 'label_sum', 'datetime', 'travel_time', 'distance', 'speed', 'weight', 'latitude', 'longitude']
     has_max = data.label_sum == data.label_sum.max()
     max_label = data.loc[has_max, relevant_features]
     without_max = data.loc[~has_max, relevant_features]
@@ -123,31 +123,32 @@ def double_cluster(adid, full_data):
     return full_labeled_data
 
 def get_cluster_centroids(data) -> pd.DataFrame:
-    # This should be passed something like full_labeled_data
-    relevant_features = ['latitude', 'longitude', 'weight', 'label', 'geohash', 'datetime', 'advertiser_id']
-    label_groups = data.groupby(by='label')
 
-    lat_long = ['latitude', 'longitude']
-    def calculate_centroids(group):
-        locations = group[lat_long].to_numpy()
+    # Ensure timestamp column is explicitly of type 'datetime'
+    data['datetime'] = pd.to_datetime(data.datetime)
 
-        mean_date = pd.to_datetime(group['datetime']).mean()
+    # Calculate midpoint timestamps for each cluster
+    midpoints = data.groupby('label').agg({'datetime': ['min', 'max']})
+    midpoints['midpoint'] = midpoints.apply(lambda row: row['datetime']['min'] +
+                                             (row['datetime']['max'] - row['datetime']['min']) / 2, axis=1)
+    midpoints = midpoints['midpoint'].to_dict()
 
-        weights = group.weight.tolist()
-        centroids = np.average(locations, axis=0, weights=weights)
+    # Calculate weighted centroids for each cluster
+    centroids = data.groupby('label').apply(lambda x: np.average(x[['latitude', 'longitude']],
+                                                                 weights=x['weight'], axis=0))
+    centroids = pd.DataFrame(centroids.tolist(), columns=['latitude', 'longitude'], index=centroids.index)
 
-        centroids = np.insert(centroids, 2, mean_date, 0)
+    # Add midpoint timestamp column to centroids dataframe
+    centroids['datetime'] = centroids.index.map(lambda x: midpoints[x])
 
-        return centroids
-    raw_centroids = label_groups.apply(calculate_centroids)
-    centroids = raw_centroids.tolist()
-    labels = raw_centroids.index
-    df = pd.DataFrame(centroids, index=labels, columns=lat_long + ['datetime']).reset_index()
+    # Re-geohash the lats and longs, since we have a new lat-long pair
+    centroids['geohash'] = centroids.apply(lambda x: encode(x.latitude, x.longitude, precision=10), axis=1)
 
-    # Geohash the centroids
-    df['geohash'] = df.apply(lambda d : gh.encode(d.latitude, d.longitude, precision=10), axis=1)
-    df['advertiser_id'] = data['advertiser_id']
-    return df
+    # Label the centroids with the original adid
+    centroids['advertiser_id'] = data.advertiser_id.iloc[0]
+
+    return centroids
+
 
 def get_top_N_clusters(data, N) -> pd.DataFrame:
     if data is None:
