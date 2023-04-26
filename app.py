@@ -280,7 +280,13 @@ elif nav_bar == 'Algorithms':
                         # We need to filter by adid and then perform loi analysis
                         data = st.session_state.data
                         cluster_data = double_cluster(adid, data)
+
                         loi_data = get_top_N_clusters(cluster_data, num_clusters)
+
+                        # Top N clusters clobbers the geohash so we need to calculate it for the centroids again
+                        # loi_data['geohash'] = loi_data.apply(lambda d : gh.encode(d.latitude, d.longitude, precision=10), axis=1)
+                        # loi_data['advertiser_id'] = adid
+
                         if loi_data is None:
                             results_c.write('No Clusters Found')
                         else:
