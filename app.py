@@ -41,6 +41,8 @@ if 'loi_data' not in st.session_state:
     st.session_state.loi_data = None
 if 'uploaded' not in st.session_state:
     st.session_state.uploaded = False
+if 'file_source' not in st.session_state:
+    st.session_state.file_source = False
 
 # Replace Sidebar with data options Menu
 # This will equal the value of the string selected
@@ -83,10 +85,11 @@ if nav_bar == 'Data':
     with data_upload_sb:
         raw_data = st.file_uploader('Upload Data File')
         # If a file has not yet been uploaded (this allows multiple form requests in unison)
-        if raw_data and not st.session_state.uploaded:
+        if raw_data:
             try:
                 st.session_state.data = pd.read_csv(raw_data, sep=',')
                 st.session_state.uploaded = True
+                st.session_state.file_source = raw_data.name
 
                 # Check to make sure the uploaded data has geohashes
 
@@ -101,27 +104,6 @@ if nav_bar == 'Data':
 
             except:
                 results_c.error('Invalid file format. Please upload a valid .csv file that contains latitude and longitude columns.')
-        reset_c = st.container()
-        with reset_c:
-            reset_form = st.form(key='reset')
-            with reset_form:
-                # This will reset the state variable resetting the data to uploaded state
-                if raw_data:
-                    if st.form_submit_button('RESET DATA'):
-                        try:
-                            st.session_state.data = pd.read_csv(raw_data, sep=',')
-                            st.session_state.uploaded = True
-
-                            if not 'geohash' in st.session_state.data.columns or not len(st.session_state.data['geohash'].iloc[0]) == 10:
-                                # Something is wrong, either the column does not exist
-                                # Or it is the wrong precision geohash
-                                # So we genertae it manually
-
-                                with st.spinner("Geohashing the data..."):
-                                    st.session_state.data['geohash'] = st.session_state.data.apply(lambda d : gh.encode(d.latitude, d.longitude, precision=10), axis=1)
-
-                        except:
-                            results_c.write('Invalid file format. Please upload a valid .csv file.')
 
 
 elif nav_bar == 'Filtering':
