@@ -127,15 +127,21 @@ def get_cluster_centroids(data) -> pd.DataFrame:
     # Ensure timestamp column is explicitly of type 'datetime'
     data['datetime'] = pd.to_datetime(data.datetime)
 
+    #print("DATA: \n", data)
+
     # Calculate midpoint timestamps for each cluster
     midpoints = data.groupby('label').agg({'datetime': ['min', 'max']})
     midpoints['midpoint'] = midpoints.apply(lambda row: row['datetime']['min'] +
                                              (row['datetime']['max'] - row['datetime']['min']) / 2, axis=1)
     midpoints = midpoints['midpoint'].to_dict()
 
+
     # Calculate weighted centroids for each cluster
     centroids = data.groupby('label').apply(lambda x: np.average(x[['latitude', 'longitude']],
                                                                  weights=x['weight'], axis=0))
+    
+    #print("CENTROIDS: \n", centroids)
+
     centroids = pd.DataFrame(centroids.tolist(), columns=['latitude', 'longitude'], index=centroids.index)
 
     # Add midpoint timestamp column to centroids dataframe
@@ -146,6 +152,11 @@ def get_cluster_centroids(data) -> pd.DataFrame:
 
     # Label the centroids with the original adid
     centroids['advertiser_id'] = data.advertiser_id.iloc[0]
+
+    # Re-attach the labels that were clobbered earlier
+    centroids['label'] = data['label'].unique()
+
+    #print("DONE: \n", centroids)
 
     return centroids
 

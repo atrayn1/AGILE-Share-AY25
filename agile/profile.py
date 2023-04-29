@@ -64,7 +64,9 @@ class Profile:
         if data is None:
             data = self.data
         clustered_data = double_cluster(self.ad_id, data)
+
         self.cluster_centroids = get_cluster_centroids(clustered_data)
+
         print(len(self.cluster_centroids))
         self.lois = get_top_N_clusters(clustered_data, 5)
         self.model, self.model_accuracy = fit_predictor(clustered_data, False)
@@ -83,6 +85,7 @@ class Profile:
         """
         X = pd.DataFrame([[time, day]], columns=['seconds', 'dayofweek'])
         label = self.model.predict(X)[0]
+
         centroid = self.cluster_centroids.loc[self.cluster_centroids['label'] == label]
         return label, centroid
 
