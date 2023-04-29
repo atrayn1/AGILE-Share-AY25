@@ -44,9 +44,9 @@ def query_date(start_date: str, start_time: str, end_date: str, end_time: str, d
     if not start_date or not end_date or df.empty:
         return None
 
-    # Combine dates and times
-    start = dt.combine(pd.to_datetime(start_date).date(), pd.to_datetime(start_time).time())
-    end = dt.combine(pd.to_datetime(end_date).date(), pd.to_datetime(end_time).time())
+    # Combine dates and times from user input
+    start = dt.combine(pd.to_datetime(start_date).date(), start_time)
+    end = dt.combine(pd.to_datetime(end_date).date(), end_time)
 
     # Parse the df by datetime
     df['datetime'] = pd.to_datetime(df['datetime'])
