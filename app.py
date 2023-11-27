@@ -81,8 +81,8 @@ results_c = st.container()
 results_c.subheader('Analysis')
 
 
-
-
+if not os.path.exists('saved_data'):
+    os.makedirs('saved_data')
 
 
 # Based on what option is selected on the Nav Bar, a different container/expander will be displayed in the sidebar
@@ -97,7 +97,7 @@ if nav_bar == 'Data':
     with data_upload_sb:
         raw_data = st.file_uploader('Upload Data File')
         # If a file has not yet been uploaded (this allows multiple form requests in unison)
-        if raw_data and st.session_state.uploaded == False:
+        if raw_data and not data_reset_button:
             
             try:
                 st.session_state.data = pd.read_csv(raw_data, sep=',')
@@ -119,6 +119,8 @@ if nav_bar == 'Data':
                     with st.spinner("Saving the geohashed data locally..."):   
                         with open(os.path.abspath('./saved_data/saved_df.pkl'), 'wb') as pkl_file:
                             pickle.dump(st.session_state.data, pkl_file)
+                            
+                
                             
                 # Update the data overview section
                 
