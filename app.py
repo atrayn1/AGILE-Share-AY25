@@ -80,28 +80,8 @@ overview_c.subheader('Data Overview')
 results_c = st.container()
 results_c.subheader('Analysis')
 
-# if the button is clicked, reset the data seen by the user to what the user uploaded originally
-# this is done by saving the original data to a pickle file, and reloading it
-if data_reset_button:
-    # replace this with the function
-    
-    st.session_state.uploaded = False
-    # see if the pickle file exists already
-    if os.path.exists('./saved_data/saved_df.pkl'):
-        # load the pickle file if it does
-        try:
-            with open(os.path.abspath('./saved_data/saved_df.pkl'), 'rb') as pkl_file:
-                with st.spinner("Reseting the data..."): 
-                    st.session_state.data = pickle.load(pkl_file)    
-                    st.session_state.file_source = os.path.abspath('./saved_data/saved_df.pkl')
-                    st.session_state.uploaded = True
-                    overview_c.dataframe(adid_value_counts(st.session_state.data), height=300)
-                    
-        except:
-            title_center.error('Error reseting the data. Please upload manually')
-    # if it doesn't, raise an error
-    else:
-        title_center.error('No data has been entered yet. Please upload using the side bar on the "Data" tab')
+
+
 
 
 
@@ -117,7 +97,8 @@ if nav_bar == 'Data':
     with data_upload_sb:
         raw_data = st.file_uploader('Upload Data File')
         # If a file has not yet been uploaded (this allows multiple form requests in unison)
-        if raw_data:
+        if raw_data and st.session_state.uploaded == False:
+            
             try:
                 st.session_state.data = pd.read_csv(raw_data, sep=',')
                 st.session_state.uploaded = True
@@ -144,6 +125,8 @@ if nav_bar == 'Data':
 
             except:
                 results_c.error('Invalid file format. Please upload a valid .csv file that contains latitude and longitude columns.')
+                
+    
 
 
 elif nav_bar == 'Filtering':
@@ -432,6 +415,29 @@ else:
 
     # Generate Report
 
+# if the button is clicked, reset the data seen by the user to what the user uploaded originally
+# this is done by saving the original data to a pickle file, and reloading it
+if data_reset_button:
+    # replace this with the function
+    
+    
+    # see if the pickle file exists already
+    if os.path.exists(os.path.abspath('./saved_data/saved_df.pkl')):
+        # load the pickle file if it does
+        try:
+            with open(os.path.abspath('./saved_data/saved_df.pkl'), 'rb') as pkl_file:
+                with st.spinner("Reseting the data..."): 
+                    st.session_state.uploaded = False
+                    st.session_state.data = pickle.load(pkl_file)    
+                    st.session_state.file_source = os.path.abspath('./saved_data/saved_df.pkl')
+                    st.session_state.uploaded = True
+                    overview_c.dataframe(adid_value_counts(st.session_state.data), height=300)
+                    
+        except:
+            title_center.error('Error reseting the data. Please upload manually')
+    # if it doesn't, raise an error
+    else:
+        title_center.error('No data has been entered yet. Please upload using the side bar on the "Data" tab')
 
 # Preview container
 with preview_c:
