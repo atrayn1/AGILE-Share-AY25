@@ -7,6 +7,8 @@ import streamlit as st
 import streamlit.components.v1 as components
 import csv
 import string
+import os
+import pickle
 import pandas as pd
 from datetime import datetime as dt
 #import proximitypyhash as pph
@@ -27,6 +29,7 @@ from agile.utils.files import find
 from agile.profile import Profile
 from agile.report import Report
 from agile.centrality import compute_top_centrality
+from agile.overview import adid_value_counts
 
 from streamlit_option_menu import option_menu
 import pygeohash as gh
@@ -56,6 +59,7 @@ title_c = st.container()
 title_left, title_center = title_c.columns([1, 3])
 title_center.title('AGILE')
 title_center.subheader('Advertising and Geolocation Information Logical Extractor')
+data_reset_button = title_center.button('Reset Data')
 
 # Logo Image
 #title_left.image(find('AGILE_Black.png', '/'))
@@ -69,9 +73,37 @@ sidebar = st.sidebar
 preview_c = st.container()
 preview_c.subheader('Total Data Preview')
 
+overview_c = st.container()
+overview_c.subheader('Data Overview')
+
 # The data analysis/filtering results container
 results_c = st.container()
 results_c.subheader('Analysis')
+
+# if the button is clicked, reset the data seen by the user to what the user uploaded originally
+# this is done by saving the original data to a pickle file, and reloading it
+if data_reset_button:
+    # replace this with the function
+    
+    st.session_state.uploaded = False
+    # see if the pickle file exists already
+    if os.path.exists('./saved_data/saved_df.pkl'):
+        # load the pickle file if it does
+        try:
+            with open(os.path.abspath('./saved_data/saved_df.pkl'), 'rb') as pkl_file:
+                with st.spinner("Reseting the data..."): 
+                    st.session_state.data = pickle.load(pkl_file)    
+                    st.session_state.file_source = os.path.abspath('./saved_data/saved_df.pkl')
+                    st.session_state.uploaded = True
+                    overview_c.dataframe(adid_value_counts(st.session_state.data), height=300)
+                    
+        except:
+            title_center.error('Error reseting the data. Please upload manually')
+    # if it doesn't, raise an error
+    else:
+        title_center.error('No data has been entered yet. Please upload using the side bar on the "Data" tab')
+
+
 
 # Based on what option is selected on the Nav Bar, a different container/expander will be displayed in the sidebar
 if nav_bar == 'Data':
@@ -92,15 +124,23 @@ if nav_bar == 'Data':
                 st.session_state.file_source = raw_data.name
 
                 # Check to make sure the uploaded data has geohashes
-
                 # If it does not, generate them on the fly
                 if not 'geohash' in st.session_state.data.columns or not len(st.session_state.data['geohash'].iloc[0]) == 10:
                     # Something is wrong, either the column does not exist
                     # Or it is the wrong precision geohash
-                    # So we genertae it manually
+                    # So we generate it manually
 
                     with st.spinner("Geohashing the data..."):
                         st.session_state.data['geohash'] = st.session_state.data.apply(lambda d : gh.encode(d.latitude, d.longitude, precision=10), axis=1)
+                     
+                    # Save the data to a pickle file, located in the /saved_data directory
+                    # This is done so it can be reloaded with the "reset data" button
+                    with st.spinner("Saving the geohashed data locally..."):   
+                        with open(os.path.abspath('./saved_data/saved_df.pkl'), 'wb') as pkl_file:
+                            pickle.dump(st.session_state.data, pkl_file)
+                            
+                # Update the data overview section
+                
 
             except:
                 results_c.error('Invalid file format. Please upload a valid .csv file that contains latitude and longitude columns.')

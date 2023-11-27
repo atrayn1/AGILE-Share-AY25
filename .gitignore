@@ -6,6 +6,9 @@ __pycache__/
 # Data Folder
 data/
 
+# Saved Data
+saved_data/saved_df.pkl
+
 # C extensions
 *.so
 
