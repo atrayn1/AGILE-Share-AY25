@@ -6,6 +6,9 @@ __pycache__/
 # Data Folder
 data/
 
+# pdfs
+*.pdf
+
 # Saved Data
 saved_data/saved_df.pkl
 
