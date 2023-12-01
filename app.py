@@ -11,6 +11,7 @@ import os
 import pickle
 import pandas as pd
 from datetime import datetime as dt
+from base64 import b64encode
 #import proximitypyhash as pph
 #import pygeohash as gh
 from streamlit_folium import st_folium
@@ -27,7 +28,7 @@ from agile.utils.tag import find_all_nearby_nodes
 from agile.utils.geocode import reverse_geocode
 from agile.utils.files import find
 from agile.profile import Profile
-from agile.report import Report
+from agile.samsreport import Report
 from agile.centrality import compute_top_centrality
 from agile.overview import adid_value_counts
 
@@ -403,8 +404,17 @@ elif nav_bar == 'Report':
                 if report_button:
                     if st.session_state.uploaded:
                         device = Profile(st.session_state.data, adid, exth, reph, colh)
-                        Report(device)
+                        report = Report(device)
+                        pdf_file_path = report.file_name
                         results_c.write('Report generated!')
+                        
+                        
+                        with open(pdf_file_path, "rb") as f:
+                            pdf_bytes = f.read()
+
+                        pdf_base64 = b64encode(pdf_bytes).decode('utf-8')
+                        pdf_display = f'<iframe src="data:application/pdf;base64,{pdf_base64}" width="900" height="800" type="application/pdf"></iframe>'
+                        results_c.write(pdf_display, unsafe_allow_html=True)
                     else:
                         results_c.write('Upload data first!')
 else:

@@ -24,7 +24,7 @@ class Report:
         self.profile = profile
         self.tldr_report()
         self.full_report()
-        self.save_pdf()
+        self.file_name = self.save_pdf()
 
     def tldr_report(self):
 
@@ -60,7 +60,10 @@ class Report:
         self.pdf.set_font('Arial', 'B', 16)
         self.pdf.cell(w=0, h=ch, txt="Co-located Devices:", ln=1)
         self.pdf.set_font('Arial', '', 16)
-        self.display_dataframe(self.profile.coloc.advertiser_id.to_frame(), w=160)
+        try:
+            self.display_dataframe(self.profile.coloc.advertiser_id.to_frame(), w=160)
+        except:
+            self.display_dataframe(pd.DataFrame())
 
         # Pattern of life
         self.pdf.ln(ch)
@@ -98,26 +101,36 @@ class Report:
         self.pdf.ln(ch)
         # Everything except the adresses
         relevant_features = ['geohash', 'datetime', 'latitude', 'longitude']
-        self.display_dataframe(self.profile.lois[relevant_features])
+        try:
+            self.display_dataframe(self.profile.lois[relevant_features])
+        except:
+            self.display_dataframe(pd.DataFrame())
         self.pdf.ln(ch)
 
         # Now we display the resolved addresses (This is mostly for spacing issues since addresses are long)
         self.pdf.multi_cell(w=0, h=ch, txt="The above Latitudes and Longitudes were resolved to the following addresses.")
         self.pdf.ln(ch)
-        self.display_dataframe(self.profile.lois.address.to_frame(), w=160)
+        try:
+            self.display_dataframe(self.profile.lois.address.to_frame(), w=160)
+        except:
+            self.display_dataframe(pd.DataFrame())
 
         # Co-locations
         self.pdf.ln(ch)
         self.pdf.set_font('Arial', 'B', 16)
         self.pdf.cell(w=0, h=ch, txt="Co-located Devices:", ln=1)
         self.pdf.set_font('Arial', '', 16)
-        self.display_dataframe(self.profile.coloc.advertiser_id.to_frame(), w=160)
+        try:
+            self.display_dataframe(self.profile.coloc.advertiser_id.to_frame(), w=160)
+        except:
+            self.display_dataframe(pd.DataFrame())
 
     # TODO
     # fix this so we can save where we want to
     def save_pdf(self):
         output_path = self.profile.name + '.pdf'
         self.pdf.output(output_path, 'F')
+        return output_path
 
     def display_dataframe(self, df, w=45):
 

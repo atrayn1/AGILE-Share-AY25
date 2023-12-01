@@ -26,6 +26,8 @@ class Profile:
             self.lois = reverse_geocode(locations_of_interest(data, ad_id, ext_duration, rep_duration))
         except:
             self.lois = locations_of_interest(data, ad_id, ext_duration, rep_duration)
+            
+        print(self.lois)
         self.coloc = colocation(data, self.lois, coloc_duration)
         self.data, self.model, self.cluster_centroids, self.model_accuracy = data, None, None, None
     
