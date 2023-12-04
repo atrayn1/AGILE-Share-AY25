@@ -1,5 +1,9 @@
 import pandas as pd
 from fpdf import FPDF
+from agile.mapping import data_map
+import os
+import io
+from PIL import Image
 
 class PDF(FPDF):
 
@@ -73,9 +77,40 @@ class Report:
         self.pdf.set_font('Arial', '', 10)
 
     def full_report(self):
-
         # cell height
         ch = 8
+        
+        """# advertiser ID and codename
+        self.pdf.ln(ch)
+        self.pdf.set_font('Arial', 'B', 16)
+        self.pdf.cell(w=0, h=ch, txt="Device Details:", ln=1)
+        self.pdf.set_font('Arial', '', 16)
+        self.pdf.cell(w=30, h=ch, txt="Codename: " + self.profile.name, ln=1)
+        self.pdf.cell(w=30, h=ch, txt="AdID: " + self.profile.ad_id, ln=1)
+        
+        
+        # Add the map of all the data points in
+        self.pdf.add_page()
+        # Title for the map
+        self.pdf.set_font('Arial', 'B', 24)
+        self.pdf.cell(w=0, h=ch, txt="Map of ADID pins", align="C")
+        self.pdf.ln(ch)
+        
+        
+        m = data_map(data=self.profile.data[self.profile.data['advertiser_id'] == self.profile.ad_id])
+        map_file_output = f'./saved_data/{self.profile.name}.html'
+        map_image_output = f'./saved_data/{self.profile.name}.png'
+        
+        img_data = m._to_png(3)
+        img = Image.open(io.BytesIO(img_data))
+        img.save(map_image_output)
+        pdf.image(os.path.abspath(map_image_output, x=10, y=50, w=180))
+    
+        self.pdf.set_font('Arial', '', 16)
+        self.pdf.cell(w=30, h=ch, txt="Could not generate the map for this ADID", ln=1)"""
+        
+
+        
         self.pdf.add_page()
 
         # full title

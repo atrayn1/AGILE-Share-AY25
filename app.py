@@ -99,7 +99,6 @@ if nav_bar == 'Data':
         raw_data = st.file_uploader('Upload Data File')
         # If a file has not yet been uploaded (this allows multiple form requests in unison)
         if raw_data and not data_reset_button:
-            
             try:
                 st.session_state.data = pd.read_csv(raw_data, sep=',')
                 st.session_state.uploaded = True
@@ -120,14 +119,17 @@ if nav_bar == 'Data':
                     with st.spinner("Saving the geohashed data locally..."):   
                         with open(os.path.abspath('./saved_data/saved_df.pkl'), 'wb') as pkl_file:
                             pickle.dump(st.session_state.data, pkl_file)
-                            
-                
-                            
-                # Update the data overview section
-                
-
+                        
             except:
                 results_c.error('Invalid file format. Please upload a valid .csv file that contains latitude and longitude columns.')
+               
+        # If there is a dataframe, update the "Data Overview" statistics 
+        if st.session_state.uploaded:
+            try:
+                # Update the value counts for an ADID
+                overview_c.dataframe(adid_value_counts(st.session_state.data), height=300)
+            except:
+                overview_c.error("Could not load overview statistics.")
                 
     
 
@@ -443,6 +445,7 @@ if data_reset_button:
                     st.session_state.data = pickle.load(pkl_file)    
                     st.session_state.file_source = os.path.abspath('./saved_data/saved_df.pkl')
                     st.session_state.uploaded = True
+                    overview_c = st.empty()
                     overview_c.dataframe(adid_value_counts(st.session_state.data), height=300)
                     
         except:

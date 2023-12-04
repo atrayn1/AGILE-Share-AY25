@@ -10,7 +10,7 @@ data/
 *.pdf
 
 # Saved Data
-saved_data/saved_df.pkl
+saved_data/*
 
 # C extensions
 *.so
