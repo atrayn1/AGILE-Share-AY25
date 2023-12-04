@@ -168,7 +168,7 @@ if nav_bar == 'Data':
             if st.form_submit_button('Assign Name'):
                 if adid_rename_text.strip() not in st.session_state.data['advertiser_id'].values:
                     preview_c.error('Error: Invalid ADID. Please re-enter the ADID')
-                elif new_name_text == '':
+                elif new_name_text == '' and not random_name_generation:
                     preview_c.error('Error: Please enter at least one character for a custom name')
                 elif new_name_text in st.session_state.data['advertiser_id_alias']:
                     preview_c.error(f'Error: The alias {new_name_text} is already in use')
