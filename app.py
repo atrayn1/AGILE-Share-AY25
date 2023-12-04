@@ -170,7 +170,7 @@ if nav_bar == 'Data':
                     preview_c.error('Error: Invalid ADID. Please re-enter the ADID')
                 elif new_name_text == '' and not random_name_generation:
                     preview_c.error('Error: Please enter at least one character for a custom name')
-                elif new_name_text in st.session_state.data['advertiser_id_alias']:
+                elif new_name_text in st.session_state.data['advertiser_id_alias'].values and not random_name_generation:
                     preview_c.error(f'Error: The alias {new_name_text} is already in use')
                 else:
                     with st.spinner('Adding Alias...'):
