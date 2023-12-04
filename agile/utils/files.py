@@ -2,6 +2,7 @@ from random import Random
 from itertools import islice
 from math import ceil
 import os
+import pickle
 
 ROOT_DIR = os.path.realpath(os.path.join(os.path.dirname(__file__), '..'))
 
@@ -30,3 +31,14 @@ def random_line(iterator):
 # Otherwise the image and names could not be loaded
 def find(relative_path):
     return os.path.join(ROOT_DIR, relative_path)
+
+# Save a file to a pickle file, in the saved_files directory
+def save(file_name, data):
+    with open(os.path.abspath(f'./saved_data/{file_name}'), 'wb') as pkl_file:
+        pickle.dump(data, pkl_file)
+
+# Generate a random name
+def random_name():
+    with open(find('../names/first.txt')) as F, open(find('../names/last.txt')) as L:
+                    new_name = random_line(F) + '-' + random_line(L)
+                    return new_name
