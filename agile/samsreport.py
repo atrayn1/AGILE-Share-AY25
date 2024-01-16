@@ -109,8 +109,6 @@ class Report:
         self.pdf.set_font('Arial', '', 16)
         self.pdf.cell(w=30, h=ch, txt="Could not generate the map for this ADID", ln=1)"""
         
-
-        
         self.pdf.add_page()
 
         # full title

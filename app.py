@@ -152,14 +152,14 @@ if nav_bar == 'Data':
                 overview_c.error("Could not load overview statistics.")
             
             
-                
+    # Container for adding an alias to an ADID
     renamer = sidebar.container()
     with renamer:
         st.subheader('Add Alias for an ADID')
         st.write("Choose a name yourself or generate a random name for an ADID")
         
+        # Creates the form which will hold the text boxes, check box, and button
         rename_form = st.form('rename_adid')
-        
         with rename_form:
             adid_rename_text = st.text_input('Advertiser ID')
             new_name_text = st.text_input('Custom Name')
