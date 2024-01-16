@@ -7,8 +7,11 @@ import streamlit as st
 import streamlit.components.v1 as components
 import csv
 import string
+import os
+import pickle
 import pandas as pd
 from datetime import datetime as dt
+from base64 import b64encode
 #import proximitypyhash as pph
 #import pygeohash as gh
 from streamlit_folium import st_folium
@@ -23,10 +26,12 @@ from agile.people import colocation
 from agile.prediction import double_cluster, get_top_N_clusters
 from agile.utils.tag import find_all_nearby_nodes
 from agile.utils.geocode import reverse_geocode
-from agile.utils.files import find
+from agile.utils.files import find, random_line, save, random_name
+from agile.utils.dataframes import modify_and_sort_columns
 from agile.profile import Profile
-from agile.report import Report
+from agile.samsreport import Report
 from agile.centrality import compute_top_centrality
+from agile.overview import adid_value_counts
 
 from streamlit_option_menu import option_menu
 import pygeohash as gh
@@ -42,7 +47,13 @@ if 'loi_data' not in st.session_state:
 if 'uploaded' not in st.session_state:
     st.session_state.uploaded = False
 if 'file_source' not in st.session_state:
+    # Iterate through all files in the directory and deleted the saved ones
+    for filename in os.listdir(os.path.abspath('./saved_data')):
+        file_path = os.path.join(os.path.abspath('./saved_data'), filename)
+        if os.path.isfile(file_path):
+            os.remove(file_path)
     st.session_state.file_source = False
+
 
 # Replace Sidebar with data options Menu
 # This will equal the value of the string selected
@@ -56,6 +67,8 @@ title_c = st.container()
 title_left, title_center = title_c.columns([1, 3])
 title_center.title('AGILE')
 title_center.subheader('Advertising and Geolocation Information Logical Extractor')
+data_reset_button = title_center.button('Reset Data')
+keep_aliases_check = title_center.checkbox('Keep Aliases', True)
 
 # Logo Image
 #title_left.image(find('AGILE_Black.png', '/'))
@@ -69,9 +82,19 @@ sidebar = st.sidebar
 preview_c = st.container()
 preview_c.subheader('Total Data Preview')
 
+overview_c = st.container()
+overview_c.subheader('Data Overview')
+
 # The data analysis/filtering results container
 results_c = st.container()
 results_c.subheader('Analysis')
+
+
+if not os.path.exists('saved_data'):
+    os.makedirs('saved_data')
+    
+
+
 
 # Based on what option is selected on the Nav Bar, a different container/expander will be displayed in the sidebar
 if nav_bar == 'Data':
@@ -84,26 +107,82 @@ if nav_bar == 'Data':
     #relevant_features = ['datetime', 'latitude', 'longitude', 'advertiser_id']
     with data_upload_sb:
         raw_data = st.file_uploader('Upload Data File')
+        
         # If a file has not yet been uploaded (this allows multiple form requests in unison)
-        if raw_data:
+        if raw_data and raw_data.name != st.session_state.file_source:
             try:
                 st.session_state.data = pd.read_csv(raw_data, sep=',')
                 st.session_state.uploaded = True
                 st.session_state.file_source = raw_data.name
+                
 
                 # Check to make sure the uploaded data has geohashes
-
                 # If it does not, generate them on the fly
                 if not 'geohash' in st.session_state.data.columns or not len(st.session_state.data['geohash'].iloc[0]) == 10:
                     # Something is wrong, either the column does not exist
                     # Or it is the wrong precision geohash
-                    # So we genertae it manually
+                    # So we generate it manually
 
                     with st.spinner("Geohashing the data..."):
                         st.session_state.data['geohash'] = st.session_state.data.apply(lambda d : gh.encode(d.latitude, d.longitude, precision=10), axis=1)
-
+                        
+                    
+                     
+                    # Save the data to a pickle file, located in the /saved_data directory
+                    # This is done so it can be reloaded with the "reset data" button
+                    with st.spinner("Saving the geohashed data locally..."):
+                        save('original_df.pkl',st.session_state.data)  
+                        save('saved_df.pkl',st.session_state.data)   
+                        
+                
+                # perform final preprocessing operations before displaying the data
+                st.session_state.data = modify_and_sort_columns(st.session_state.data)
+                    
+                
+                    
             except:
                 results_c.error('Invalid file format. Please upload a valid .csv file that contains latitude and longitude columns.')
+               
+        # If there is a dataframe, update the "Data Overview" statistics 
+        if st.session_state.uploaded and not data_reset_button:
+            try:
+                # Update the value counts for an ADID
+                overview_c.dataframe(adid_value_counts(st.session_state.data), height=300)
+            except:
+                overview_c.error("Could not load overview statistics.")
+            
+            
+    # Container for adding an alias to an ADID
+    renamer = sidebar.container()
+    with renamer:
+        st.subheader('Add Alias for an ADID')
+        st.write("Choose a name yourself or generate a random name for an ADID")
+        
+        # Creates the form which will hold the text boxes, check box, and button
+        rename_form = st.form('rename_adid')
+        with rename_form:
+            adid_rename_text = st.text_input('Advertiser ID')
+            new_name_text = st.text_input('Custom Name')
+            random_name_generation = st.checkbox('Generate Random Name (will override custom name)')
+                
+            if st.form_submit_button('Assign Name'):
+                if adid_rename_text.strip() not in st.session_state.data['advertiser_id'].values:
+                    preview_c.error('Error: Invalid ADID. Please re-enter the ADID')
+                elif new_name_text == '' and not random_name_generation:
+                    preview_c.error('Error: Please enter at least one character for a custom name')
+                elif new_name_text in st.session_state.data['advertiser_id_alias'].values and not random_name_generation:
+                    preview_c.error(f'Error: The alias {new_name_text} is already in use')
+                else:
+                    with st.spinner('Adding Alias...'):
+                        if random_name_generation:
+                            new_name_text = random_name()
+                        st.session_state.data.loc[st.session_state.data['advertiser_id'] == adid_rename_text, 'advertiser_id_alias'] = new_name_text
+                        
+                        save('saved_df.pkl',st.session_state.data)
+                
+                        #st.session_state.file_source = os.path.abspath('./saved_data/saved_df.pkl')
+                
+    
 
 
 elif nav_bar == 'Filtering':
@@ -376,22 +455,62 @@ elif nav_bar == 'Report':
                 colh = st.slider('Colocation Duration', min_value=1, max_value=24, value=2)
                 report_button = st.form_submit_button('Generate Report')
                 if report_button:
+                    if adid not in st.session_state.data['advertiser_id'].values:
+                        results_c.error('ADID is invalid. Please enter a different ADID')
                     if st.session_state.uploaded:
-                        device = Profile(st.session_state.data, adid, exth, reph, colh)
-                        Report(device)
+                        if len(st.session_state.data.query('advertiser_id==@adid')['advertiser_id_alias'].unique()) > 0:
+                            adid_alias = st.session_state.data.query('advertiser_id==@adid')['advertiser_id_alias'].unique()[0]
+                        else:
+                            adid_alias = None
+                        device = Profile(data=st.session_state.data, ad_id=adid, ext_duration=exth, rep_duration=reph, coloc_duration=colh, alias=adid_alias)
+                        report = Report(device)
+                        pdf_file_path = report.file_name
                         results_c.write('Report generated!')
+                        
+                        
+                        with open(pdf_file_path, "rb") as f:
+                            pdf_bytes = f.read()
+
+                        pdf_base64 = b64encode(pdf_bytes).decode('utf-8')
+                        pdf_display = f'<iframe src="data:application/pdf;base64,{pdf_base64}" width="900" height="800" type="application/pdf"></iframe>'
+                        results_c.write(pdf_display, unsafe_allow_html=True)
                     else:
                         results_c.write('Upload data first!')
 else:
     pass #Nothing should happen, it should never be here
 
-# Dynamic content
-#with sidebar:
-    # Data Filtering Expander
-    # Analysis Expander
 
-    # Generate Report
-
+# if the button is clicked, reset the data seen by the user to what the user uploaded originally
+# this is done by saving the original data to a pickle file, and reloading it
+if data_reset_button:
+    # replace this with the function
+    
+    
+    # see if the pickle file exists already
+    if os.path.exists(os.path.abspath('./saved_data/saved_df.pkl')) and os.path.exists(os.path.abspath('./saved_data/original_df.pkl')):
+        # load the pickle file if it does
+        try:
+            pickle_path = 'saved_df' if keep_aliases_check else 'original_df'
+            
+            with open(os.path.abspath(f'./saved_data/{pickle_path}.pkl'), 'rb') as pkl_file:
+                with st.spinner("Reseting the data..."): 
+                    # load in the pickle file and update the file source
+                    st.session_state.data = pickle.load(pkl_file)    
+                    #st.session_state.file_source = os.path.abspath('./saved_data/saved_df.pkl')
+                    
+                    # update the data overview section
+                    overview_c.empty()
+                    overview_c.dataframe(adid_value_counts(st.session_state.data), height=300)
+                    
+                    # sort and modify the columns if needed
+                    st.session_state.data = modify_and_sort_columns(st.session_state.data)
+   
+        except:
+            title_center.error('Error reseting the data. Please upload manually')
+            
+    # if the pickle file doesn't exist, raise an error
+    else:
+        title_center.error('No data has been entered yet. Please upload using the side bar on the "Data" tab')
 
 # Preview container
 with preview_c:

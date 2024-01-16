@@ -17,9 +17,16 @@ def colocation(data: pd.DataFrame, lois: pd.DataFrame, duration: int) -> pd.Data
     data = data[relevant_features].sort_values(by="datetime").reset_index(drop=True)
 
     filtered = data[data.geohash.isin(lois.geohash.unique())]
-    filtered = filtered[filtered.advertiser_id != lois.advertiser_id.iloc[0]]
-
+    
+    try:
+        filtered = filtered[filtered.advertiser_id != lois.advertiser_id.iloc[0]]
+    except:
+        pass
+    
+    print(filtered)
+    
     search_time = timedelta(hours=duration)
+    
     def time_filter(row):
         loi_filtered = lois[lois.geohash == row.geohash]
         loi_dates = pd.to_datetime(loi_filtered.datetime)

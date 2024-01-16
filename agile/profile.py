@@ -7,7 +7,7 @@ from .prediction import double_cluster, get_cluster_centroids, get_top_N_cluster
 import math
 
 class Profile:
-    def __init__(self, data: pd.DataFrame, ad_id: int, ext_duration: int = 7, rep_duration: int = 24, coloc_duration: int = 2) -> None:
+    def __init__(self, data: pd.DataFrame, ad_id: int, ext_duration: int = 7, rep_duration: int = 24, coloc_duration: int = 2, alias: str = None) -> None:
         """
         Constructs a Profile object with given parameters.
 
@@ -17,15 +17,18 @@ class Profile:
         ext_duration (int): Time period (in days) for which locations of interest will be considered for the profile.
         rep_duration (int): Time period (in hours) for which locations of interest will be considered repeatedly for the profile.
         coloc_duration (int): Time period (in hours) for which other advertising IDs co-located with this advertising ID will be considered for the profile.
+        alias (str): A given alias made by the user already for an ADID
         """
         self.ad_id = ad_id
-        self.name = self.__name_gen()
+        self.name = self.__name_gen() if alias == None else alias
         self.ext_duration, self.rep_duration, self.coloc_duration = ext_duration, rep_duration, coloc_duration
         try:
             # Check if Nominatim is down, and if it is do not reverse Geocode the data (allows for most algorithms to run more reliably)
             self.lois = reverse_geocode(locations_of_interest(data, ad_id, ext_duration, rep_duration))
         except:
             self.lois = locations_of_interest(data, ad_id, ext_duration, rep_duration)
+            
+        
         self.coloc = colocation(data, self.lois, coloc_duration)
         self.data, self.model, self.cluster_centroids, self.model_accuracy = data, None, None, None
     
