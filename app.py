@@ -36,8 +36,6 @@ from agile.overview import adid_value_counts
 from streamlit_option_menu import option_menu
 import pygeohash as gh
 
-
-
 # Make use of the whole screen
 st.set_page_config(layout="wide")
 
@@ -116,6 +114,11 @@ if nav_bar == 'Data':
                 st.session_state.data = pd.read_csv(raw_data, sep=',')
                 st.session_state.uploaded = True
                 st.session_state.file_source = raw_data.name
+                
+                try:
+                    st.session_state.data['datetime'] = pd.to_datetime(st.session_state.data['datetime'],errors='coerce')
+                except:
+                    results_c.error('Could not convert "datetime" column to pd.DateTime type')
                 
 
                 # Check to make sure the uploaded data has geohashes
