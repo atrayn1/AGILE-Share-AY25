@@ -456,19 +456,33 @@ elif nav_bar == 'Report':
                 reph = st.slider('Time Between Repeat Visits', min_value=1, max_value=72, value=24)
                 colh = st.slider('Colocation Duration', min_value=1, max_value=24, value=2)
                 report_button = st.form_submit_button('Generate Report')
+
+                #find the number of days this data covers to see if there is sufficient data for an adid
+                st.session_state.data['datetime'] = pd.to_datetime(st.session_state.data['datetime'])
+                min_date = st.session_state.data['datetime'].min()
+                max_date = st.session_state.data['datetime'].max()
+                days_covered = (max_date - min_date).days + 1
+
                 if report_button:
                     if adid not in st.session_state.data['advertiser_id'].values:
                         results_c.error('ADID is invalid. Please enter a different ADID')
+                    #elif adid_value_counts(st.session_state.data)['Occurences in Data'].get(adid) < 200:
+                    elif (adid_value_counts(st.session_state.data)['Occurences in Data'].get(adid) * 1.0 / days_covered) < 200:                        
+                        suff_data = 0
+                    else:
+                        suff_data = 1
                     if st.session_state.uploaded:
                         if len(st.session_state.data.query('advertiser_id==@adid')['advertiser_id_alias'].unique()) > 0:
                             adid_alias = st.session_state.data.query('advertiser_id==@adid')['advertiser_id_alias'].unique()[0]
                         else:
                             adid_alias = None
-                        device = Profile(data=st.session_state.data, ad_id=adid, ext_duration=exth, rep_duration=reph, coloc_duration=colh, alias=adid_alias)
+                        device = Profile(data=st.session_state.data, ad_id=adid,
+                                ext_duration=exth, rep_duration=reph,
+                                coloc_duration=colh, alias=adid_alias, sd =
+                                suff_data)
                         report = Report(device)
                         pdf_file_path = report.file_name
                         results_c.write('Report generated!')
-                        
                         
                         with open(pdf_file_path, "rb") as f:
                             pdf_bytes = f.read()

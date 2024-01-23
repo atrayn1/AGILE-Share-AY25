@@ -41,6 +41,15 @@ class Report:
         self.pdf.cell(w=0, h=ch, txt="tl;dr Report on Device Activity:", align="C")
         self.pdf.ln(ch)
 
+        #disclaimer if there isn't enough data
+        if self.profile.sd == 0:
+            self.pdf.set_font('Arial', '', 14)
+            self.pdf.cell(w=0, h=ch, txt="Warning: Limited information available for this device.", align="C")
+            self.pdf.ln(ch)
+            self.pdf.cell(w=0, h=ch, txt="This may affect the accuracy of the report.", align="C")
+
+
+
         # advertiser ID and codename
         self.pdf.ln(ch)
         self.pdf.set_font('Arial', 'B', 16)

@@ -7,7 +7,9 @@ from .prediction import double_cluster, get_cluster_centroids, get_top_N_cluster
 import math
 
 class Profile:
-    def __init__(self, data: pd.DataFrame, ad_id: int, ext_duration: int = 7, rep_duration: int = 24, coloc_duration: int = 2, alias: str = None) -> None:
+    def __init__(self, data: pd.DataFrame, ad_id: int, ext_duration: int = 7,
+            rep_duration: int = 24, coloc_duration: int = 2, alias: str = None,
+            sd: int = 0) -> None:
         """
         Constructs a Profile object with given parameters.
 
@@ -20,6 +22,7 @@ class Profile:
         alias (str): A given alias made by the user already for an ADID
         """
         self.ad_id = ad_id
+        self.sd = sd
         self.name = self.__name_gen() if alias == None else alias
         self.ext_duration, self.rep_duration, self.coloc_duration = ext_duration, rep_duration, coloc_duration
         try:
