@@ -60,6 +60,6 @@ foo@bar:../AGILE$ streamlit run app.py
 
 The coding team for AGILE:
 
-- SAMUEL CHANOW
-- ERNEST SON
-- KATIE DESSAUER
+- RACHEL SUMMERS
+- JOE REIMANN
+- ALEX TONER
