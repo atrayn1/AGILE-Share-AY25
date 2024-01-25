@@ -426,7 +426,7 @@ elif nav_bar == 'Algorithms':
                             st.session_state.profile.model_train()
                         # Convert the time input to a datetime
                         # str(dt.combine(start_date, start_time))
-                        # Using an arbitary date because this algorith monly cares about the time of day
+                        # Using an arbitary date because this algorithm only cares about the time of day
                         start_time = pd.to_datetime(str(dt.combine(pd.to_datetime('2018-01-01'), start_time)))
                         start_time = np.array((start_time - start_time.replace(hour=0, minute=0, second=0, microsecond=0)).total_seconds()).reshape(-1, 1)
                         result_label, result_centroid = st.session_state.profile.model_predict(start_time, start_day)
@@ -475,14 +475,20 @@ elif nav_bar == 'Report':
                     else:
                         suff_data = 1
                     if st.session_state.uploaded:
+                        # Check if the adid has an alias added
                         if len(st.session_state.data.query('advertiser_id==@adid')['advertiser_id_alias'].unique()) > 0:
                             adid_alias = st.session_state.data.query('advertiser_id==@adid')['advertiser_id_alias'].unique()[0]
                         else:
                             adid_alias = None
+                            
+                        # set up the profile for the adid
+                        # creating a profile also creates the LOI DataFrame, which may take a minute or two depending on the size of the data
                         device = Profile(data=st.session_state.data, ad_id=adid,
                                 ext_duration=exth, rep_duration=reph,
                                 coloc_duration=colh, alias=adid_alias, sd =
                                 suff_data)
+                        
+                        # generate the report
                         report = Report(device)
                         pdf_file_path = report.file_name
                         results_c.write('Report generated!')

@@ -3,12 +3,12 @@ from .locations import locations_of_interest
 from .people import colocation
 from .utils.files import random_line, find
 from .utils.geocode import reverse_geocode
-from .prediction import double_cluster, get_cluster_centroids, get_top_N_clusters, fit_predictor
+from .prediction import double_cluster, get_cluster_centroids, get_top_N_clusters, fit_predictor, haversine
 import math
 
 class Profile:
     def __init__(self, data: pd.DataFrame, ad_id: int, ext_duration: int = 7,
-            rep_duration: int = 24, coloc_duration: int = 2, alias: str = None,
+            rep_duration: int = 24, coloc_duration: int = 12, alias: str = None,
             sd: int = 0) -> None:
         """
         Constructs a Profile object with given parameters.
@@ -25,12 +25,22 @@ class Profile:
         self.sd = sd
         self.name = self.__name_gen() if alias == None else alias
         self.ext_duration, self.rep_duration, self.coloc_duration = ext_duration, rep_duration, coloc_duration
-        try:
+        '''try:
             # Check if Nominatim is down, and if it is do not reverse Geocode the data (allows for most algorithms to run more reliably)
             self.lois = reverse_geocode(locations_of_interest(data, ad_id, ext_duration, rep_duration))
         except:
-            self.lois = locations_of_interest(data, ad_id, ext_duration, rep_duration)
-            
+            self.lois = locations_of_interest(data, ad_id, ext_duration, rep_duration)'''
+           
+        
+        self.lois = self.create_report_lois(data)
+        print(self.lois.head())
+        try:
+            self.lois = reverse_geocode(self.lois)
+            print('GeoCoding Successful')
+        except:
+            pass
+        
+        print(self.lois.head())
         
         self.coloc = colocation(data, self.lois, coloc_duration)
         self.data, self.model, self.cluster_centroids, self.model_accuracy = data, None, None, None
@@ -94,4 +104,57 @@ class Profile:
 
         centroid = self.cluster_centroids.loc[self.cluster_centroids['label'] == label]
         return label, centroid
+    
+    def filter_close_coordinates(self, df: pd.DataFrame = None, threshold_distance: float = 0.13):
+        """
+        Filters out any LOI locations that are within threshold distance of one another
+        
+        Parameters:
+        df (pd.DataFrame): the data to be filtered
+        threshold_distance (float): how close two data points can be without being considered too close, in kilometers
+        
+        Returns:
+        pd.DataFrame: the filtered DataFrame
+        """
+        new_df = pd.DataFrame(columns=df.columns)
+
+        for i, row1 in df.iterrows():
+            keep_row = True
+            for _, row2 in new_df.iterrows():
+                distance = haversine(row1['latitude'], row1['longitude'], row2['latitude'], row2['longitude'])
+                if distance < threshold_distance:
+                    keep_row = False
+                    break
+            if keep_row:
+                new_df = new_df.append(row1, ignore_index=True)
+
+        return new_df
+    
+    def create_report_lois(self, df: pd.DataFrame):
+        cluster_data = pd.DataFrame()
+        loi_data = pd.DataFrame()
+        loi_data_i = pd.DataFrame()
+        
+        # run the cluster algorithm, from 1 to 5 clusters
+        for cluster_num in range(1,5):
+            print(cluster_num)
+            cluster_data = double_cluster(self.ad_id, df)
+            loi_data_i = get_top_N_clusters(cluster_data, cluster_num)
+            loi_data_i['i'] = [cluster_num] * len(loi_data_i)
+            loi_data_i = self.filter_close_coordinates(loi_data_i, threshold_distance=.7)
+            loi_data = pd.concat([loi_data, loi_data_i])
+            
+        # run the locations of interest algorithm, covering a 25hrs to 1hr for extended duration and 73hrs to 1hr for repetition duration
+        for ext_d in range(1,25,3):
+            for rep_d in range(73,0,-4):
+                print(ext_d,rep_d)
+                loi_data = pd.concat([loi_data,locations_of_interest(df, self.ad_id, ext_d, rep_d)]).reset_index(drop=True)
+            
+        loi_data = loi_data.drop_duplicates()    
+            
+        loi_data = self.filter_close_coordinates(loi_data, threshold_distance=.4)       
+
+        return loi_data
+        
+            
 
