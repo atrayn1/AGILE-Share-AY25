@@ -53,6 +53,8 @@ if 'file_source' not in st.session_state:
         if os.path.isfile(file_path):
             os.remove(file_path)
     st.session_state.file_source = False
+if 'coloc_ids' not in st.session_state:
+    st.session_state.coloc_ids = pd.DataFrame(columns=['Colocated IDs'])
 
 
 # Replace Sidebar with data options Menu
@@ -448,9 +450,12 @@ elif nav_bar == 'Report':
     sidebar.write("The module below generates a report in PDF format about a single adverter ID (a single device) in the data.")
 
     sidebar.subheader('Generate Report')
+    
     report_sb = sidebar.container() #'Report'
     with report_sb:
         report_c = st.container()
+        
+        colocs = st.container()
         with report_c:
             report_form = st.form(key='report')
             with report_form:
@@ -501,6 +506,16 @@ elif nav_bar == 'Report':
                         results_c.write(pdf_display, unsafe_allow_html=True)
                     else:
                         results_c.write('Upload data first!')
+                        
+                        
+        with colocs:
+            st.subheader('Colocated Devices')
+            try:
+                colocs_df = st.dataframe(pd.DataFrame(device.coloc['advertiser_id'].unique(), columns=['Colocated IDs']))
+            except:
+                colocs_df = st.info('Run a report on an ADID')
+                
+        
 else:
     pass #Nothing should happen, it should never be here
 

@@ -136,7 +136,7 @@ class Profile:
         loi_data_i = pd.DataFrame()
         
         # run the cluster algorithm, from 1 to 5 clusters
-        for cluster_num in range(1,5):
+        for cluster_num in range(4,5):
             print(cluster_num)
             cluster_data = double_cluster(self.ad_id, df)
             loi_data_i = get_top_N_clusters(cluster_data, cluster_num)
@@ -146,7 +146,7 @@ class Profile:
             
         # run the locations of interest algorithm, covering a 25hrs to 1hr for extended duration and 73hrs to 1hr for repetition duration
         for ext_d in range(1,25,3):
-            for rep_d in range(73,0,-4):
+            for rep_d in range(71,0,-10):
                 print(ext_d,rep_d)
                 loi_data = pd.concat([loi_data,locations_of_interest(df, self.ad_id, ext_d, rep_d)]).reset_index(drop=True)
             
