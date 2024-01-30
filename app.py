@@ -454,15 +454,15 @@ elif nav_bar == 'Report':
     report_sb = sidebar.container() #'Report'
     with report_sb:
         report_c = st.container()
-        
         colocs = st.container()
+ 
         with report_c:
             report_form = st.form(key='report')
             with report_form:
                 adid = st.text_input('Advertiser ID')
-                exth = st.slider('Extended Stay Duration', min_value=1, max_value=24, value=7)
-                reph = st.slider('Time Between Repeat Visits', min_value=1, max_value=72, value=24)
-                colh = st.slider('Colocation Duration', min_value=1, max_value=24, value=2)
+                #exth = st.slider('Extended Stay Duration', min_value=1, max_value=24, value=7)
+                #reph = st.slider('Time Between Repeat Visits', min_value=1, max_value=72, value=24)
+                #colh = st.slider('Colocation Duration', min_value=1, max_value=24, value=2)
                 report_button = st.form_submit_button('Generate Report')
 
                 #find the number of days this data covers to see if there is sufficient data for an adid
@@ -487,11 +487,9 @@ elif nav_bar == 'Report':
                             adid_alias = None
                             
                         # set up the profile for the adid
-                        # creating a profile also creates the LOI DataFrame, which may take a minute or two depending on the size of the data
+                        # creating a profile also creates the LOI DataFrame, which may take a minute or two depending on the size of the data                
                         device = Profile(data=st.session_state.data, ad_id=adid,
-                                ext_duration=exth, rep_duration=reph,
-                                coloc_duration=colh, alias=adid_alias, sd =
-                                suff_data)
+                                         alias=adid_alias, sd = suff_data)
                         
                         # generate the report
                         report = Report(device)
@@ -510,10 +508,10 @@ elif nav_bar == 'Report':
                         
         with colocs:
             st.subheader('Colocated Devices')
-            try:
-                colocs_df = st.dataframe(pd.DataFrame(device.coloc['advertiser_id'].unique(), columns=['Colocated IDs']))
+            try:  
+                colocs_df = st.dataframe(pd.DataFrame(device.coloc['advertiser_id'].unique(), columns=['Colocated IDs']))  
             except:
-                colocs_df = st.info('Run a report on an ADID')
+                colocs_df = st.info('No colocated devices found')
                 
         
 else:
