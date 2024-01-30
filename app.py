@@ -59,28 +59,47 @@ if 'coloc_ids' not in st.session_state:
 
 # Replace Sidebar with data options Menu
 # This will equal the value of the string selected
+
+# Title container
+title_c = st.container()
+title_img, title_left, space = title_c.columns([1, 3, 1])
+
+title_left.markdown("<h2 style='text-align: center; color: black;'>AGILE</h2>", unsafe_allow_html=True)
+
+title_left.markdown("<h3 style='text-align: center; color: black;'>Advertising and Geolocation Information Logical Extractor </h3>", unsafe_allow_html=True)
+
+#title_left.title('AGILE')
+#title_left.subheader('Advertising and Geolocation Information Logical Extractor')
+#data_reset_button = title_left.button('Reset Data')
+#keep_aliases_check = title_left.checkbox('Keep Aliases', True)
+
+
+title_img.image(find('../img/AGILE_Black.png'), width = 180)
+
+
 nav_bar = option_menu(None, ['Data', 'Filtering', 'Locations', 'Algorithms', 'Report'],
                       icons=['file-earmark-fill', 'funnel-fill', 'pin-map-fill', 'layer-forward', 'stack'],
                       menu_icon="cast", default_index=0, orientation="horizontal",
                     )
 
-# Title container
-title_c = st.container()
-title_left, title_center = title_c.columns([1, 3])
-title_center.title('AGILE')
-title_center.subheader('Advertising and Geolocation Information Logical Extractor')
-data_reset_button = title_center.button('Reset Data')
-keep_aliases_check = title_center.checkbox('Keep Aliases', True)
+
 
 # Logo Image
 #title_left.image(find('AGILE_Black.png', '/'))
 # Path relative to files.py
-title_left.image(find('../img/AGILE_Black.png'))
+#title_left.image(find('../img/AGILE_Black.png'), width = 200)
 
 # Main page sidebar
 sidebar = st.sidebar
 
 # The data preview
+blank = st.container()
+blank.subheader('')
+
+data_opts = st.container()
+data_reset_button = data_opts.button('Reset Data')
+keep_aliases_check = data_opts.checkbox('Keep Aliases', True)
+
 preview_c = st.container()
 preview_c.subheader('Total Data Preview')
 
