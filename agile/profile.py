@@ -140,9 +140,13 @@ class Profile:
             print(cluster_num)
             cluster_data = double_cluster(self.ad_id, df)
             loi_data_i = get_top_N_clusters(cluster_data, cluster_num)
-            loi_data_i['i'] = [cluster_num] * len(loi_data_i)
-            loi_data_i = self.filter_close_coordinates(loi_data_i, threshold_distance=.7)
-            loi_data = pd.concat([loi_data, loi_data_i])
+            
+            try:
+                loi_data_i['i'] = [cluster_num] * len(loi_data_i)
+                loi_data_i = self.filter_close_coordinates(loi_data_i, threshold_distance=.7)
+                loi_data = pd.concat([loi_data, loi_data_i])
+            except:
+                return pd.DataFrame()
             
         # run the locations of interest algorithm, covering a 25hrs to 1hr for extended duration and 73hrs to 1hr for repetition duration
         for ext_d in range(1,25,3):
