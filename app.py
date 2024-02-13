@@ -55,7 +55,8 @@ if 'file_source' not in st.session_state:
     st.session_state.file_source = False
 if 'coloc_ids' not in st.session_state:
     st.session_state.coloc_ids = pd.DataFrame(columns=['Colocated IDs'])
-
+if 'generated_reports' not in st.session_state:
+    st.session_state.generated_reports = pd.DataFrame(columns=['ADID', 'Alias','Profile'])
 
 
 # Replace Sidebar with data options Menu
@@ -383,7 +384,7 @@ elif nav_bar == 'Algorithms':
                             data_map(results_c, lois=st.session_state.loi_data)
                             # Write Locations of Interest to the results container
                             results_c.write('Cluster Data')
-                            results_c.write(loi_data)
+                            results_c.write(loi_data)pd.DataFrame(columns=['Generated Reports'])
 
         # (Traditional) locations of interest
         loi_analysis = st.container()
@@ -515,6 +516,8 @@ elif nav_bar == 'Report':
                         report = Report(device)
                         pdf_file_path = report.file_name
                         results_c.write('Report generated!')
+                        
+                        st.session_state.generated_reports.loc[len(st.session_state.generated_reports)] = [adid, device.name, device]
                         
                         with open(pdf_file_path, "rb") as f:
                             pdf_bytes = f.read()
