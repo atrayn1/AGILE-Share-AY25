@@ -57,6 +57,7 @@ if 'coloc_ids' not in st.session_state:
     st.session_state.coloc_ids = pd.DataFrame(columns=['Colocated IDs'])
 
 
+
 # Replace Sidebar with data options Menu
 # This will equal the value of the string selected
 
@@ -466,7 +467,7 @@ elif nav_bar == 'Report':
 
     sidebar.title('Report')
 
-    sidebar.write("The module below generates a report in PDF format about a single adverter ID (a single device) in the data.")
+    sidebar.write("The module below generates a report in PDF format about a single adverter ID (a single device) in the data.\n\nThe report may take 2-5 minutes to generate.")
 
     sidebar.subheader('Generate Report')
     
@@ -563,11 +564,11 @@ if data_reset_button:
                     st.session_state.data = modify_and_sort_columns(st.session_state.data)
    
         except:
-            title_center.error('Error reseting the data. Please upload manually')
+            title_c.error('Error reseting the data. Please upload manually')
             
     # if the pickle file doesn't exist, raise an error
     else:
-        title_center.error('No data has been entered yet. Please upload using the side bar on the "Data" tab')
+        title_c.error('No data has been entered yet. Please upload using the side bar on the "Data" tab')
 
 # Preview container
 with preview_c:
