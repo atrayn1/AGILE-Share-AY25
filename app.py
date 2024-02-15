@@ -54,7 +54,7 @@ if 'file_source' not in st.session_state:
             os.remove(file_path)
     st.session_state.file_source = False
 if 'coloc_ids' not in st.session_state:
-    st.session_state.coloc_ids = pd.DataFrame(columns=['Colocated IDs'])
+    st.session_state.coloc_ids = pd.DataFrame(columns=['Colocated ADIDs','Alias'])
 if 'generated_reports' not in st.session_state:
     st.session_state.generated_reports = pd.DataFrame(columns=['ADID', 'Alias','Profile'])
 
@@ -503,23 +503,46 @@ elif nav_bar == 'Report':
                     else:
                         suff_data = 1
                     if st.session_state.uploaded:
-                        # Check if the adid has an alias added
-                        if len(st.session_state.data.query('advertiser_id==@adid')['advertiser_id_alias'].unique()) > 0:
-                            adid_alias = st.session_state.data.query('advertiser_id==@adid')['advertiser_id_alias'].unique()[0]
-                        else:
-                            adid_alias = None
-                            
-                        # set up the profile for the adid
-                        # creating a profile also creates the LOI DataFrame, which may take a minute or two depending on the size of the data                
-                        device = Profile(data=st.session_state.data, ad_id=adid,
-                                         alias=adid_alias, sd = suff_data)
+                        print(st.session_state.generated_reports['ADID'])
                         
-                        # generate the report
+                        if adid not in st.session_state.generated_reports['ADID']:
+                            # Check if the adid has an alias added
+                            if len(st.session_state.data.query('advertiser_id==@adid')['advertiser_id_alias'].unique()) > 0:
+                                adid_alias = st.session_state.data.query('advertiser_id==@adid')['advertiser_id_alias'].unique()[0]
+                            else:
+                                adid_alias = None
+                                
+                            # set up the profile for the adid
+                            # creating a profile also creates the LOI DataFrame, which may take a minute or two depending on the size of the data                
+                            device = Profile(data=st.session_state.data, ad_id=adid,
+                                            alias=adid_alias, sd = suff_data)
+                            
+                            
+                            st.session_state.data.loc[st.session_state.data['advertiser_id'] == adid, 'advertiser_id_alias'] = device.name
+                            save('saved_df.pkl',st.session_state.data)
+                            
+                            # generate the report
+                            report = Report(device)
+                            pdf_file_path = report.file_name
+                            results_c.write('Report generated!')
+                            
+                            if adid not in st.session_state.generated_reports['ADID']:
+                                st.session_state.generated_reports.loc[len(st.session_state.generated_reports)] = [adid, device.name, device]
+                            
+                            with open(pdf_file_path, "rb") as f:
+                                pdf_bytes = f.read()
+
+                            pdf_base64 = b64encode(pdf_bytes).decode('utf-8')
+                            pdf_display = f'<iframe src="data:application/pdf;base64,{pdf_base64}" width="900" height="800" type="application/pdf"></iframe>'
+                            results_c.write(pdf_display, unsafe_allow_html=True)
+                        else:
+                            results_c.write('Upload data first!')
+                            
+                    else:
+                        device = st.session_state.generated_reports[st.session_state.generated_reports['ADID'] == adid]['Profile'].reset_index(drop=True)[0]
                         report = Report(device)
                         pdf_file_path = report.file_name
                         results_c.write('Report generated!')
-                        
-                        st.session_state.generated_reports.loc[len(st.session_state.generated_reports)] = [adid, device.name, device]
                         
                         with open(pdf_file_path, "rb") as f:
                             pdf_bytes = f.read()
@@ -527,19 +550,30 @@ elif nav_bar == 'Report':
                         pdf_base64 = b64encode(pdf_bytes).decode('utf-8')
                         pdf_display = f'<iframe src="data:application/pdf;base64,{pdf_base64}" width="900" height="800" type="application/pdf"></iframe>'
                         results_c.write(pdf_display, unsafe_allow_html=True)
-                    else:
-                        results_c.write('Upload data first!')
-                        
+                            
                         
         with colocs:
             st.subheader('Colocated Devices')
             try:  
-                colocs_df = st.dataframe(pd.DataFrame(device.coloc['advertiser_id'].unique(), columns=['Colocated IDs']))  
+                colocs_df = st.dataframe(pd.DataFrame(device.coloc['advertiser_id'].unique(), columns=['Colocated ADIDs','Alias']))
+                
+                for adid in colocs_df['Colocated ADIDs']:
+                    if len(st.session_state.data.query('advertiser_id==@adid')['advertiser_id_alias'].unique()) == 0:
+                        generated_name = random_name()
+                        st.session_state.data.loc[st.session_state.data['advertiser_id'] == adid, 'advertiser_id_alias'] = generated_name
+                        colocs_df.loc[colocs_df['Colocated ADIDs'] == adid, 'Alias'] = generated_name
+                        
+                print(colocs_df)
             except:
                 colocs_df = st.info('No colocated devices found')
                 
         with generated_reps:
             st.subheader('Generated Reports')
+            try:
+                generated_report_df = st.dataframe(st.session_state.generated_reports[['Alias','ADID']])
+            except:
+                generated_report_df = st.info('No reports have been generated yet.')
+            
 else:
     pass #Nothing should happen, it should never be here
 
