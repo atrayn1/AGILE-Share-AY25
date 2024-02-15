@@ -224,7 +224,7 @@ elif nav_bar == 'Filtering':
         st.write("The modules below filter the data by Advertising ID, Location, or Time. These changes will remain until \
                  the data is reset in the 'Data' section.")
 
-        # Filter by advertising ID
+        # Filter by advertising ID4d02768a-0340-d327-4482-78a7a7420829
         adid_filter_c = st.container()
         with adid_filter_c:
             st.subheader('Advertising ID Filtering')
@@ -323,7 +323,7 @@ elif nav_bar == 'Locations':
                     with st.spinner(text="Computing..."):
                         centrality_data = compute_top_centrality(lat, long, radius, 5, st.session_state.data)
                         data_map(results_c, lois=centrality_data)
-                        results_c.write('The locations with the highest centrality to the AdIDs at the entered location are:')
+                        results_c.write('The locations with the highest centrality to the ADIDs at the entered location are:')
                         results_c.write(centrality_data)
 
         # Overpass API polyline
@@ -384,7 +384,8 @@ elif nav_bar == 'Algorithms':
                             data_map(results_c, lois=st.session_state.loi_data)
                             # Write Locations of Interest to the results container
                             results_c.write('Cluster Data')
-                            results_c.write(loi_data)pd.DataFrame(columns=['Generated Reports'])
+                            results_c.write(loi_data)
+                            
 
         # (Traditional) locations of interest
         loi_analysis = st.container()
@@ -476,6 +477,7 @@ elif nav_bar == 'Report':
     with report_sb:
         report_c = st.container()
         colocs = st.container()
+        generated_reps = st.container()
  
         with report_c:
             report_form = st.form(key='report')
@@ -536,7 +538,8 @@ elif nav_bar == 'Report':
             except:
                 colocs_df = st.info('No colocated devices found')
                 
-        
+        with generated_reps:
+            st.subheader('Generated Reports')
 else:
     pass #Nothing should happen, it should never be here
 
