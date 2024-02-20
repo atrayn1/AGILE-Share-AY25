@@ -1,7 +1,7 @@
 import pandas as pd
 from .locations import locations_of_interest
 from .people import colocation
-from .utils.files import random_line, find
+from .utils.files import random_line, find, random_name
 from .utils.geocode import reverse_geocode
 from .prediction import double_cluster, get_cluster_centroids, get_top_N_clusters, fit_predictor, haversine
 import math
@@ -43,6 +43,8 @@ class Profile:
         print(self.lois.head())
         
         self.coloc = colocation(data, self.lois, coloc_duration)
+        self.coloc_addendum()
+        
         self.data, self.model, self.cluster_centroids, self.model_accuracy = data, None, None, None
     
     def reliability(self) -> float:
@@ -137,7 +139,7 @@ class Profile:
         
         # run the cluster algorithm, from 1 to 5 clusters
         for cluster_num in range(4,5):
-            print(cluster_num)
+            print('Running Clustering Algorithm...')
             cluster_data = double_cluster(self.ad_id, df)
             loi_data_i = get_top_N_clusters(cluster_data, cluster_num)
             
@@ -151,7 +153,7 @@ class Profile:
         # run the locations of interest algorithm, covering a 25hrs to 1hr for extended duration and 73hrs to 1hr for repetition duration
         for ext_d in range(1,25,3):
             for rep_d in range(71,0,-10):
-                print(ext_d,rep_d)
+                print(f'Running LOI Algorithm (Extended Duration: {ext_d} hrs, Repetition Duration: {rep_d} hrs)')
                 loi_data = pd.concat([loi_data,locations_of_interest(df, self.ad_id, ext_d, rep_d)]).reset_index(drop=True)
             
         loi_data = loi_data.drop_duplicates()    
@@ -159,6 +161,24 @@ class Profile:
         loi_data = self.filter_close_coordinates(loi_data, threshold_distance=.4)       
 
         return loi_data
+    
+    def coloc_addendum(self):
+        colocs_df = pd.DataFrame(self.coloc['advertiser_id'].unique(), columns=['Colocated ADIDs'])
+                
+        colocs_df['Alias'] = [''] * len(colocs_df)
+        
+        for adid in colocs_df['Colocated ADIDs'].values:
+            if None in self.data.query('advertiser_id==@self.ad_id')['advertiser_id_alias'].unique():
+                generated_name = random_name()
+                self.data.loc[self.data['advertiser_id'] == adid, 'advertiser_id_alias'] = generated_name
+                colocs_df.loc[colocs_df['Colocated ADIDs'] == adid, 'Alias'] = generated_name
+            else:
+                colocs_df.loc[colocs_df['Colocated ADIDs'] == adid, 'Alias'] = self.data.query('advertiser_id==@self.ad_id')['advertiser_id_alias'].unique()[0]
+                
+        self.coloc = pd.merge(left=self.coloc, right=colocs_df, left_on='advertiser_id', right_on='Colocated ADIDs')
+        print(self.coloc)
+                
+                    
         
             
 

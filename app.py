@@ -502,11 +502,12 @@ elif nav_bar == 'Report':
                         suff_data = 0
                     else:
                         suff_data = 1
-                    if st.session_state.uploaded:
-                        print(st.session_state.generated_reports['ADID'])
                         
-                        if adid not in st.session_state.generated_reports['ADID']:
+                    if st.session_state.uploaded:
+                        
+                        if adid not in st.session_state.generated_reports['ADID'].values:
                             # Check if the adid has an alias added
+                            
                             if len(st.session_state.data.query('advertiser_id==@adid')['advertiser_id_alias'].unique()) > 0:
                                 adid_alias = st.session_state.data.query('advertiser_id==@adid')['advertiser_id_alias'].unique()[0]
                             else:
@@ -526,8 +527,8 @@ elif nav_bar == 'Report':
                             pdf_file_path = report.file_name
                             results_c.write('Report generated!')
                             
-                            if adid not in st.session_state.generated_reports['ADID']:
-                                st.session_state.generated_reports.loc[len(st.session_state.generated_reports)] = [adid, device.name, device]
+                            
+                            st.session_state.generated_reports.loc[len(st.session_state.generated_reports)] = [adid, device.name, device]
                             
                             with open(pdf_file_path, "rb") as f:
                                 pdf_bytes = f.read()
@@ -535,36 +536,33 @@ elif nav_bar == 'Report':
                             pdf_base64 = b64encode(pdf_bytes).decode('utf-8')
                             pdf_display = f'<iframe src="data:application/pdf;base64,{pdf_base64}" width="900" height="800" type="application/pdf"></iframe>'
                             results_c.write(pdf_display, unsafe_allow_html=True)
+                        
+                            
                         else:
-                            results_c.write('Upload data first!')
+                            device = st.session_state.generated_reports[st.session_state.generated_reports['ADID'] == adid]['Profile'].reset_index(drop=True)[0]
+                            
+                            report = Report(device)
+                            pdf_file_path = report.file_name
+                            results_c.write('Report generated!')
+                            
+                            with open(pdf_file_path, "rb") as f:
+                                pdf_bytes = f.read()
+
+                            pdf_base64 = b64encode(pdf_bytes).decode('utf-8')
+                            pdf_display = f'<iframe src="data:application/pdf;base64,{pdf_base64}" width="900" height="800" type="application/pdf"></iframe>'
+                            results_c.write(pdf_display, unsafe_allow_html=True)
                             
                     else:
-                        device = st.session_state.generated_reports[st.session_state.generated_reports['ADID'] == adid]['Profile'].reset_index(drop=True)[0]
-                        report = Report(device)
-                        pdf_file_path = report.file_name
-                        results_c.write('Report generated!')
-                        
-                        with open(pdf_file_path, "rb") as f:
-                            pdf_bytes = f.read()
-
-                        pdf_base64 = b64encode(pdf_bytes).decode('utf-8')
-                        pdf_display = f'<iframe src="data:application/pdf;base64,{pdf_base64}" width="900" height="800" type="application/pdf"></iframe>'
-                        results_c.write(pdf_display, unsafe_allow_html=True)
+                        results_c.write('Upload Data First!')
                             
                         
         with colocs:
             st.subheader('Colocated Devices')
             try:  
-                colocs_df = st.dataframe(pd.DataFrame(device.coloc['advertiser_id'].unique(), columns=['Colocated ADIDs','Alias']))
+                colocs_df = st.dataframe(device.coloc[['Alias','advertiser_id']])     
                 
-                for adid in colocs_df['Colocated ADIDs']:
-                    if len(st.session_state.data.query('advertiser_id==@adid')['advertiser_id_alias'].unique()) == 0:
-                        generated_name = random_name()
-                        st.session_state.data.loc[st.session_state.data['advertiser_id'] == adid, 'advertiser_id_alias'] = generated_name
-                        colocs_df.loc[colocs_df['Colocated ADIDs'] == adid, 'Alias'] = generated_name
-                        
-                print(colocs_df)
-            except:
+            except Exception as error:
+                print(error)
                 colocs_df = st.info('No colocated devices found')
                 
         with generated_reps:
