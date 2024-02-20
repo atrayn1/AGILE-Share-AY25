@@ -40,12 +40,14 @@ class Profile:
         except:
             pass
         
-        print(self.lois.head())
+        #print(self.lois.head())
+        
+        self.data, self.model, self.cluster_centroids, self.model_accuracy = data, None, None, None
         
         self.coloc = colocation(data, self.lois, coloc_duration)
         self.coloc_addendum()
         
-        self.data, self.model, self.cluster_centroids, self.model_accuracy = data, None, None, None
+        
     
     def reliability(self) -> float:
         n = len(self.cluster_centroids)
