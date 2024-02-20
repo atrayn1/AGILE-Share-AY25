@@ -165,20 +165,24 @@ class Profile:
         return loi_data
     
     def coloc_addendum(self):
-        colocs_df = pd.DataFrame(self.coloc['advertiser_id'].unique(), columns=['Colocated ADIDs'])
-                
-        colocs_df['Alias'] = [''] * len(colocs_df)
-        
-        for adid in colocs_df['Colocated ADIDs'].values:
-            if None in self.data.query('advertiser_id==@self.ad_id')['advertiser_id_alias'].unique():
-                generated_name = random_name()
-                self.data.loc[self.data['advertiser_id'] == adid, 'advertiser_id_alias'] = generated_name
-                colocs_df.loc[colocs_df['Colocated ADIDs'] == adid, 'Alias'] = generated_name
-            else:
-                colocs_df.loc[colocs_df['Colocated ADIDs'] == adid, 'Alias'] = self.data.query('advertiser_id==@self.ad_id')['advertiser_id_alias'].unique()[0]
-                
-        self.coloc = pd.merge(left=self.coloc, right=colocs_df, left_on='advertiser_id', right_on='Colocated ADIDs')
-        print(self.coloc)
+        if len(self.coloc) > 0:
+            colocs_df = pd.DataFrame(self.coloc['advertiser_id'].unique(), columns=['Colocated ADIDs'])
+                    
+            colocs_df['Alias'] = [''] * len(colocs_df)
+            
+            for adid in colocs_df['Colocated ADIDs'].values:
+                if None in self.data.query('advertiser_id==@self.ad_id')['advertiser_id_alias'].unique():
+                    generated_name = random_name()
+                    self.data.loc[self.data['advertiser_id'] == adid, 'advertiser_id_alias'] = generated_name
+                    colocs_df.loc[colocs_df['Colocated ADIDs'] == adid, 'Alias'] = generated_name
+                else:
+                    colocs_df.loc[colocs_df['Colocated ADIDs'] == adid, 'Alias'] = self.data.query('advertiser_id==@self.ad_id')['advertiser_id_alias'].unique()[0]
+                    
+            self.coloc = pd.merge(left=self.coloc, right=colocs_df, left_on='advertiser_id', right_on='Colocated ADIDs')
+            print(self.coloc)
+            
+        else:
+            self.coloc = pd.DataFrame(columns=['advertiser_id','Colocated IDs','Alias','latitude','longitude'])
                 
                     
         

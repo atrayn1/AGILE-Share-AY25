@@ -559,7 +559,7 @@ elif nav_bar == 'Report':
         with colocs:
             st.subheader('Colocated Devices')
             try:  
-                colocs_df = st.dataframe(device.coloc[['Alias','advertiser_id']])     
+                colocs_df = st.dataframe(device.coloc[['Alias','advertiser_id','latitude','longitude']])     
                 
             except Exception as error:
                 print(error)
