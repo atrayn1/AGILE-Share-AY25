@@ -165,7 +165,7 @@ class Profile:
         return loi_data
     
     def coloc_addendum(self):
-        if len(self.coloc) > 0:
+        if self.coloc is not None and len(self.coloc) > 0:
             colocs_df = pd.DataFrame(self.coloc['advertiser_id'].unique(), columns=['Colocated ADIDs'])
                     
             colocs_df['Alias'] = [''] * len(colocs_df)
