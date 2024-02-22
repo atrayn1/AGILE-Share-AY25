@@ -183,6 +183,8 @@ class Profile:
             
         else:
             self.coloc = pd.DataFrame(columns=['advertiser_id','Colocated IDs','Alias','latitude','longitude'])
+            
+        self.coloc = self.coloc.drop_duplicates()
                 
                     
         

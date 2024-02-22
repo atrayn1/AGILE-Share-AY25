@@ -179,10 +179,20 @@ if nav_bar == 'Data':
             except:
                 overview_c.error("Could not load overview statistics.")
                 
-           
-            time_data = overview_c.container()
-            time_data.subheader('Time Data')
-            time_data.dataframe(pd.DataFrame(st.session_state.data['datetime']).describe())
+            try:
+                time_data = overview_c.container()
+                time_data.subheader('Time Distribution')
+                time_data.dataframe(pd.DataFrame(st.session_state.data['datetime']).describe())
+            except:
+                time_data.error('Could not load time statistics.')   
+                
+            try: 
+                geohash_distro = overview_c.container()
+                geohash_distro.subheader('Geohash Distribution')
+                geohash_distro_data = st.session_state.data.groupby('geohash').size().reset_index(name='count').sort_values(by='count', ascending=False)
+                geohash_distro.dataframe(geohash_distro_data)
+            except:
+                geohash_distro.error("Could not load geohash statistics.")
             
             
             
@@ -565,7 +575,7 @@ elif nav_bar == 'Report':
         with colocs:
             st.subheader('Colocated Devices')
             try:  
-                colocs_df = st.dataframe(device.coloc[['Alias','advertiser_id','latitude','longitude']])     
+                colocs_df = st.dataframe(device.coloc.drop_duplicates()[['Alias','advertiser_id','latitude','longitude']])     
                 
             except Exception as error:
                 print(error)
