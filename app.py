@@ -178,6 +178,12 @@ if nav_bar == 'Data':
                 overview_c.dataframe(adid_value_counts(st.session_state.data), height=300)
             except:
                 overview_c.error("Could not load overview statistics.")
+                
+           
+            time_data = overview_c.container()
+            time_data.subheader('Time Data')
+            time_data.dataframe(pd.DataFrame(st.session_state.data['datetime']).describe())
+            
             
             
     # Container for adding an alias to an ADID
