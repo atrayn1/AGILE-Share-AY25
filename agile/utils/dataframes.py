@@ -10,9 +10,13 @@ def modify_and_sort_columns(df):
     if 'advertiser_id_alias' not in df.columns:
         df['advertiser_id_alias'] = [None] * len(df)
         
+    # sort the columns so that the most relevant columns are to the left
     current_columns = df.columns.tolist()
     desired_columns = ['advertiser_id', 'advertiser_id_alias'] + [col for col in current_columns if col not in ['advertiser_id', 'advertiser_id_alias']]
-    
     df = df[desired_columns]
+    
+    return df
+
+def generate_names(df):
     
     return df

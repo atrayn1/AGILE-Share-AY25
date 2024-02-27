@@ -164,7 +164,9 @@ if nav_bar == 'Data':
                         
                 
                 # perform final preprocessing operations before displaying the data
+                # all the code for these next couple lines can be found in agile/utils/dataframes.py
                 st.session_state.data = modify_and_sort_columns(st.session_state.data)
+                st.session_state.data = generate_names(st.session_state.data)
                     
                 
                     

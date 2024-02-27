@@ -40,5 +40,9 @@ def save(file_name, data):
 # Generate a random name
 def random_name():
     with open(find('../names/first.txt')) as F, open(find('../names/last.txt')) as L:
-                    new_name = random_line(F) + '-' + random_line(L)
-                    return new_name
+        new_name = random_line(F) + '-' + random_line(L)
+        return new_name
+                
+def init_random_name_list():
+    
+                
