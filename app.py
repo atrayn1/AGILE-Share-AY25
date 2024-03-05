@@ -26,7 +26,7 @@ from agile.people import colocation
 from agile.prediction import double_cluster, get_top_N_clusters
 from agile.utils.tag import find_all_nearby_nodes
 from agile.utils.geocode import reverse_geocode
-from agile.utils.files import find, random_line, save, random_name
+from agile.utils.files import find, random_line, save, random_name, generate_aliases
 from agile.utils.dataframes import modify_and_sort_columns
 from agile.profile import Profile
 from agile.samsreport import Report
@@ -57,6 +57,8 @@ if 'coloc_ids' not in st.session_state:
     st.session_state.coloc_ids = pd.DataFrame(columns=['Colocated ADIDs','Alias'])
 if 'generated_reports' not in st.session_state:
     st.session_state.generated_reports = pd.DataFrame(columns=['ADID', 'Alias','Profile'])
+if 'alias_ids' not in st.session_state:
+    st.session_state.alias_ids = {}
 
 
 # Replace Sidebar with data options Menu
@@ -166,13 +168,15 @@ if nav_bar == 'Data':
                 # perform final preprocessing operations before displaying the data
                 # all the code for these next couple lines can be found in agile/utils/dataframes.py
                 st.session_state.data = modify_and_sort_columns(st.session_state.data)
-                st.session_state.data = generate_names(st.session_state.data)
+                
+                print(st.session_state.alias_ids, len(st.session_state.data), len(st.session_state.alias_ids))
                     
                 
                     
             except:
                 results_c.error('Invalid file format. Please upload a valid .csv file that contains latitude and longitude columns.')
-               
+            
+            st.session_state.alias_ids = generate_aliases(st.session_state.data)
         # If there is a dataframe, update the "Data Overview" statistics 
         if st.session_state.uploaded and not data_reset_button:
             try:

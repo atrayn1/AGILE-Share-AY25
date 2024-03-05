@@ -1,4 +1,4 @@
-from random import Random
+from random import Random, randrange
 from itertools import islice
 from math import ceil
 import os
@@ -43,6 +43,22 @@ def random_name():
         new_name = random_line(F) + '-' + random_line(L)
         return new_name
                 
-def init_random_name_list():
-    
-                
+def generate_aliases(df):
+    first = []
+    last = []
+    name_list = []
+    with open(find('../names/first.txt')) as F, open(find('../names/last.txt')) as L:
+        for line_f in F:
+            first.append(line_f.strip())
+        for line_l in L:
+            last.append(line_l.strip())
+            
+        for f in first:
+            for l in last:        
+                name_list.append(l + '-' + f) 
+            
+    adid_dict = {}
+    for id in df['advertiser_id'].unique():
+        adid_dict[id] = name_list.pop(randrange(len(name_list)))
+        
+    return adid_dict
