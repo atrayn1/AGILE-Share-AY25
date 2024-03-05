@@ -9,7 +9,7 @@ import math
 class Profile:
     def __init__(self, data: pd.DataFrame, ad_id: int, ext_duration: int = 7,
             rep_duration: int = 24, coloc_duration: int = 12, alias: str = None,
-            sd: int = 0) -> None:
+            sd: int = 0, alias_dict: dict = None) -> None:
         """
         Constructs a Profile object with given parameters.
 
@@ -40,7 +40,7 @@ class Profile:
         except:
             pass
         
-        #print(self.lois.head())
+        self.alias_dict = alias_dict
         
         self.data, self.model, self.cluster_centroids, self.model_accuracy = data, None, None, None
         
@@ -165,14 +165,14 @@ class Profile:
         return loi_data
     
     def coloc_addendum(self):
-        if self.coloc is not None and len(self.coloc) > 0:
+        if self.coloc is not None and len(self.coloc) > 0 and len(self.alias_dict) > 0:
             colocs_df = pd.DataFrame(self.coloc['advertiser_id'].unique(), columns=['Colocated ADIDs'])
                     
             colocs_df['Alias'] = [''] * len(colocs_df)
             
             for adid in colocs_df['Colocated ADIDs'].values:
                 if None in self.data.query('advertiser_id==@self.ad_id')['advertiser_id_alias'].unique():
-                    generated_name = random_name()
+                    generated_name = self.alias_dict[adid]
                     self.data.loc[self.data['advertiser_id'] == adid, 'advertiser_id_alias'] = generated_name
                     colocs_df.loc[colocs_df['Colocated ADIDs'] == adid, 'Alias'] = generated_name
                 else:

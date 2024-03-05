@@ -17,6 +17,3 @@ def modify_and_sort_columns(df):
     
     return df
 
-def generate_names(df):
-    
-    return df

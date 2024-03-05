@@ -157,27 +157,27 @@ if nav_bar == 'Data':
                         st.session_state.data['geohash'] = st.session_state.data.apply(lambda d : gh.encode(d.latitude, d.longitude, precision=10), axis=1)
                         
                     
-                     
-                    # Save the data to a pickle file, located in the /saved_data directory
-                    # This is done so it can be reloaded with the "reset data" button
-                    with st.spinner("Saving the geohashed data locally..."):
-                        save('original_df.pkl',st.session_state.data)  
-                        save('saved_df.pkl',st.session_state.data)   
-                        
-                
                 # perform final preprocessing operations before displaying the data
                 # all the code for these next couple lines can be found in agile/utils/dataframes.py
                 st.session_state.data = modify_and_sort_columns(st.session_state.data)
                 
-                print(st.session_state.alias_ids, len(st.session_state.data), len(st.session_state.alias_ids))
-                    
+                # this function generates a random alias for each ADID, though it saves it in a dictionary (st.session_state.alias_ids) 
+                # because saving it to st.session_state.data would take a long time. If we ever want to access or modify
+                # an alias, we use this dictionary
+                st.session_state.alias_ids = generate_aliases(st.session_state.data)
                 
-                    
+                # Save the data to a pickle file, located in the /saved_data directory
+                # This is done so it can be reloaded with the "reset data" button
+                with st.spinner("Saving the modified data locally for fast reaccessing..."):
+                    save('original_df.pkl',st.session_state.data)  
+                    save('saved_df.pkl',st.session_state.data)
+                
+                        
             except:
                 results_c.error('Invalid file format. Please upload a valid .csv file that contains latitude and longitude columns.')
             
-            st.session_state.alias_ids = generate_aliases(st.session_state.data)
-        # If there is a dataframe, update the "Data Overview" statistics 
+            
+        # If there is a dataframe, update the "Data Overview," "Time Distribution," and "Geohash Distribution" statistics 
         if st.session_state.uploaded and not data_reset_button:
             try:
                 # Update the value counts for an ADID
@@ -224,10 +224,8 @@ if nav_bar == 'Data':
                     preview_c.error(f'Error: The alias {new_name_text} is already in use')
                 else:
                     with st.spinner('Adding Alias...'):
-                        if random_name_generation:
-                            new_name_text = random_name()
+                        new_name_text = st.session_state.alias_ids[adid_rename_text]
                         st.session_state.data.loc[st.session_state.data['advertiser_id'] == adid_rename_text, 'advertiser_id_alias'] = new_name_text
-                        
                         save('saved_df.pkl',st.session_state.data)
                 
                         #st.session_state.file_source = os.path.abspath('./saved_data/saved_df.pkl')
@@ -533,12 +531,12 @@ elif nav_bar == 'Report':
                             if len(st.session_state.data.query('advertiser_id==@adid')['advertiser_id_alias'].unique()) > 0:
                                 adid_alias = st.session_state.data.query('advertiser_id==@adid')['advertiser_id_alias'].unique()[0]
                             else:
-                                adid_alias = None
+                                adid_alias = st.session_state.alias_ids[adid]
                                 
                             # set up the profile for the adid
                             # creating a profile also creates the LOI DataFrame, which may take a minute or two depending on the size of the data                
                             device = Profile(data=st.session_state.data, ad_id=adid,
-                                            alias=adid_alias, sd = suff_data)
+                                            alias=adid_alias, sd = suff_data, alias_dict = st.session_state.alias_ids)
                             
                             
                             st.session_state.data.loc[st.session_state.data['advertiser_id'] == adid, 'advertiser_id_alias'] = device.name
