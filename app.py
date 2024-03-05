@@ -491,7 +491,7 @@ elif nav_bar == 'Report':
 
     sidebar.title('Report')
 
-    sidebar.write("The module below generates a report in PDF format about a single adverter ID (a single device) in the data.\n\nThe report may take 2-5 minutes to generate.")
+    sidebar.write("The module below generates a report in PDF format about a single adverter ID (a single device) in the data.")
 
     sidebar.subheader('Generate Report')
     
