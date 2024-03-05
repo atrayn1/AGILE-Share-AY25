@@ -135,47 +135,71 @@ if nav_bar == 'Data':
         
         # If a file has not yet been uploaded (this allows multiple form requests in unison)
         if raw_data and raw_data.name != st.session_state.file_source:
+            #try:
+            
+                
+                
+            st.session_state.data = pd.read_csv(raw_data, sep=',')
+            st.session_state.uploaded = True
+            st.session_state.file_source = raw_data.name
+            
+            required = ['latitude','longitude','advertiser_id','datetime']
+            data_columns = st.session_state.data.columns[:]
+            
+            for col in data_columns:
+                if col.strip().lower() in required:
+                    required.remove(col.strip().lower())
+                if 'unnamed' in col.strip().lower():
+                    st.session_state.data.drop(col, axis=1, inplace=True)
+            
+            if len(required) > 0:       
+                raise Exception()
+            
+            st.session_state.data.set_axis([col.strip().lower() for col in st.session_state.data.columns], axis=1, inplace=True)
+            
             try:
-                st.session_state.data = pd.read_csv(raw_data, sep=',')
-                st.session_state.uploaded = True
-                st.session_state.file_source = raw_data.name
-                
-                try:
-                    st.session_state.data['datetime'] = pd.to_datetime(st.session_state.data['datetime'],errors='coerce')
-                except:
-                    results_c.error('Could not convert "datetime" column to pd.DateTime type')
-                
+                st.session_state.data['datetime'] = pd.to_datetime(st.session_state.data['datetime'],errors='coerce')
+            except:
+                results_c.error('Could not convert "datetime" column to pd.DateTime type')
+            
 
-                # Check to make sure the uploaded data has geohashes
-                # If it does not, generate them on the fly
-                if not 'geohash' in st.session_state.data.columns or not len(st.session_state.data['geohash'].iloc[0]) == 10:
-                    # Something is wrong, either the column does not exist
-                    # Or it is the wrong precision geohash
-                    # So we generate it manually
+            # Check to make sure the uploaded data has geohashes
+            # If it does not, generate them on the fly
+            if not 'geohash' in st.session_state.data.columns or not len(st.session_state.data['geohash'].iloc[0]) == 10:
+                # Something is wrong, either the column does not exist
+                # Or it is the wrong precision geohash
+                # So we generate it manually
 
-                    with st.spinner("Geohashing the data..."):
-                        st.session_state.data['geohash'] = st.session_state.data.apply(lambda d : gh.encode(d.latitude, d.longitude, precision=10), axis=1)
-                        
-                    
+                with st.spinner("Geohashing the data..."):
+                    st.session_state.data['geohash'] = st.session_state.data.apply(lambda d : gh.encode(d.latitude, d.longitude, precision=10), axis=1)
+        
+                
+            #except:
+                #results_c.error('Invalid file format. Please upload a valid .csv file that contains advertiser_id, datetime, latitude and longitude columns.')
+            
+            try:
                 # perform final preprocessing operations before displaying the data
                 # all the code for these next couple lines can be found in agile/utils/dataframes.py
                 st.session_state.data = modify_and_sort_columns(st.session_state.data)
-                
+            except:
+                results_c.error('Error with modifying and sorting the columns. Please ensure you uploaded a csv file with advertiser_id, datetime, latitude and longitude columns.')
+            
+            #try:
                 # this function generates a random alias for each ADID, though it saves it in a dictionary (st.session_state.alias_ids) 
                 # because saving it to st.session_state.data would take a long time. If we ever want to access or modify
                 # an alias, we use this dictionary
-                st.session_state.alias_ids = generate_aliases(st.session_state.data)
-                
-                # Save the data to a pickle file, located in the /saved_data directory
-                # This is done so it can be reloaded with the "reset data" button
-                with st.spinner("Saving the modified data locally for fast reaccessing..."):
-                    save('original_df.pkl',st.session_state.data)  
-                    save('saved_df.pkl',st.session_state.data)
-                
-                        
-            except:
-                results_c.error('Invalid file format. Please upload a valid .csv file that contains latitude and longitude columns.')
+            st.session_state.alias_ids = generate_aliases(st.session_state.data)
+            if len(st.session_state.alias_ids) < len(st.session_state.data['advertiser_id'].unique()):
+                results_c.text("WARNING: Due to the amount of ADIDs in your data, not every ADID was assigned an alias")
             
+            #except:
+            #    results_c.error('Error with generating name aliases. Please ensure you uploaded a csv file with advertiser_id, datetime, latitude and longitude columns.')
+            
+            # Save the data to a pickle file, located in the /saved_data directory
+            # This is done so it can be reloaded with the "reset data" button
+            with st.spinner("Saving the modified data locally for fast reaccessing..."):
+                save('original_df.pkl',st.session_state.data)  
+                save('saved_df.pkl',st.session_state.data)
             
         # If there is a dataframe, update the "Data Overview," "Time Distribution," and "Geohash Distribution" statistics 
         if st.session_state.uploaded and not data_reset_button:
