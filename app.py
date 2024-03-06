@@ -220,7 +220,7 @@ if nav_bar == 'Data':
     renamer = sidebar.container()
     with renamer:
         st.subheader('Add Alias for an ADID')
-        st.write("Choose a name yourself or generate a random name for an ADID")
+        st.write("Choose a name yourself or generate a random name for an ADID.\nNote: Though it's not displayed in the data to the right, each advertising ID is automatically assigned an alias to begin with. It is not updated in the DataFrame because it could take several minutes, but these names aliases still be seen in reports and across AGILE.")
         
         # Creates the form which will hold the text boxes, check box, and button
         rename_form = st.form('rename_adid')
