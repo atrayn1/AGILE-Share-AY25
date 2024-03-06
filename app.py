@@ -27,7 +27,7 @@ from agile.prediction import double_cluster, get_top_N_clusters
 from agile.utils.tag import find_all_nearby_nodes
 from agile.utils.geocode import reverse_geocode
 from agile.utils.files import find, random_line, save, random_name, generate_aliases
-from agile.utils.dataframes import modify_and_sort_columns
+from agile.utils.dataframes import modify_and_sort_columns, clean_and_verify_columns
 from agile.profile import Profile
 from agile.samsreport import Report
 from agile.centrality import compute_top_centrality
@@ -143,19 +143,9 @@ if nav_bar == 'Data':
             st.session_state.uploaded = True
             st.session_state.file_source = raw_data.name
             
-            required = ['latitude','longitude','advertiser_id','datetime']
-            data_columns = st.session_state.data.columns[:]
-            
-            for col in data_columns:
-                if col.strip().lower() in required:
-                    required.remove(col.strip().lower())
-                if 'unnamed' in col.strip().lower():
-                    st.session_state.data.drop(col, axis=1, inplace=True)
-            
-            if len(required) > 0:       
-                raise Exception()
-            
-            st.session_state.data.set_axis([col.strip().lower() for col in st.session_state.data.columns], axis=1, inplace=True)
+            # makes sure all the required columns are present (latitude, longitude, datetime, advertiser_id) and
+            # cleans the names if they are close (Latitude instead of latitude)
+            st.session_state.data = clean_and_verify_columns(st.session_state.data)
             
             try:
                 st.session_state.data['datetime'] = pd.to_datetime(st.session_state.data['datetime'],errors='coerce')
