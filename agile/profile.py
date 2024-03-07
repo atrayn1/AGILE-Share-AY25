@@ -33,7 +33,7 @@ class Profile:
            
         
         self.lois = self.create_report_lois(data)
-        print(self.lois.head())
+        print('Beginning of LOI:\n',self.lois.head(),'\nEnd of LOI')
         try:
             self.lois = reverse_geocode(self.lois)
             print('GeoCoding Successful')
@@ -153,6 +153,8 @@ class Profile:
                 return pd.DataFrame()
             
         # run the locations of interest algorithm, covering a 25hrs to 1hr for extended duration and 73hrs to 1hr for repetition duration
+        
+        # change to (1,25,3) and (71,0,-10)
         for ext_d in range(1,25,3):
             for rep_d in range(71,0,-10):
                 print(f'Running LOI Algorithm (Extended Duration: {ext_d} hrs, Repetition Duration: {rep_d} hrs)')
@@ -179,13 +181,15 @@ class Profile:
                     colocs_df.loc[colocs_df['Colocated ADIDs'] == adid, 'Alias'] = self.data.query('advertiser_id==@self.ad_id')['advertiser_id_alias'].unique()[0]
                     
             self.coloc = pd.merge(left=self.coloc, right=colocs_df, left_on='advertiser_id', right_on='Colocated ADIDs')
-            print(self.coloc)
             
         else:
             self.coloc = pd.DataFrame(columns=['advertiser_id','Colocated IDs','Alias','latitude','longitude'])
             
+            
+        self.coloc['lat/long'] = self.coloc['latitude'].astype(str) + ', ' + self.coloc['longitude'].astype(str)
+        
         self.coloc = self.coloc.drop_duplicates()
-        print(self.coloc)
+        print('Beginning of Colocated IDs\n',self.coloc,'\nEnd of Colocated IDs')
                 
                     
         
