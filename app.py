@@ -219,7 +219,7 @@ if nav_bar == 'Data':
     alias_finder = sidebar.container()
     with alias_finder:
         st.subheader('Check the alias for an ADID')
-        st.write('If you have not set a custom alias for an ADID, there will be a randomly generated alias assigned. Whether you enter a custom alias or look at the randomly generated alias, you can find it here')
+        st.write('If you have not set a custom alias for an ADID, there will be a randomly generated alias assigned. Whether you enter a custom alias or look at the randomly generated alias, you can find it here.')
         
         alias_finder_form = st.form('find_alias')
         with alias_finder_form:
@@ -228,9 +228,9 @@ if nav_bar == 'Data':
                 try:
                     found_alias = st.session_state.alias_ids[alias_form_text.strip()]
                     st.info(found_alias)
-                    st.session_state.data.loc[st.session_state.data['advertiser_id'] == adid_form_text, 'advertiser_id_alias'] = found_alias
+                    st.session_state.data.loc[st.session_state.data['advertiser_id'] == alias_form_text, 'advertiser_id_alias'] = found_alias
                 except:
-                    st.info(f'ADID {alias_form_text} was not found') 
+                    st.info(f'ADID {alias_form_text} was not found')
             
     # Container for adding an alias to an ADID
     renamer = sidebar.container()
@@ -250,7 +250,7 @@ if nav_bar == 'Data':
                     preview_c.error('Error: Invalid ADID. Please re-enter the ADID')
                 elif new_name_text == '' and not random_name_generation:
                     preview_c.error('Error: Please enter at least one character for a custom name')
-                elif new_name_text in st.session_state.data['advertiser_id_alias'].values and not random_name_generation:
+                elif (new_name_text in st.session_state.data['advertiser_id_alias'].values or new_name_text in st.session_state.alias_ids[new_name_text].values) and not random_name_generation:
                     preview_c.error(f'Error: The alias {new_name_text} is already in use')
                 else:
                     with st.spinner('Adding Alias...'):

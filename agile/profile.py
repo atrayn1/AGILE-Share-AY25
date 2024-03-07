@@ -203,9 +203,9 @@ class Profile:
         
         self.coloc = self.coloc.drop_duplicates()
         
-        for adid in self.coloc['Colocated ADIDs'].values:
+        '''for adid in self.coloc['Colocated ADIDs'].values:
             adid_alias = self.alias_dict[adid]
-            self.coloc.loc[self.coloc['Colocated ADIDs'] == adid, 'Alias'] = adid_alias
+            self.coloc.loc[self.coloc['Colocated ADIDs'] == adid, 'Alias'] = adid_alias'''
         
         print('Beginning of Colocated IDs\n',self.coloc,'\nEnd of Colocated IDs')
                 
