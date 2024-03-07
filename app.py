@@ -215,7 +215,22 @@ if nav_bar == 'Data':
             except:
                 geohash_distro.error("Could not load geohash statistics.")
             
-            
+    # find generated alias for an ADID
+    alias_finder = sidebar.container()
+    with alias_finder:
+        st.subheader('Check the alias for an ADID')
+        st.write('If you have not set a custom alias for an ADID, there will be a randomly generated alias assigned. Whether you enter a custom alias or look at the randomly generated alias, you can find it here')
+        
+        alias_finder_form = st.form('find_alias')
+        with alias_finder_form:
+            alias_form_text = st.text_input('Advertiser ID')
+            if st.form_submit_button('Find Alias'):
+                try:
+                    found_alias = st.session_state.alias_ids[alias_form_text.strip()]
+                    st.info(found_alias)
+                    st.session_state.data.loc[st.session_state.data['advertiser_id'] == adid_form_text, 'advertiser_id_alias'] = found_alias
+                except:
+                    st.info(f'ADID {alias_form_text} was not found') 
             
     # Container for adding an alias to an ADID
     renamer = sidebar.container()
