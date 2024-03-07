@@ -73,6 +73,8 @@ def generate_aliases(df):
             if names_left > 0:
                 adid_dict[id] = name_list.pop(randrange(names_left))
                 names_left -= 1
+            else:
+                adid_dict[id] = 'Unnamed'
             
         
     return adid_dict

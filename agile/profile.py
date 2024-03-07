@@ -5,8 +5,6 @@ from .utils.files import random_line, find, random_name
 from .utils.geocode import reverse_geocode
 from .prediction import double_cluster, get_cluster_centroids, get_top_N_clusters, fit_predictor, haversine
 import math
-import geopandas as gpd
-from shapely.geometry import Point
 from agile.utils.tag import find_all_nearby_nodes
 
 class Profile:
@@ -168,8 +166,8 @@ class Profile:
         # run the locations of interest algorithm, covering a 25hrs to 1hr for extended duration and 73hrs to 1hr for repetition duration
         
         # change to (1,25,3) and (71,0,-10)
-        for ext_d in range(1,25,3):
-            for rep_d in range(71,0,-10):
+        for ext_d in range(1,25,6):
+            for rep_d in range(71,0,-35):
                 print(f'Running LOI Algorithm (Extended Duration: {ext_d} hrs, Repetition Duration: {rep_d} hrs)')
                 loi_data = pd.concat([loi_data,locations_of_interest(df, self.ad_id, ext_d, rep_d)]).reset_index(drop=True)
             
