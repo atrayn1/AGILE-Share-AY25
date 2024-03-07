@@ -15,7 +15,7 @@ def clean_and_verify_columns(df):
     if len(required) > 0:       
         raise Exception()
     
-    df.set_axis([col.strip().lower() for col in df.columns], axis=1, inplace=True)
+    df = df.set_axis([col.strip().lower() for col in df.columns], axis=1)
     return df
 
 # Final preprocessing before the dataframe is displayed. adds a new columns for aliases if neeeded, and sorts the columns of the Data Preview in a particular order

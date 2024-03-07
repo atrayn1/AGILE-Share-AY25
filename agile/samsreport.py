@@ -163,7 +163,8 @@ class Report:
         self.pdf.cell(w=0, h=ch, txt="Co-located Devices:", ln=1)
         self.pdf.set_font('Arial', '', 16)
         try:
-            self.display_dataframe(self.profile.coloc.advertiser_id.to_frame(), w=160)
+            relevant_features = ['advertiser_id','Colocated IDs','Alias','latitude','longitude']
+            self.display_dataframe(self.profile.coloc[relevant_features], w=160)
         except:
             self.display_dataframe(pd.DataFrame())
 

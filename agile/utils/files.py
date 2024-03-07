@@ -47,6 +47,7 @@ def generate_aliases(df):
     first = []
     last = []
     name_list = []
+
     
     with open(find('../names/first.txt')) as F, open(find('../names/last.txt')) as L:
         for line_f in F:
@@ -57,16 +58,20 @@ def generate_aliases(df):
         for f in first:
             for l in last:        
                 name_list.append(l + '-' + f) 
-            
+           
+    
+     
     adid_dict = {}
+    
     if len(name_list) >= len(df['advertiser_id'].unique()):
         for id in df['advertiser_id'].unique():
             adid_dict[id] = name_list.pop(randrange(len(name_list)))
     else:
         names_left = len(name_list)
         for id in df['advertiser_id'].unique():
+            print(names_left)
             if names_left > 0:
-                adid_dict[id] = name_list.pop(randrange(len(name_list)))
+                adid_dict[id] = name_list.pop(randrange(names_left))
                 names_left -= 1
             
         
