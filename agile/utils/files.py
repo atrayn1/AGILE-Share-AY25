@@ -69,12 +69,13 @@ def generate_aliases(df):
     else:
         names_left = len(name_list)
         for id in df['advertiser_id'].unique():
-            print(names_left)
             if names_left > 0:
+                if names_left % 100000 == 0:
+                    print(names_left)
                 adid_dict[id] = name_list.pop(randrange(names_left))
                 names_left -= 1
             else:
-                adid_dict[id] = 'Unnamed'
+                adid_dict[id] = 'Unnamed_Alias'
             
         
     return adid_dict

@@ -136,17 +136,16 @@ if nav_bar == 'Data':
         
         # If a file has not yet been uploaded (this allows multiple form requests in unison)
         if raw_data and raw_data.name != st.session_state.file_source:
-            #try:
-            
-                
-                
             st.session_state.data = pd.read_csv(raw_data, sep=',')
             st.session_state.uploaded = True
             st.session_state.file_source = raw_data.name
             
             # makes sure all the required columns are present (latitude, longitude, datetime, advertiser_id) and
             # cleans the names if they are close (Latitude instead of latitude)
-            st.session_state.data = clean_and_verify_columns(st.session_state.data)
+            try:
+                st.session_state.data = clean_and_verify_columns(st.session_state.data)
+            except:
+                preview_c.error('Error with modifying and sorting the columns. Please ensure you uploaded a csv file with advertiser_id, datetime, latitude and longitude columns.')
             
             try:
                 st.session_state.data['datetime'] = pd.to_datetime(st.session_state.data['datetime'],errors='coerce')
@@ -180,8 +179,9 @@ if nav_bar == 'Data':
                 # because saving it to st.session_state.data would take a long time. If we ever want to access or modify
                 # an alias, we use this dictionary
             st.session_state.alias_ids = generate_aliases(st.session_state.data)
-            if len(st.session_state.alias_ids) < len(st.session_state.data['advertiser_id'].unique()):
-                results_c.text("WARNING: Due to the amount of ADIDs in your data, not every ADID was assigned an alias")
+            
+            if 'Unnamed_Alias' in st.session_state.alias_ids.values():
+                preview_c.error("WARNING: Due to the amount of ADIDs in your data, not every ADID was assigned an alias")
             
             #except:
             #    results_c.error('Error with generating name aliases. Please ensure you uploaded a csv file with advertiser_id, datetime, latitude and longitude columns.')

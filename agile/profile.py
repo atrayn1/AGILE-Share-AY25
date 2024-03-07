@@ -202,6 +202,11 @@ class Profile:
         self.coloc['lat/long'] = self.coloc['latitude'].astype(str) + ', ' + self.coloc['longitude'].astype(str)
         
         self.coloc = self.coloc.drop_duplicates()
+        
+        for adid in self.coloc['Colocated ADIDs'].values:
+            adid_alias = self.alias_dict[adid]
+            self.coloc.loc[self.coloc['Colocated ADIDs'] == adid, 'Alias'] = adid_alias
+        
         print('Beginning of Colocated IDs\n',self.coloc,'\nEnd of Colocated IDs')
                 
                     
