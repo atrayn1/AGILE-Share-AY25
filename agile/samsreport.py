@@ -48,8 +48,6 @@ class Report:
             self.pdf.ln(ch)
             self.pdf.cell(w=0, h=ch, txt="This may affect the accuracy of the report.", align="C")
 
-
-
         # advertiser ID and codename
         self.pdf.ln(ch)
         self.pdf.set_font('Arial', 'B', 16)
@@ -135,27 +133,29 @@ class Report:
 
         # Locations of interest
         self.pdf.ln(ch)
-        self.pdf.set_font('Arial', 'B', 16)
+        self.pdf.set_font('Arial', 'B', 8)
         self.pdf.cell(w=0, h=ch, txt="Locations of Interest:", ln=1)
-        self.pdf.set_font('Arial', '', 10)
+        self.pdf.set_font('Arial', '', 16)
         self.pdf.multi_cell(w=0, h=ch, txt="All Locations of Interest were flagged for either repeated visits separated by more than " + str(self.profile.rep_duration) +
             " hours, or extended stays at the location for over "+ str(self.profile.ext_duration) + " hours. Locations were determined with a geohash precision of 10.")
         self.pdf.ln(ch)
         # Everything except the adresses
-        relevant_features = ['geohash', 'datetime', 'latitude', 'longitude']
+        relevant_features = ['geohash', 'datetime', 'latitude', 'longitude', 'address']
         try:
-            self.display_dataframe(self.profile.lois[relevant_features])
+            self.display_dataframe(self.profile.lois[relevant_features], w=32)
+
+
         except:
             self.display_dataframe(pd.DataFrame())
         self.pdf.ln(ch)
 
         # Now we display the resolved addresses (This is mostly for spacing issues since addresses are long)
-        self.pdf.multi_cell(w=0, h=ch, txt="The above Latitudes and Longitudes were resolved to the following addresses.")
-        self.pdf.ln(ch)
-        try:
-            self.display_dataframe(self.profile.lois.address.to_frame(), w=160)
-        except:
-            self.display_dataframe(pd.DataFrame())
+        #self.pdf.multi_cell(w=0, h=ch, txt="The above Latitudes and Longitudes were resolved to the following addresses.")
+        #self.pdf.ln(ch)
+        #try:
+        #    self.display_dataframe(self.profile.lois.address.to_frame(), w=160)
+        #except:
+        #    self.display_dataframe(pd.DataFrame())
 
         # Co-locations
         self.pdf.ln(ch)
@@ -184,9 +184,28 @@ class Report:
         self.pdf.ln(8)
 
         # the actual data
-        self.pdf.set_font('Arial', '', 10)
+        self.pdf.set_font('Arial', '', 7)
         for j,row in df.iterrows():
             for datum in row.values:
                 self.pdf.cell(w, 8, str(datum), border=1,align='L')
             self.pdf.ln(8)
+
+
+    def display_lois(self, df, column_widths=None):
+        if column_widths is None:
+            column_widths = [40] * len(df.columns)  # default width for all columns
+
+        # feature names
+        self.pdf.set_font('Arial', 'B', 12)
+        for i, col in ennumerate(df.columns):
+                self.pdf.cell(column_widths[i], 8, str(col), border=1, align='C')#, new_x=index*40)
+        self.pdf.ln(8)
+
+        # the actual data
+        self.pdf.set_font('Arial', '', 10)
+        for j,row in df.iterrows():
+            for datum in row.values:
+                self.pdf.cell(column_widths[j], 8, str(datum), border=1,align='L')
+            self.pdf.ln(8)
+
 

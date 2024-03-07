@@ -48,10 +48,11 @@ if 'uploaded' not in st.session_state:
     st.session_state.uploaded = False
 if 'file_source' not in st.session_state:
     # Iterate through all files in the directory and deleted the saved ones
-    for filename in os.listdir(os.path.abspath('./saved_data')):
-        file_path = os.path.join(os.path.abspath('./saved_data'), filename)
-        if os.path.isfile(file_path):
-            os.remove(file_path)
+    if os.path.exists('./saved_data'):
+        for filename in os.listdir(os.path.abspath('./saved_data')):
+            file_path = os.path.join(os.path.abspath('./saved_data'), filename)
+            if os.path.isfile(file_path):
+                os.remove(file_path)
     st.session_state.file_source = False
 if 'coloc_ids' not in st.session_state:
     st.session_state.coloc_ids = pd.DataFrame(columns=['Colocated ADIDs','Alias'])
@@ -503,7 +504,7 @@ elif nav_bar == 'Report':
 
     sidebar.title('Report')
 
-    sidebar.write("The module below generates a report in PDF format about a single adverter ID (a single device) in the data.")
+    sidebar.write("The module below generates a report in PDF format about a single advertiser ID (a single device) in the data.")
 
     sidebar.subheader('Generate Report')
     
@@ -531,14 +532,13 @@ elif nav_bar == 'Report':
                 if report_button:
                     if adid not in st.session_state.data['advertiser_id'].values:
                         results_c.error('ADID is invalid. Please enter a different ADID')
-                    #elif adid_value_counts(st.session_state.data)['Occurences in Data'].get(adid) < 200:
                     elif (adid_value_counts(st.session_state.data)['Occurences in Data'].get(adid) * 1.0 / days_covered) < 200:                        
                         suff_data = 0
                     else:
                         suff_data = 1
-                        
+                       
                     if st.session_state.uploaded:
-                        
+
                         if adid not in st.session_state.generated_reports['ADID'].values:
                             # Check if the adid has an alias added
                             
@@ -551,7 +551,6 @@ elif nav_bar == 'Report':
                             # creating a profile also creates the LOI DataFrame, which may take a minute or two depending on the size of the data                
                             device = Profile(data=st.session_state.data, ad_id=adid,
                                             alias=adid_alias, sd = suff_data, alias_dict = st.session_state.alias_ids)
-                            
                             
                             st.session_state.data.loc[st.session_state.data['advertiser_id'] == adid, 'advertiser_id_alias'] = device.name
                             save('saved_df.pkl',st.session_state.data)
