@@ -5,6 +5,9 @@ from .utils.files import random_line, find, random_name
 from .utils.geocode import reverse_geocode
 from .prediction import double_cluster, get_cluster_centroids, get_top_N_clusters, fit_predictor, haversine
 import math
+import geopandas as gpd
+from shapely.geometry import Point
+from agile.utils.tag import find_all_nearby_nodes
 
 class Profile:
     def __init__(self, data: pd.DataFrame, ad_id: int, ext_duration: int = 7,
@@ -47,8 +50,18 @@ class Profile:
         self.coloc = colocation(data, self.lois, coloc_duration)
         self.coloc_addendum()
         
-        
-    
+    def add_location_data(self, data: pd.DataFrame):
+        location_data =  find_all_nearby_nodes(data, 10)
+        location_data.rename(columns={'lat': 'latitude', 'lon': 'longitude'}, inplace=True)
+        data['address'] = data.apply(lambda row: self.find_location(row, location_data), axis=1) 
+        print("in ald")
+        print(data)
+        return data
+
+    def find_location(self, row, df):
+        location = df[(df['longitude'] == row['longitude']) & (df['latitude'] == row['latitude'])]['name'].values
+        return location[0] if len(location) > 0 else None
+
     def reliability(self) -> float:
         n = len(self.cluster_centroids)
         acc = self.model_accuracy
@@ -161,6 +174,8 @@ class Profile:
         loi_data = loi_data.drop_duplicates()    
             
         loi_data = self.filter_close_coordinates(loi_data, threshold_distance=.4)       
+        
+        loi_data = self.add_location_data(loi_data)
 
         return loi_data
     
