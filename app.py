@@ -26,8 +26,8 @@ from agile.people import colocation
 from agile.prediction import double_cluster, get_top_N_clusters
 from agile.utils.tag import find_all_nearby_nodes
 from agile.utils.geocode import reverse_geocode
-from agile.utils.files import find, random_line, save, random_name
-from agile.utils.dataframes import modify_and_sort_columns
+from agile.utils.files import find, random_line, save, random_name, generate_aliases
+from agile.utils.dataframes import modify_and_sort_columns, clean_and_verify_columns
 from agile.profile import Profile
 from agile.samsreport import Report
 from agile.centrality import compute_top_centrality
@@ -35,8 +35,6 @@ from agile.overview import adid_value_counts
 
 from streamlit_option_menu import option_menu
 import pygeohash as gh
-
-
 
 # Make use of the whole screen
 st.set_page_config(layout="wide")
@@ -50,37 +48,63 @@ if 'uploaded' not in st.session_state:
     st.session_state.uploaded = False
 if 'file_source' not in st.session_state:
     # Iterate through all files in the directory and deleted the saved ones
-    for filename in os.listdir(os.path.abspath('./saved_data')):
-        file_path = os.path.join(os.path.abspath('./saved_data'), filename)
-        if os.path.isfile(file_path):
-            os.remove(file_path)
+    if os.path.exists('./saved_data'):
+        for filename in os.listdir(os.path.abspath('./saved_data')):
+            file_path = os.path.join(os.path.abspath('./saved_data'), filename)
+            if os.path.isfile(file_path):
+                os.remove(file_path)
     st.session_state.file_source = False
+if 'coloc_ids' not in st.session_state:
+    st.session_state.coloc_ids = pd.DataFrame(columns=['Colocated ADIDs','Alias'])
+if 'generated_reports' not in st.session_state:
+    st.session_state.generated_reports = pd.DataFrame(columns=['ADID', 'Alias','Profile'])
+if 'alias_ids' not in st.session_state:
+    st.session_state.alias_ids = {}
 
 
 # Replace Sidebar with data options Menu
 # This will equal the value of the string selected
+
+# Title container
+title_c = st.container()
+title_img, title_left, space = title_c.columns([1, 3, 1])
+
+title_left.markdown("<h2 style='text-align: center; color: black;'>AGILE</h2>", unsafe_allow_html=True)
+
+title_left.markdown("<h3 style='text-align: center; color: black;'>Advertising and Geolocation Information Logical Extractor </h3>", unsafe_allow_html=True)
+
+#title_left.title('AGILE')
+#title_left.subheader('Advertising and Geolocation Information Logical Extractor')
+#data_reset_button = title_left.button('Reset Data')
+#keep_aliases_check = title_left.checkbox('Keep Aliases', True)
+
+
+title_img.image(find('../img/AGILE_Black.png'), width = 180)
+
+
 nav_bar = option_menu(None, ['Data', 'Filtering', 'Locations', 'Algorithms', 'Report'],
                       icons=['file-earmark-fill', 'funnel-fill', 'pin-map-fill', 'layer-forward', 'stack'],
                       menu_icon="cast", default_index=0, orientation="horizontal",
                     )
 
-# Title container
-title_c = st.container()
-title_left, title_center = title_c.columns([1, 3])
-title_center.title('AGILE')
-title_center.subheader('Advertising and Geolocation Information Logical Extractor')
-data_reset_button = title_center.button('Reset Data')
-keep_aliases_check = title_center.checkbox('Keep Aliases', True)
+
 
 # Logo Image
 #title_left.image(find('AGILE_Black.png', '/'))
 # Path relative to files.py
-title_left.image(find('../img/AGILE_Black.png'))
+#title_left.image(find('../img/AGILE_Black.png'), width = 200)
 
 # Main page sidebar
 sidebar = st.sidebar
 
 # The data preview
+blank = st.container()
+blank.subheader('')
+
+data_opts = st.container()
+data_reset_button = data_opts.button('Reset Data')
+keep_aliases_check = data_opts.checkbox('Keep Aliases', True)
+
 preview_c = st.container()
 preview_c.subheader('Total Data Preview')
 
@@ -112,53 +136,107 @@ if nav_bar == 'Data':
         
         # If a file has not yet been uploaded (this allows multiple form requests in unison)
         if raw_data and raw_data.name != st.session_state.file_source:
+            st.session_state.data = pd.read_csv(raw_data, sep=',')
+            st.session_state.uploaded = True
+            st.session_state.file_source = raw_data.name
+            
+            # makes sure all the required columns are present (latitude, longitude, datetime, advertiser_id) and
+            # cleans the names if they are close (Latitude instead of latitude)
             try:
-                st.session_state.data = pd.read_csv(raw_data, sep=',')
-                st.session_state.uploaded = True
-                st.session_state.file_source = raw_data.name
-                
-
-                # Check to make sure the uploaded data has geohashes
-                # If it does not, generate them on the fly
-                if not 'geohash' in st.session_state.data.columns or not len(st.session_state.data['geohash'].iloc[0]) == 10:
-                    # Something is wrong, either the column does not exist
-                    # Or it is the wrong precision geohash
-                    # So we generate it manually
-
-                    with st.spinner("Geohashing the data..."):
-                        st.session_state.data['geohash'] = st.session_state.data.apply(lambda d : gh.encode(d.latitude, d.longitude, precision=10), axis=1)
-                        
-                    
-                     
-                    # Save the data to a pickle file, located in the /saved_data directory
-                    # This is done so it can be reloaded with the "reset data" button
-                    with st.spinner("Saving the geohashed data locally..."):
-                        save('original_df.pkl',st.session_state.data)  
-                        save('saved_df.pkl',st.session_state.data)   
-                        
-                
-                # perform final preprocessing operations before displaying the data
-                st.session_state.data = modify_and_sort_columns(st.session_state.data)
-                    
-                
-                    
+                st.session_state.data = clean_and_verify_columns(st.session_state.data)
             except:
-                results_c.error('Invalid file format. Please upload a valid .csv file that contains latitude and longitude columns.')
-               
-        # If there is a dataframe, update the "Data Overview" statistics 
+                preview_c.error('Error with modifying and sorting the columns. Please ensure you uploaded a csv file with advertiser_id, datetime, latitude and longitude columns.')
+            
+            try:
+                st.session_state.data['datetime'] = pd.to_datetime(st.session_state.data['datetime'],errors='coerce')
+            except:
+                results_c.error('Could not convert "datetime" column to pd.DateTime type')
+            
+
+            # Check to make sure the uploaded data has geohashes
+            # If it does not, generate them on the fly
+            if not 'geohash' in st.session_state.data.columns or not len(st.session_state.data['geohash'].iloc[0]) == 10:
+                # Something is wrong, either the column does not exist
+                # Or it is the wrong precision geohash
+                # So we generate it manually
+
+                with st.spinner("Geohashing the data..."):
+                    st.session_state.data['geohash'] = st.session_state.data.apply(lambda d : gh.encode(d.latitude, d.longitude, precision=10), axis=1)
+        
+                
+            #except:
+                #results_c.error('Invalid file format. Please upload a valid .csv file that contains advertiser_id, datetime, latitude and longitude columns.')
+            
+            try:
+                # perform final preprocessing operations before displaying the data
+                # all the code for these next couple lines can be found in agile/utils/dataframes.py
+                st.session_state.data = modify_and_sort_columns(st.session_state.data)
+            except:
+                results_c.error('Error with modifying and sorting the columns. Please ensure you uploaded a csv file with advertiser_id, datetime, latitude and longitude columns.')
+            
+            #try:
+                # this function generates a random alias for each ADID, though it saves it in a dictionary (st.session_state.alias_ids) 
+                # because saving it to st.session_state.data would take a long time. If we ever want to access or modify
+                # an alias, we use this dictionary
+            st.session_state.alias_ids = generate_aliases(st.session_state.data)
+            
+            if 'Unnamed_Alias' in st.session_state.alias_ids.values():
+                preview_c.error("WARNING: Due to the amount of ADIDs in your data, not every ADID was assigned an alias")
+            
+            #except:
+            #    results_c.error('Error with generating name aliases. Please ensure you uploaded a csv file with advertiser_id, datetime, latitude and longitude columns.')
+            
+            # Save the data to a pickle file, located in the /saved_data directory
+            # This is done so it can be reloaded with the "reset data" button
+            with st.spinner("Saving the modified data locally for fast reaccessing..."):
+                save('original_df.pkl',st.session_state.data)  
+                save('saved_df.pkl',st.session_state.data)
+            
+        # If there is a dataframe, update the "Data Overview," "Time Distribution," and "Geohash Distribution" statistics 
         if st.session_state.uploaded and not data_reset_button:
             try:
                 # Update the value counts for an ADID
                 overview_c.dataframe(adid_value_counts(st.session_state.data), height=300)
             except:
                 overview_c.error("Could not load overview statistics.")
+                
+            try:
+                time_data = overview_c.container()
+                time_data.subheader('Time Distribution')
+                time_data.dataframe(pd.DataFrame(st.session_state.data['datetime']).describe())
+            except:
+                time_data.error('Could not load time statistics.')   
+                
+            try: 
+                geohash_distro = overview_c.container()
+                geohash_distro.subheader('Geohash Distribution')
+                geohash_distro_data = st.session_state.data.groupby('geohash').size().reset_index(name='count').sort_values(by='count', ascending=False)
+                geohash_distro.dataframe(geohash_distro_data)
+            except:
+                geohash_distro.error("Could not load geohash statistics.")
             
+    # find generated alias for an ADID
+    alias_finder = sidebar.container()
+    with alias_finder:
+        st.subheader('Check the alias for an ADID')
+        st.write('If you have not set a custom alias for an ADID, there will be a randomly generated alias assigned. Whether you enter a custom alias or look at the randomly generated alias, you can find it here.')
+        
+        alias_finder_form = st.form('find_alias')
+        with alias_finder_form:
+            alias_form_text = st.text_input('Advertiser ID')
+            if st.form_submit_button('Find Alias'):
+                try:
+                    found_alias = st.session_state.alias_ids[alias_form_text.strip()]
+                    st.info(found_alias)
+                    st.session_state.data.loc[st.session_state.data['advertiser_id'] == alias_form_text, 'advertiser_id_alias'] = found_alias
+                except:
+                    st.info(f'ADID {alias_form_text} was not found')
             
     # Container for adding an alias to an ADID
     renamer = sidebar.container()
     with renamer:
         st.subheader('Add Alias for an ADID')
-        st.write("Choose a name yourself or generate a random name for an ADID")
+        st.write("Choose a name yourself or generate a random name for an ADID.\nNote: Though it's not displayed in the data to the right, each advertising ID is automatically assigned an alias to begin with. It is not updated in the DataFrame because it could take several minutes, but these names aliases still be seen in reports and across AGILE.")
         
         # Creates the form which will hold the text boxes, check box, and button
         rename_form = st.form('rename_adid')
@@ -172,14 +250,12 @@ if nav_bar == 'Data':
                     preview_c.error('Error: Invalid ADID. Please re-enter the ADID')
                 elif new_name_text == '' and not random_name_generation:
                     preview_c.error('Error: Please enter at least one character for a custom name')
-                elif new_name_text in st.session_state.data['advertiser_id_alias'].values and not random_name_generation:
+                elif (new_name_text in st.session_state.data['advertiser_id_alias'].values or new_name_text in st.session_state.alias_ids[new_name_text].values) and not random_name_generation:
                     preview_c.error(f'Error: The alias {new_name_text} is already in use')
                 else:
                     with st.spinner('Adding Alias...'):
-                        if random_name_generation:
-                            new_name_text = random_name()
+                        new_name_text = st.session_state.alias_ids[adid_rename_text]
                         st.session_state.data.loc[st.session_state.data['advertiser_id'] == adid_rename_text, 'advertiser_id_alias'] = new_name_text
-                        
                         save('saved_df.pkl',st.session_state.data)
                 
                         #st.session_state.file_source = os.path.abspath('./saved_data/saved_df.pkl')
@@ -198,7 +274,7 @@ elif nav_bar == 'Filtering':
         st.write("The modules below filter the data by Advertising ID, Location, or Time. These changes will remain until \
                  the data is reset in the 'Data' section.")
 
-        # Filter by advertising ID
+        # Filter by advertising ID4d02768a-0340-d327-4482-78a7a7420829
         adid_filter_c = st.container()
         with adid_filter_c:
             st.subheader('Advertising ID Filtering')
@@ -297,7 +373,7 @@ elif nav_bar == 'Locations':
                     with st.spinner(text="Computing..."):
                         centrality_data = compute_top_centrality(lat, long, radius, 5, st.session_state.data)
                         data_map(results_c, lois=centrality_data)
-                        results_c.write('The locations with the highest centrality to the AdIDs at the entered location are:')
+                        results_c.write('The locations with the highest centrality to the ADIDs at the entered location are:')
                         results_c.write(centrality_data)
 
         # Overpass API polyline
@@ -359,6 +435,7 @@ elif nav_bar == 'Algorithms':
                             # Write Locations of Interest to the results container
                             results_c.write('Cluster Data')
                             results_c.write(loi_data)
+                            
 
         # (Traditional) locations of interest
         loi_analysis = st.container()
@@ -423,7 +500,7 @@ elif nav_bar == 'Algorithms':
                             st.session_state.profile.model_train()
                         # Convert the time input to a datetime
                         # str(dt.combine(start_date, start_time))
-                        # Using an arbitary date because this algorith monly cares about the time of day
+                        # Using an arbitary date because this algorithm only cares about the time of day
                         start_time = pd.to_datetime(str(dt.combine(pd.to_datetime('2018-01-01'), start_time)))
                         start_time = np.array((start_time - start_time.replace(hour=0, minute=0, second=0, microsecond=0)).total_seconds()).reshape(-1, 1)
                         result_label, result_centroid = st.session_state.profile.model_predict(start_time, start_day)
@@ -442,42 +519,107 @@ elif nav_bar == 'Report':
 
     sidebar.title('Report')
 
-    sidebar.write("The module below generates a report in PDF format about a single adverter ID (a single device) in the data.")
+    sidebar.write("The module below generates a report in PDF format about a single advertiser ID (a single device) in the data.")
 
     sidebar.subheader('Generate Report')
+    
     report_sb = sidebar.container() #'Report'
     with report_sb:
         report_c = st.container()
+        colocs = st.container()
+        generated_reps = st.container()
+ 
         with report_c:
             report_form = st.form(key='report')
             with report_form:
                 adid = st.text_input('Advertiser ID')
-                exth = st.slider('Extended Stay Duration', min_value=1, max_value=24, value=7)
-                reph = st.slider('Time Between Repeat Visits', min_value=1, max_value=72, value=24)
-                colh = st.slider('Colocation Duration', min_value=1, max_value=24, value=2)
+                #exth = st.slider('Extended Stay Duration', min_value=1, max_value=24, value=7)
+                #reph = st.slider('Time Between Repeat Visits', min_value=1, max_value=72, value=24)
+                #colh = st.slider('Colocation Duration', min_value=1, max_value=24, value=2)
                 report_button = st.form_submit_button('Generate Report')
+
+                #find the number of days this data covers to see if there is sufficient data for an adid
+                st.session_state.data['datetime'] = pd.to_datetime(st.session_state.data['datetime'])
+                min_date = st.session_state.data['datetime'].min()
+                max_date = st.session_state.data['datetime'].max()
+                days_covered = (max_date - min_date).days + 1
+
                 if report_button:
                     if adid not in st.session_state.data['advertiser_id'].values:
                         results_c.error('ADID is invalid. Please enter a different ADID')
-                    if st.session_state.uploaded:
-                        if len(st.session_state.data.query('advertiser_id==@adid')['advertiser_id_alias'].unique()) > 0:
-                            adid_alias = st.session_state.data.query('advertiser_id==@adid')['advertiser_id_alias'].unique()[0]
-                        else:
-                            adid_alias = None
-                        device = Profile(data=st.session_state.data, ad_id=adid, ext_duration=exth, rep_duration=reph, coloc_duration=colh, alias=adid_alias)
-                        report = Report(device)
-                        pdf_file_path = report.file_name
-                        results_c.write('Report generated!')
-                        
-                        
-                        with open(pdf_file_path, "rb") as f:
-                            pdf_bytes = f.read()
-
-                        pdf_base64 = b64encode(pdf_bytes).decode('utf-8')
-                        pdf_display = f'<iframe src="data:application/pdf;base64,{pdf_base64}" width="900" height="800" type="application/pdf"></iframe>'
-                        results_c.write(pdf_display, unsafe_allow_html=True)
+                    elif (adid_value_counts(st.session_state.data)['Occurences in Data'].get(adid) * 1.0 / days_covered) < 200:                        
+                        suff_data = 0
                     else:
-                        results_c.write('Upload data first!')
+                        suff_data = 1
+                       
+                    if st.session_state.uploaded:
+
+                        if adid not in st.session_state.generated_reports['ADID'].values:
+                            # Check if the adid has an alias added
+                            
+                            if len(st.session_state.data.query('advertiser_id==@adid')['advertiser_id_alias'].unique()) > 0:
+                                adid_alias = st.session_state.data.query('advertiser_id==@adid')['advertiser_id_alias'].unique()[0]
+                            else:
+                                adid_alias = st.session_state.alias_ids[adid]
+                                
+                            # set up the profile for the adid
+                            # creating a profile also creates the LOI DataFrame, which may take a minute or two depending on the size of the data                
+                            device = Profile(data=st.session_state.data, ad_id=adid,
+                                            alias=adid_alias, sd = suff_data, alias_dict = st.session_state.alias_ids)
+                            
+                            st.session_state.data.loc[st.session_state.data['advertiser_id'] == adid, 'advertiser_id_alias'] = device.name
+                            save('saved_df.pkl',st.session_state.data)
+                            
+                            # generate the report
+                            report = Report(device)
+                            pdf_file_path = report.file_name
+                            results_c.write('Report generated!')
+                            
+                            
+                            st.session_state.generated_reports.loc[len(st.session_state.generated_reports)] = [adid, device.name, device]
+                            
+                            with open(pdf_file_path, "rb") as f:
+                                pdf_bytes = f.read()
+
+                            pdf_base64 = b64encode(pdf_bytes).decode('utf-8')
+                            pdf_display = f'<iframe src="data:application/pdf;base64,{pdf_base64}" width="900" height="800" type="application/pdf"></iframe>'
+                            results_c.write(pdf_display, unsafe_allow_html=True)
+                        
+                            
+                        else:
+                            device = st.session_state.generated_reports[st.session_state.generated_reports['ADID'] == adid]['Profile'].reset_index(drop=True)[0]
+                            
+                            report = Report(device)
+                            pdf_file_path = report.file_name
+                            results_c.write('Report generated!')
+                            
+                            with open(pdf_file_path, "rb") as f:
+                                pdf_bytes = f.read()
+
+                            pdf_base64 = b64encode(pdf_bytes).decode('utf-8')
+                            pdf_display = f'<iframe src="data:application/pdf;base64,{pdf_base64}" width="900" height="800" type="application/pdf"></iframe>'
+                            results_c.write(pdf_display, unsafe_allow_html=True)
+                            
+                    else:
+                        results_c.write('Upload Data First!')
+                            
+                        
+        with colocs:
+            st.subheader('Colocated Devices')
+            try:  
+                colocs_df = st.dataframe(device.coloc.drop_duplicates()[['Alias','advertiser_id','latitude','longitude']])     
+                
+            except Exception as error:
+                print(error)
+                colocs_df = st.info('No colocated devices found')
+                
+        with generated_reps:
+            st.subheader('Generated Reports')
+            try:
+                generated_report_df = st.dataframe(st.session_state.generated_reports[['Alias','ADID']])
+            except:
+                generated_report_df = st.info('No reports have been generated yet.')
+            
 else:
     pass #Nothing should happen, it should never be here
 
@@ -508,11 +650,11 @@ if data_reset_button:
                     st.session_state.data = modify_and_sort_columns(st.session_state.data)
    
         except:
-            title_center.error('Error reseting the data. Please upload manually')
+            title_c.error('Error reseting the data. Please upload manually')
             
     # if the pickle file doesn't exist, raise an error
     else:
-        title_center.error('No data has been entered yet. Please upload using the side bar on the "Data" tab')
+        title_c.error('No data has been entered yet. Please upload using the side bar on the "Data" tab')
 
 # Preview container
 with preview_c:

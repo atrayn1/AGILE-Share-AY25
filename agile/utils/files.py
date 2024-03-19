@@ -1,4 +1,4 @@
-from random import Random
+from random import Random, randrange
 from itertools import islice
 from math import ceil
 import os
@@ -40,5 +40,42 @@ def save(file_name, data):
 # Generate a random name
 def random_name():
     with open(find('../names/first.txt')) as F, open(find('../names/last.txt')) as L:
-                    new_name = random_line(F) + '-' + random_line(L)
-                    return new_name
+        new_name = random_line(F) + '-' + random_line(L)
+        return new_name
+                
+def generate_aliases(df):
+    first = []
+    last = []
+    name_list = []
+
+    
+    with open(find('../names/first.txt')) as F, open(find('../names/last.txt')) as L:
+        for line_f in F:
+            first.append(line_f.strip())
+        for line_l in L:
+            last.append(line_l.strip())
+            
+        for f in first:
+            for l in last:        
+                name_list.append(l + '-' + f) 
+           
+    
+     
+    adid_dict = {}
+    
+    if len(name_list) >= len(df['advertiser_id'].unique()):
+        for id in df['advertiser_id'].unique():
+            adid_dict[id] = name_list.pop(randrange(len(name_list)))
+    else:
+        names_left = len(name_list)
+        for id in df['advertiser_id'].unique():
+            if names_left > 0:
+                if names_left % 100000 == 0:
+                    print(names_left)
+                adid_dict[id] = name_list.pop(randrange(names_left))
+                names_left -= 1
+            else:
+                adid_dict[id] = 'Unnamed_Alias'
+            
+        
+    return adid_dict
