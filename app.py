@@ -219,7 +219,7 @@ if nav_bar == 'Data':
     alias_finder = sidebar.container()
     with alias_finder:
         st.subheader('Check the alias for an ADID')
-        st.write('If you have not set a custom alias for an ADID, there will be a randomly generated alias assigned. Whether you enter a custom alias or look at the randomly generated alias, you can find it here.')
+        st.write('Aliases are randomly assigned to all ADIDs, even if the advertiser_id_alias column does not populate. Whether you enter a custom alias or look at the randomly generated alias, you can find it here.')
         
         alias_finder_form = st.form('find_alias')
         with alias_finder_form:
@@ -241,21 +241,20 @@ if nav_bar == 'Data':
         # Creates the form which will hold the text boxes, check box, and button
         rename_form = st.form('rename_adid')
         with rename_form:
-            adid_rename_text = st.text_input('Advertiser ID')
+            adid_to_update = st.text_input('Advertiser ID')
             new_name_text = st.text_input('Custom Name')
-            random_name_generation = st.checkbox('Generate Random Name (will override custom name)')
-                
+            
             if st.form_submit_button('Assign Name'):
-                if adid_rename_text.strip() not in st.session_state.data['advertiser_id'].values:
+                if adid_to_update.strip() not in st.session_state.data['advertiser_id'].values:
                     preview_c.error('Error: Invalid ADID. Please re-enter the ADID')
-                elif new_name_text == '' and not random_name_generation:
+                elif new_name_text == '':
                     preview_c.error('Error: Please enter at least one character for a custom name')
-                elif (new_name_text in st.session_state.data['advertiser_id_alias'].values or new_name_text in st.session_state.alias_ids[new_name_text].values) and not random_name_generation:
+                elif (new_name_text in st.session_state.data['advertiser_id_alias'].values or new_name_text in st.session_state.alias_ids.values()):
                     preview_c.error(f'Error: The alias {new_name_text} is already in use')
                 else:
                     with st.spinner('Adding Alias...'):
-                        new_name_text = st.session_state.alias_ids[adid_rename_text]
-                        st.session_state.data.loc[st.session_state.data['advertiser_id'] == adid_rename_text, 'advertiser_id_alias'] = new_name_text
+                        st.session_state.alias_ids[adid_to_update] = new_name_text
+                        st.session_state.data.loc[st.session_state.data['advertiser_id'] == adid_to_update, 'advertiser_id_alias'] = new_name_text
                         save('saved_df.pkl',st.session_state.data)
                 
                         #st.session_state.file_source = os.path.abspath('./saved_data/saved_df.pkl')
@@ -568,7 +567,7 @@ elif nav_bar == 'Report':
                                             alias=adid_alias, sd = suff_data, alias_dict = st.session_state.alias_ids)
                             
                             st.session_state.data.loc[st.session_state.data['advertiser_id'] == adid, 'advertiser_id_alias'] = device.name
-                            save('saved_df.pkl',st.session_state.data)
+                            #save('saved_df.pkl',st.session_state.data)
                             
                             # generate the report
                             report = Report(device)
