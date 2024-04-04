@@ -4,6 +4,8 @@ from agile.mapping import data_map
 import os
 import io
 from PIL import Image
+from agile.filtering import query_location, query_date, query_adid, query_node
+from agile.utils.tag import find_all_nearby_nodes
 
 class PDF(FPDF):
 
@@ -60,11 +62,13 @@ class Report:
         self.pdf.ln(ch)
         self.pdf.set_font('Arial', 'B', 16)
         self.pdf.cell(w=0, h=ch, txt="Locations of Interest:", ln=1)
-
-        # We only care about addresses for the summary page
-        self.pdf.set_font('Arial', '', 10)
-        loi_addresses = pd.DataFrame(self.profile.lois.address.unique(), columns=['address'])
-        self.display_dataframe(loi_addresses, w=160)
+        # Overpass API polyline
+        adid = self.profile.ad_id
+        radius = 20
+        query_data = query_adid(adid, self.profile.data) # Filter the data
+        res = find_all_nearby_nodes(query_data, radius)
+        res = res.drop_duplicates(subset = 'name', keep=False)
+        self.display_dataframe(res, w=58)
 
         # Co-locations
         self.pdf.ln(ch)
@@ -133,7 +137,7 @@ class Report:
 
         # Locations of interest
         self.pdf.ln(ch)
-        self.pdf.set_font('Arial', 'B', 8)
+        self.pdf.set_font('Arial', 'B', 16)
         self.pdf.cell(w=0, h=ch, txt="Locations of Interest:", ln=1)
         self.pdf.set_font('Arial', '', 16)
         self.pdf.multi_cell(w=0, h=ch, txt="All Locations of Interest were flagged for either repeated visits separated by more than " + str(self.profile.rep_duration) +
