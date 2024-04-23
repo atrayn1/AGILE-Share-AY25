@@ -29,7 +29,7 @@ from agile.utils.geocode import reverse_geocode
 from agile.utils.files import find, random_line, save, random_name, generate_aliases
 from agile.utils.dataframes import modify_and_sort_columns, clean_and_verify_columns
 from agile.profile import Profile
-from agile.samsreport import Report
+from agile.report import Report
 from agile.centrality import compute_top_centrality
 from agile.overview import adid_value_counts
 
@@ -163,9 +163,6 @@ if nav_bar == 'Data':
                 with st.spinner("Geohashing the data..."):
                     st.session_state.data['geohash'] = st.session_state.data.apply(lambda d : gh.encode(d.latitude, d.longitude, precision=10), axis=1)
         
-                
-            #except:
-                #results_c.error('Invalid file format. Please upload a valid .csv file that contains advertiser_id, datetime, latitude and longitude columns.')
             
             try:
                 # perform final preprocessing operations before displaying the data
@@ -174,17 +171,16 @@ if nav_bar == 'Data':
             except:
                 results_c.error('Error with modifying and sorting the columns. Please ensure you uploaded a csv file with advertiser_id, datetime, latitude and longitude columns.')
             
-            #try:
-                # this function generates a random alias for each ADID, though it saves it in a dictionary (st.session_state.alias_ids) 
-                # because saving it to st.session_state.data would take a long time. If we ever want to access or modify
-                # an alias, we use this dictionary
+         
+            # this function generates a random alias for each ADID, though it saves it in a dictionary (st.session_state.alias_ids) 
+            # because saving it to st.session_state.data would take a long time. If we ever want to access or modify
+            # an alias, we use this dictionary
             st.session_state.alias_ids = generate_aliases(st.session_state.data)
             
+            # the case where there are more ADIDs than generated aliases. This should never really happen! There are 1,368,896 possible generated aliases
             if 'Unnamed_Alias' in st.session_state.alias_ids.values():
                 preview_c.error("WARNING: Due to the amount of ADIDs in your data, not every ADID was assigned an alias")
             
-            #except:
-            #    results_c.error('Error with generating name aliases. Please ensure you uploaded a csv file with advertiser_id, datetime, latitude and longitude columns.')
             
             # Save the data to a pickle file, located in the /saved_data directory
             # This is done so it can be reloaded with the "reset data" button
@@ -194,12 +190,14 @@ if nav_bar == 'Data':
             
         # If there is a dataframe, update the "Data Overview," "Time Distribution," and "Geohash Distribution" statistics 
         if st.session_state.uploaded and not data_reset_button:
+            # Data overview
             try:
                 # Update the value counts for an ADID
                 overview_c.dataframe(adid_value_counts(st.session_state.data), height=300)
             except:
                 overview_c.error("Could not load overview statistics.")
-                
+            
+            # Time distribution
             try:
                 time_data = overview_c.container()
                 time_data.subheader('Time Distribution')
@@ -207,6 +205,7 @@ if nav_bar == 'Data':
             except:
                 time_data.error('Could not load time statistics.')   
                 
+            # Geohash distribution
             try: 
                 geohash_distro = overview_c.container()
                 geohash_distro.subheader('Geohash Distribution')
@@ -215,7 +214,7 @@ if nav_bar == 'Data':
             except:
                 geohash_distro.error("Could not load geohash statistics.")
             
-    # find generated alias for an ADID
+    # find generated alias for an ADID. This looks up some ADID's alias in the dictionary st.session_state.alias_ids
     alias_finder = sidebar.container()
     with alias_finder:
         st.subheader('Check the alias for an ADID')
@@ -245,12 +244,16 @@ if nav_bar == 'Data':
             new_name_text = st.text_input('Custom Name')
             
             if st.form_submit_button('Assign Name'):
+                # Case where an invalid ADID is entered
                 if adid_to_update.strip() not in st.session_state.data['advertiser_id'].values:
                     preview_c.error('Error: Invalid ADID. Please re-enter the ADID')
+                # Case where the user enters nothing but clicks the button
                 elif new_name_text == '':
                     preview_c.error('Error: Please enter at least one character for a custom name')
+                # Case where the user enters an alias that is already being used
                 elif (new_name_text in st.session_state.data['advertiser_id_alias'].values or new_name_text in st.session_state.alias_ids.values()):
                     preview_c.error(f'Error: The alias {new_name_text} is already in use')
+                # No errors, change the current alias with the alias the user entered
                 else:
                     with st.spinner('Adding Alias...'):
                         st.session_state.alias_ids[adid_to_update] = new_name_text
@@ -543,7 +546,11 @@ elif nav_bar == 'Report':
                 max_date = st.session_state.data['datetime'].max()
                 days_covered = (max_date - min_date).days + 1
 
+                # if the button is clicked...
                 if report_button:
+                    
+                    # This block of code calculates whether or not there were a sufficient amount of datapoints for a thorough analysis.
+                    # If there are not enough, then a disclaimer is shown that the algorithms may be inaccurate
                     if adid not in st.session_state.data['advertiser_id'].values:
                         results_c.error('ADID is invalid. Please enter a different ADID')
                     elif (adid_value_counts(st.session_state.data)['Occurences in Data'].get(adid) * 1.0 / days_covered) < 200:                        
@@ -553,9 +560,10 @@ elif nav_bar == 'Report':
                        
                     if st.session_state.uploaded:
 
+                        # If no report has been generated on this ADID already...
                         if adid not in st.session_state.generated_reports['ADID'].values:
-                            # Check if the adid has an alias added
                             
+                            # Check if the adid has an alias added (it should)
                             if len(st.session_state.data.query('advertiser_id==@adid')['advertiser_id_alias'].unique()) > 0:
                                 adid_alias = st.session_state.data.query('advertiser_id==@adid')['advertiser_id_alias'].unique()[0]
                             else:
@@ -566,35 +574,40 @@ elif nav_bar == 'Report':
                             device = Profile(data=st.session_state.data, ad_id=adid,
                                             alias=adid_alias, sd = suff_data, alias_dict = st.session_state.alias_ids)
                             
+                            # Update all of the aliases for this ADID in the main dataframe. 
+                            # This is because all of the aliases are stored in a dictionary (st.session_state.alias_ids) rather than the main dataframe (st.session_state.data)
                             st.session_state.data.loc[st.session_state.data['advertiser_id'] == adid, 'advertiser_id_alias'] = device.name
-                            #save('saved_df.pkl',st.session_state.data)
                             
-                            # generate the report
+                            # Generate the report
                             report = Report(device)
                             pdf_file_path = report.file_name
                             results_c.write('Report generated!')
                             
-                            
+                            # Save the report in the dictionary st.session_state.generated_reports so that if the user wants to regenerate a report on this ADID,
+                            # they don't need to wait forever for the algorithms to run--it's saved already!
+                            # Also helps us display in the sidebar which reports have been generated
                             st.session_state.generated_reports.loc[len(st.session_state.generated_reports)] = [adid, device.name, device]
                             
+                            # Display the report in a PDF viewer within the browser
                             with open(pdf_file_path, "rb") as f:
                                 pdf_bytes = f.read()
-
                             pdf_base64 = b64encode(pdf_bytes).decode('utf-8')
                             pdf_display = f'<iframe src="data:application/pdf;base64,{pdf_base64}" width="900" height="800" type="application/pdf"></iframe>'
                             results_c.write(pdf_display, unsafe_allow_html=True)
                         
-                            
+                        # If a report has been generated on this ADID already...    
                         else:
+                            # Fetch the device
                             device = st.session_state.generated_reports[st.session_state.generated_reports['ADID'] == adid]['Profile'].reset_index(drop=True)[0]
                             
+                            # Make the report based off of the device
                             report = Report(device)
                             pdf_file_path = report.file_name
                             results_c.write('Report generated!')
                             
+                            # Display the report in a PDF viewer within the browser
                             with open(pdf_file_path, "rb") as f:
                                 pdf_bytes = f.read()
-
                             pdf_base64 = b64encode(pdf_bytes).decode('utf-8')
                             pdf_display = f'<iframe src="data:application/pdf;base64,{pdf_base64}" width="900" height="800" type="application/pdf"></iframe>'
                             results_c.write(pdf_display, unsafe_allow_html=True)
@@ -602,7 +615,7 @@ elif nav_bar == 'Report':
                     else:
                         results_c.write('Upload Data First!')
                             
-                        
+        # This block shows a sidebar with the colocated devices that were detected                
         with colocs:
             st.subheader('Colocated Devices')
             try:  
@@ -612,6 +625,7 @@ elif nav_bar == 'Report':
                 print(error)
                 colocs_df = st.info('No colocated devices found')
                 
+        # This block shows a sidebar with the previously generated reports
         with generated_reps:
             st.subheader('Generated Reports')
             try:
@@ -626,8 +640,6 @@ else:
 # if the button is clicked, reset the data seen by the user to what the user uploaded originally
 # this is done by saving the original data to a pickle file, and reloading it
 if data_reset_button:
-    # replace this with the function
-    
     
     # see if the pickle file exists already
     if os.path.exists(os.path.abspath('./saved_data/saved_df.pkl')) and os.path.exists(os.path.abspath('./saved_data/original_df.pkl')):
