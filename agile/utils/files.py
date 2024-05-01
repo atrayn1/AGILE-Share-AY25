@@ -1,4 +1,4 @@
-from random import Random, randrange
+from random import Random
 import random
 from itertools import islice
 from math import ceil
