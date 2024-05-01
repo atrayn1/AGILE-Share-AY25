@@ -1,4 +1,5 @@
 from random import Random, randrange
+import random
 from itertools import islice
 from math import ceil
 import os
@@ -60,7 +61,8 @@ def generate_aliases(df):
                 name_list.append(l + '-' + f) 
            
     
-     
+    random.seed(24)
+
     adid_dict = {}
     
     if len(name_list) >= len(df['advertiser_id'].unique()):
