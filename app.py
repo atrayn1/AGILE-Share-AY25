@@ -345,7 +345,7 @@ elif nav_bar == 'Locations':
         with node_analysis:
             st.subheader('Node Query')
             st.info('Query the Overpass API for named locations within a certain circular radius of a given latitude and longitude.\
-                     The radius is in meters. To search for a specific type of location, enter the location mname into the Node field below.')
+                     The radius is in meters. To search for a specific type of location, enter the location name into the Node field below.')
             node_form = st.form(key='node')
             with node_form:
                 lat = st.text_input('Latitude')

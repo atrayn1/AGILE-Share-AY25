@@ -171,8 +171,8 @@ class Profile:
             
         # run the locations of interest algorithm, covering a 25hrs to 1hr for extended duration and 73hrs to 1hr for repetition duration
         # change to (1,25,3) and (71,0,-10)
-        for ext_d in range(1,25,6):
-            for rep_d in range(71,0,-35):
+        for ext_d in range(1,25,3):
+            for rep_d in range(71,0,-10):
                 print(f'Running LOI Algorithm (Extended Duration: {ext_d} hrs, Repetition Duration: {rep_d} hrs)')
                 loi_data = pd.concat([loi_data,locations_of_interest(df, self.ad_id, ext_d, rep_d)]).reset_index(drop=True)
             
@@ -198,12 +198,13 @@ class Profile:
             
             # Iterate through each row. Add the alias to the correct column
             for adid in colocs_df['Colocated ADIDs'].values:
-                if None in self.data.query('advertiser_id==@self.ad_id')['advertiser_id_alias'].unique():
+                '''if None in self.data.query('advertiser_id==@self.ad_id')['advertiser_id_alias'].unique():
                     generated_name = self.alias_dict[adid]
                     self.data.loc[self.data['advertiser_id'] == adid, 'advertiser_id_alias'] = generated_name
                     colocs_df.loc[colocs_df['Colocated ADIDs'] == adid, 'Alias'] = generated_name
                 else:
-                    colocs_df.loc[colocs_df['Colocated ADIDs'] == adid, 'Alias'] = self.data.query('advertiser_id==@self.ad_id')['advertiser_id_alias'].unique()[0]
+                    colocs_df.loc[colocs_df['Colocated ADIDs'] == adid, 'Alias'] = self.data.query('advertiser_id==@self.ad_id')['advertiser_id_alias'].unique()[0]'''
+                colocs_df.loc[colocs_df['Colocated ADIDs'] == adid, 'Alias'] = self.alias_dict[adid]
             
             # Merge with the other colocation dataframe
             self.coloc = pd.merge(left=self.coloc, right=colocs_df, left_on='advertiser_id', right_on='Colocated ADIDs')
