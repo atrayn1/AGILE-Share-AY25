@@ -103,7 +103,7 @@ blank.subheader('')
 
 data_opts = st.container()
 data_reset_button = data_opts.button('Reset Data')
-keep_aliases_check = data_opts.checkbox('Keep Aliases', True)
+keep_aliases_check = True #data_opts.checkbox('Keep Aliases', True)
 
 preview_c = st.container()
 preview_c.subheader('Total Data Preview')
@@ -185,7 +185,7 @@ if nav_bar == 'Data':
             # Save the data to a pickle file, located in the /saved_data directory
             # This is done so it can be reloaded with the "reset data" button
             with st.spinner("Saving the modified data locally for fast reaccessing..."):
-                save('original_df.pkl',st.session_state.data)  
+                #save('original_df.pkl',st.session_state.data)  
                 save('saved_df.pkl',st.session_state.data)
             
         # If there is a dataframe, update the "Data Overview," "Time Distribution," and "Geohash Distribution" statistics 
@@ -642,10 +642,10 @@ else:
 if data_reset_button:
     
     # see if the pickle file exists already
-    if os.path.exists(os.path.abspath('./saved_data/saved_df.pkl')) and os.path.exists(os.path.abspath('./saved_data/original_df.pkl')):
+    if os.path.exists(os.path.abspath('./saved_data/saved_df.pkl')): #and os.path.exists(os.path.abspath('./saved_data/original_df.pkl')):
         # load the pickle file if it does
         try:
-            pickle_path = 'saved_df' if keep_aliases_check else 'original_df'
+            pickle_path = 'saved_df' #if keep_aliases_check else 'original_df'
             
             with open(os.path.abspath(f'./saved_data/{pickle_path}.pkl'), 'rb') as pkl_file:
                 with st.spinner("Reseting the data..."): 
