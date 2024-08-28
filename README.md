@@ -1,4 +1,21 @@
 # Capstone AY25
+Team members:
+Anuj Sirsikar
+Nick Summers
+Alex Traynor
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
