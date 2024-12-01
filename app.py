@@ -82,8 +82,8 @@ title_left.markdown("<h3 style='text-align: center; color: black;'>Advertising a
 title_img.image(find('../img/AGILE_Black.png'), width = 180)
 
 
-nav_bar = option_menu(None, ['Data', 'Filtering', 'Locations', 'Algorithms', 'Report'],
-                      icons=['file-earmark-fill', 'funnel-fill', 'pin-map-fill', 'layer-forward', 'stack'],
+nav_bar = option_menu(None, ['Data', 'Filtering', 'Locations', 'Algorithms', 'Report', "Graph"],
+                      icons=['file-earmark-fill', 'funnel-fill', 'pin-map-fill', 'layer-forward', 'stack', 'command'],
                       menu_icon="cast", default_index=0, orientation="horizontal",
                     )
 
@@ -632,10 +632,19 @@ elif nav_bar == 'Report':
                 generated_report_df = st.dataframe(st.session_state.generated_reports[['Alias','ADID']])
             except:
                 generated_report_df = st.info('No reports have been generated yet.')
-            
+
+elif nav_bar == 'Graph':
+
+    sidebar.title('Graph')
+
+    sidebar.write("The module below generates a graph with the given dataset.")
+
+    sidebar.subheader('Generate Graph')
+    
+    graph_sb = sidebar.container() #'Graph'
+
 else:
     pass #Nothing should happen, it should never be here
-
 
 # if the button is clicked, reset the data seen by the user to what the user uploaded originally
 # this is done by saving the original data to a pickle file, and reloading it
