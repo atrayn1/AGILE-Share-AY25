@@ -1,7 +1,7 @@
 # Basic Dockerfile to run the AGILE streamlit app
 # agile/Dockerfile
 
-FROM python:3.9-slim
+FROM python:3.8-slim
 
 WORKDIR /agile
 
@@ -11,6 +11,8 @@ RUN apt-get update && apt-get install -y \
     software-properties-common \
     git ssh \
     && rm -rf /var/lib/apt/lists/*
+    
+RUN pip install numpy==1.21.6 pandas==1.3.5
 
 COPY . .
 
