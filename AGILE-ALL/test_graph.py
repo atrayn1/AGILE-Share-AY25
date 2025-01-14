@@ -1,19 +1,19 @@
 import pandas as pd
-from graph_class_pytorch import createGraph
+from agile.graphing import createGraph
 
 # Path to the CSV file
-csv_file = "data/test_locations.csv"
+csv_file = "data/test_location.csv"
 
 # Read the CSV file using pandas
 data = pd.read_csv(csv_file)
 
 # Ensure the CSV has the required columns: ADID, lat, lon
-if not all(col in data.columns for col in ["ADID", "lat", "lon"]):
-    raise ValueError("The CSV file must contain 'ADID', 'lat', and 'lon' columns.")
+if not all(col in data.columns for col in ["advertiser_id", "latitude", "longitude"]):
+    raise ValueError("The CSV file must contain 'advertiser_id', 'latitude', and 'longitude' columns.")
 
 # Convert the pandas DataFrame to a list of lists for createGraph
 # Each row should be in the format: [ADID, lat, lon]
-data_list = data[["ADID", "lat", "lon"]].values.tolist()
+data_list = data[["advertiser_id", "latitude", "longitude"]].values.tolist()
 
 # Create the graph
 graph = createGraph(data_list)
