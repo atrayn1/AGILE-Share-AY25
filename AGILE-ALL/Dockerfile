@@ -12,14 +12,17 @@ RUN apt-get update && apt-get install -y \
     git ssh \
     && rm -rf /var/lib/apt/lists/*
     
-RUN pip install numpy==1.21.6 pandas==1.3.5
+RUN pip install torch==2.4.0 pandas==1.3.5
+#numpy==1.21.6 
 
 COPY . .
 
-RUN pip3 install -r requirements.txt
+#RUN pip3 install -r requirements.txt
 
-EXPOSE 8501
+#EXPOSE 8501
 
-HEALTHCHECK CMD curl --fail http://localhost:8501/_stcore/health
+#HEALTHCHECK CMD curl --fail http://localhost:8501/_stcore/health
 
-ENTRYPOINT ["streamlit", "run", "app.py", "--server.port=8501", "--server.address=0.0.0.0"]
+#ENTRYPOINT ["streamlit", "run", "app.py", "--server.port=8501", "--server.address=0.0.0.0"]
+
+CMD ["python", "tests/test_create_graph.py"]

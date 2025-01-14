@@ -1,3 +1,7 @@
+"""
+Assistance from ChatGPT
+January 2025
+"""
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -197,7 +201,7 @@ def findTimeAtSamePlace(adid1, adid2):
         adid2 (str): The second ADID.
 
     Returns:
-        int: The time spent at the same place. Currently does nothing.
+        int: The time spent at the same place, not necessarily the same time. Currently does nothing.
     """
     return 0
 
