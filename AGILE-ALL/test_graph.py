@@ -12,20 +12,15 @@ if not all(col in data.columns for col in ["advertiser_id", "latitude", "longitu
     raise ValueError("The CSV file must contain 'advertiser_id', 'latitude', and 'longitude' columns.")
 
 # Convert the pandas DataFrame to a list of lists for createGraph
-# Each row should be in the format: [ADID, lat, lon, additional columns...]
 data_list = data.values.tolist()
 
 # Create the graph
 graph = createGraph(data_list)
 
-# Print general graph information
+# Print details about the graph for testing
 print(f"Graph created with {graph.num_nodes} nodes.")
-print("Adjacency matrix:")
-print(graph.adjacency_matrix)
-
-# Print the data stored within the first 5 nodes
-print("\nData within the first 5 nodes:")
-for node_idx in range(min(graph.num_nodes, 5)):  # Limit to the first 5 nodes
-    print(f"Node {node_idx} data:")
-    node_data = graph.node_features[node_idx]
-    print(node_data)
+print("Node data (first 5 ADIDs):")
+for i, (adid, node_data) in enumerate(graph.node_features.items()):
+    if i >= 5:  # Limit output to first 5 nodes
+        break
+    print(f"ADID: {adid}, Data: {node_data}")

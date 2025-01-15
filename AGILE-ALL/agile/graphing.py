@@ -155,40 +155,34 @@ class Graph:
 def createGraph(data):
     """
     Creates a graph from the given data.
-    Each node stores all associated data (including lat, lon, and strings).
+    Each node is identified by its ADID and stores all associated data (including lat, lon, and strings).
 
     Args:
         data (list of lists): Each row contains [ADID, lat, lon, ..., additional_data].
 
     Returns:
         Graph: A constructed graph with nodes and features.
-    """  
-    # Extract unique ADIDs and map them to indices
+    """
+    # Extract unique ADIDs
     unique_adids = list(set(row[0] for row in data if len(row) > 3))
-    adid_to_index = {adid: idx for idx, adid in enumerate(unique_adids)}
 
-    num_nodes = len(unique_adids)
-    graph = Graph(num_nodes)
+    # Create a mapping of ADIDs to node data
+    adid_to_data = {adid: {"entries": []} for adid in unique_adids}
 
-    # Prepare node data storage as a list of dictionaries for flexibility
-    node_data = [{} for _ in range(num_nodes)]
-
-    # Aggregate data for each ADID
+    # Populate node data
     for row in data:
         if len(row) < 4:  # Ensure there are at least 4 columns: ADID, lat, lon, and one additional column
             print(f"Skipping row due to insufficient columns: {row}")
             continue
 
         adid = row[0]
-        node_idx = adid_to_index[adid]
-
         try:
-            # Store latitude, longitude, and any additional data as a dictionary
+            # Extract latitude, longitude, and additional data
             lat, lon = float(row[2]), float(row[3])
             additional_data = row[4:]  # Store any remaining columns
-            if "entries" not in node_data[node_idx]:
-                node_data[node_idx]["entries"] = []
-            node_data[node_idx]["entries"].append({
+
+            # Append data to the node's entries
+            adid_to_data[adid]["entries"].append({
                 "latitude": lat,
                 "longitude": lon,
                 "additional_data": additional_data
@@ -197,11 +191,11 @@ def createGraph(data):
             print(f"Skipping row due to invalid data: {row} - Error: {e}")
             continue
 
-    # Attach node data to the graph
-    graph.node_features = node_data
+    # Create the graph with nodes indexed by ADID
+    graph = Graph(len(unique_adids))
+    graph.node_features = adid_to_data  # Store the ADID-to-data mapping
 
     return graph
-
 
 
 def findTimeTogether(adid1, adid2):
