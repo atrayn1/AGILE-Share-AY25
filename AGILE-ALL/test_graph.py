@@ -32,9 +32,7 @@ print(f"Graph created with {graph.num_nodes} nodes.")
 print("Adjacency matrix:")
 print(graph.adjacency_matrix)
 
-# Print the data stored within the first 5 nodes
-print("\nData within the first 5 nodes:")
-for node_idx in range(min(graph.num_nodes, 5)):  # Limit to the first 5 nodes
-    print(f"Node {node_idx} data:")
-    node_data = graph.node_features[node_idx]
-    print(node_data)
+# Print the data stored in the first 5 nodes
+print(f"Graph created with {graph.num_nodes} nodes.")
+for i in range(min(5, graph.num_nodes)):
+    print(f"Node {i} data: {graph.node_features[i]}")
