@@ -150,14 +150,14 @@ class Graph:
 
         self.node_features = updated_features
         return self.node_features
-        
+
 def createGraph(data):
     """
     Creates a graph from the given data.
+    Each node stores all associated data (including lat, lon, and strings).
 
     Args:
-        data (list of lists): Each row contains [ADID, lat, lon, additional columns...].
-            ADIDs are used to define nodes.
+        data (list of lists): Each row contains [ADID, lat, lon, ..., additional_data].
 
     Returns:
         Graph: A constructed graph with nodes and features.
@@ -169,28 +169,27 @@ def createGraph(data):
     num_nodes = len(unique_adids)
     graph = Graph(num_nodes)
 
-    # Initialize a dictionary to store node features (list of lists per ADID)
-    node_features_dict = {adid: [] for adid in unique_adids}
+    # Prepare node data storage as a list of dictionaries for flexibility
+    node_data = [{} for _ in range(num_nodes)]
 
+    # Aggregate data for each ADID
     for row in data:
         adid = row[0]
-        features = row[1:]  # Latitude, longitude, and additional columns
-        node_features_dict[adid].append(features)
+        node_idx = adid_to_index[adid]
 
-    # Convert the feature lists into tensors for each node
-    node_features = []
-    for adid in unique_adids:
-        node_data = torch.tensor(node_features_dict[adid], dtype=torch.float32)
-        node_features.append(node_data)
+        # Store latitude, longitude, and any additional data as a dictionary
+        lat, lon = float(row[2]), float(row[3])
+        additional_data = row[4:]  # Store any remaining columns
+        if "entries" not in node_data[node_idx]:
+            node_data[node_idx]["entries"] = []
+        node_data[node_idx]["entries"].append({
+            "latitude": lat,
+            "longitude": lon,
+            "additional_data": additional_data
+        })
 
-    # Pad features for uniform shape
-    max_features = max(f.shape[0] for f in node_features)
-    feature_dim = node_features[0].shape[1]
-    padded_features = torch.zeros((num_nodes, max_features, feature_dim))
-    for idx, features in enumerate(node_features):
-        padded_features[idx, :features.shape[0], :] = features
-
-    graph.set_node_features(padded_features)
+    # Attach node data to the graph
+    graph.node_features = node_data
 
     return graph
 
