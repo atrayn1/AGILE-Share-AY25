@@ -151,6 +151,7 @@ class Graph:
         self.node_features = updated_features
         return self.node_features
 
+
 def createGraph(data):
     """
     Creates a graph from the given data.
@@ -163,7 +164,7 @@ def createGraph(data):
         Graph: A constructed graph with nodes and features.
     """
     # Extract unique ADIDs and map them to indices
-    unique_adids = list(set(row[0] for row in data))
+    unique_adids = list(set(row[0] for row in data if len(row) > 3))
     adid_to_index = {adid: idx for idx, adid in enumerate(unique_adids)}
 
     num_nodes = len(unique_adids)
@@ -174,24 +175,33 @@ def createGraph(data):
 
     # Aggregate data for each ADID
     for row in data:
+        if len(row) < 4:  # Ensure there are at least 4 columns: ADID, lat, lon, and one additional column
+            print(f"Skipping row due to insufficient columns: {row}")
+            continue
+
         adid = row[0]
         node_idx = adid_to_index[adid]
 
-        # Store latitude, longitude, and any additional data as a dictionary
-        lat, lon = float(row[2]), float(row[3])
-        additional_data = row[4:]  # Store any remaining columns
-        if "entries" not in node_data[node_idx]:
-            node_data[node_idx]["entries"] = []
-        node_data[node_idx]["entries"].append({
-            "latitude": lat,
-            "longitude": lon,
-            "additional_data": additional_data
-        })
+        try:
+            # Store latitude, longitude, and any additional data as a dictionary
+            lat, lon = float(row[2]), float(row[3])
+            additional_data = row[4:]  # Store any remaining columns
+            if "entries" not in node_data[node_idx]:
+                node_data[node_idx]["entries"] = []
+            node_data[node_idx]["entries"].append({
+                "latitude": lat,
+                "longitude": lon,
+                "additional_data": additional_data
+            })
+        except ValueError as e:
+            print(f"Skipping row due to invalid data: {row} - Error: {e}")
+            continue
 
     # Attach node data to the graph
     graph.node_features = node_data
 
     return graph
+
 
 
 def findTimeTogether(adid1, adid2):
