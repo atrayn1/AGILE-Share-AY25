@@ -248,5 +248,82 @@ def findWeight(adid1, adid2, timeTogether, timeAtSamePlace):
 
     return weight
 
+
+def findRelatedNodes(lat: float, long: float, radius: str, df: pd.DataFrame):
+    """
+    Finds related ad IDs within a certain radius of the given latitude and longitude.
+
+    Parameters:
+        lat (float): Latitude of the location.
+        long (float): Longitude of the location.
+        radius (str): The radius within which to search for related ads.
+        df (pd.DataFrame): A DataFrame containing ad data with columns 'ad_id', 'latitude', and 'longitude'.
+
+    Returns:
+        list: A list of related ad IDs within the specified radius.
+    """
+    # Call the query_location function to find related ads
+    related_ads = query_location(lat=str(lat), long=str(long), radius=radius, df=df)
+
+    return related_ads
+
+def findRelatedNodesForAll(node_id: int, graph, radius: str):
+    """
+    Finds related ad IDs for a single node in the graph using the graph's node features.
+
+    Parameters:
+        node_id (int): The ID of the node in the graph.
+        graph (Graph): The graph object created by createGraph().
+        radius (str): The radius within which to search for related ads.
+
+    Returns:
+        list: A list of related ad IDs for the given node.
+    """
+    # Get the node's data from the graph
+    node_data = graph.node_features[node_id]
+
+    # Ensure the node has location data
+    if "entries" not in node_data or not node_data["entries"]:
+        raise ValueError(f"Node {node_id} does not have location data.")
+
+    # Use the first entry's latitude and longitude for querying
+    lat = node_data["entries"][0]["latitude"]
+    long = node_data["entries"][0]["longitude"]
+
+    # Convert the graph's node features into a DataFrame for compatibility
+    df_data = []
+    for idx, data in enumerate(graph.node_features):
+        for entry in data.get("entries", []):
+            df_data.append({
+                "ad_id": idx,
+                "latitude": entry["latitude"],
+                "longitude": entry["longitude"]
+            })
+    df = pd.DataFrame(df_data)
+
+    # Find related nodes using findRelatedNodes
+    return findRelatedNodes(lat, long, radius, df)
+
+def createEdgesFromRelatedNodes(node_id: int, graph, radius: str):
+    """
+    Uses the list of related nodes from findRelatedNodesForAll to create edges with a weight of 1
+    between the given node and each related node.
+
+    Parameters:
+        node_id (int): The ID of the node in the graph.
+        graph (Graph): The graph object created by createGraph().
+        radius (str): The radius within which to search for related ads.
+
+    Returns:
+        None
+    """
+    # Get the related nodes for the given node
+    related_nodes = findRelatedNodesForAll(node_id, graph, radius)
+
+    # Add edges to the graph with a weight of 1
+    for related_node_id in related_nodes:
+        graph.add_edge(node_id, related_node_id, weight=1.0)
+
+
 if __name__ == "__main__":
     createGraph()
