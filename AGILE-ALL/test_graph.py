@@ -7,12 +7,21 @@ csv_file = "data/test_location.csv"
 # Read the CSV file using pandas
 data = pd.read_csv(csv_file)
 
-# Ensure the CSV has the required columns: ADID, lat, lon
-if not all(col in data.columns for col in ["advertiser_id", "latitude", "longitude"]):
-    raise ValueError("The CSV file must contain 'advertiser_id', 'latitude', and 'longitude' columns.")
+# Ensure the CSV has the required columns: advertiser_id, latitude, longitude
+required_columns = ["advertiser_id", "latitude", "longitude"]
+if not all(col in data.columns for col in required_columns):
+    raise ValueError(f"The CSV file must contain the following columns: {required_columns}")
 
-# Convert the pandas DataFrame to a list of lists for createGraph
-# Each row should be in the format: [ADID, lat, lon, additional columns...]
+# Remove non-numeric data (keep advertiser_id and numeric columns)
+data = data[required_columns]
+data["latitude"] = pd.to_numeric(data["latitude"], errors="coerce")
+data["longitude"] = pd.to_numeric(data["longitude"], errors="coerce")
+
+# Drop rows with missing or invalid data
+data = data.dropna()
+
+# Convert the DataFrame to a list of lists
+# Each row is in the format [advertiser_id, latitude, longitude]
 data_list = data.values.tolist()
 
 # Create the graph
