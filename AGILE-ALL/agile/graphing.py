@@ -5,6 +5,7 @@ January 2025
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from .filtering import query_adid, query_location  # Importing the functions
 
 class Graph:
     def __init__(self, num_nodes):
@@ -155,11 +156,12 @@ def createGraph(data):
     Creates a graph from the given data.
 
     Args:
-        data (list of lists): Each row contains [ADID, lat, lon, ...].
+        data (list of lists): Each row contains [ADID, lat, lon, additional_data...].
             ADIDs are used to define nodes.
 
     Returns:
-        Graph: A constructed graph with nodes and features.
+        Graph: A constructed graph with nodes and features, where each node contains
+        a list of all rows of data associated with its ADID.
     """
     # Extract unique ADIDs and map them to indices
     unique_adids = list(set(row[0] for row in data))
@@ -168,16 +170,28 @@ def createGraph(data):
     num_nodes = len(unique_adids)
     graph = Graph(num_nodes)
 
-    # Add node features (latitude and longitude)
-    features = torch.zeros((num_nodes, 2))  # Assuming features are lat and lon
-    for row in data:
-        adid, lat, lon = row[:3]
-        node_idx = adid_to_index[adid]
-        features[node_idx] = torch.tensor([lat, lon])
+    # Initialize a dictionary to store all rows of data for each ADID
+    adid_to_rows = {adid: [] for adid in unique_adids}
 
-    graph.set_node_features(features)
+    # Populate the data lists for each ADID
+    for row in data:
+        adid = row[0]
+        adid_to_rows[adid].append(row[1:])  # Store all columns except ADID
+
+    # Add node features (list of data rows) to the graph
+    max_rows = max(len(rows) for rows in adid_to_rows.values())  # Maximum number of rows per ADID
+    feature_dim = len(data[0]) - 1  # Number of features excluding ADID
+    node_features = torch.zeros((num_nodes, max_rows, feature_dim))
+
+    for adid, rows in adid_to_rows.items():
+        node_idx = adid_to_index[adid]
+        for i, row in enumerate(rows):
+            node_features[node_idx][i] = torch.tensor(row)
+
+    graph.set_node_features(node_features)
 
     return graph
+
 
 def findTimeTogether(adid1, adid2):
     """
