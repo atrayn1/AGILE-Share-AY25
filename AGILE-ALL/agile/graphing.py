@@ -162,7 +162,7 @@ def createGraph(data):
 
     Returns:
         Graph: A constructed graph with nodes and features.
-    """
+    """  
     # Extract unique ADIDs and map them to indices
     unique_adids = list(set(row[0] for row in data if len(row) > 3))
     adid_to_index = {adid: idx for idx, adid in enumerate(unique_adids)}
