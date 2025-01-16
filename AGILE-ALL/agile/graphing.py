@@ -254,6 +254,11 @@ def connectRelatedNodesToBaseNode(base_node, graph, radius: str, df: pd.DataFram
     Runs findRelatedNodes on a specified node and creates an edge between the node
     and each unique related node (by advertiser_id) returned by findRelatedNodes.
 
+    So bascially, this just adds one weight to nodes that share locations, but not nessecessarily 
+    at the same time. So, I guess the next step would be to see if the time that the two Ad Id's 
+    were at the same location, occured at the same/similiar time. Maybe that duration of time could 
+    be one of the edge factors that a slider could control...
+
     Parameters:
         base_node (Node): The base node to process.
         graph (Graph): The graph object.
