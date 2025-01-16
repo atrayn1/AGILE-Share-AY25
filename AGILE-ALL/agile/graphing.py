@@ -18,15 +18,15 @@ class Graph:
         """
         self.num_nodes = num_nodes
         self.adjacency_matrix = torch.zeros((num_nodes, num_nodes))
-        self.node_features = torch.zeros((num_nodes, 1))
-        self.edge_features = {}
+        self.node_features = []  # List to store features for each node
+        self.edge_features = []  # List to store edge features
 
     def add_node(self, features=None):
         """
         Adds a new node to the graph.
 
         Args:
-            features (torch.Tensor, optional): Features of the new node. Defaults to None.
+            features (list, optional): Features of the new node. Defaults to None.
         """
         self.num_nodes += 1
         # Expand adjacency matrix
@@ -34,12 +34,10 @@ class Graph:
         new_adj[:-1, :-1] = self.adjacency_matrix
         self.adjacency_matrix = new_adj
 
-        # Expand node features
+        # Add new node features
         if features is None:
-            features = torch.zeros((1, self.node_features.shape[1]))
-        else:
-            assert features.shape[1] == self.node_features.shape[1], "Feature dimension mismatch."
-        self.node_features = torch.cat((self.node_features, features), dim=0)
+            features = []
+        self.node_features.append(features)
 
     def remove_node(self, node):
         """
@@ -62,17 +60,7 @@ class Graph:
         ), dim=1)
 
         # Remove node features
-        self.node_features = torch.cat((
-            self.node_features[:node],
-            self.node_features[node + 1:]
-        ), dim=0)
-
-        # Remove associated edge features
-        self.edge_features = {
-            (n1, n2): features
-            for (n1, n2), features in self.edge_features.items()
-            if n1 != node and n2 != node
-        }
+        self.node_features.pop(node)
 
         self.num_nodes -= 1
 
@@ -93,22 +81,10 @@ class Graph:
         Sets the features for the nodes.
 
         Args:
-            features (torch.Tensor): A tensor of shape (num_nodes, feature_dim).
+            features (list): A list where each element is a list of features for a node.
         """
-        assert features.shape[0] == self.num_nodes, "Feature size mismatch with number of nodes."
+        assert len(features) == self.num_nodes, "Feature size mismatch with number of nodes."
         self.node_features = features
-
-    def set_edge_features(self, node1, node2, features):
-        """
-        Sets features for a specific edge.
-
-        Args:
-            node1 (int): Index of the first node.
-            node2 (int): Index of the second node.
-            features (torch.Tensor): Features for the edge.
-        """
-        self.edge_features[(node1, node2)] = features
-        self.edge_features[(node2, node1)] = features  # Assuming undirected graph
 
     def get_neighbors(self, node):
         """
@@ -123,28 +99,21 @@ class Graph:
         neighbors = torch.where(self.adjacency_matrix[node] > 0)[0].tolist()
         return neighbors
 
-    def forward_pass(self, node_transform=None, edge_transform=None):
+    def forward_pass(self, node_transform=None):
         """
         Performs a forward pass on the graph.
 
         Args:
             node_transform (callable): A function to transform node features.
-            edge_transform (callable): A function to transform edge features.
 
         Returns:
-            torch.Tensor: Updated node features.
+            List: Updated node features.
         """
-        updated_features = self.node_features.clone()
+        updated_features = self.node_features[:]
 
         for i in range(self.num_nodes):
             neighbors = self.get_neighbors(i)
-            neighbor_features = torch.stack([self.node_features[n] for n in neighbors])
-
-            if edge_transform:
-                for n in neighbors:
-                    edge_feat = self.edge_features.get((i, n), None)
-                    if edge_feat is not None:
-                        neighbor_features += edge_transform(edge_feat)
+            neighbor_features = [self.node_features[n] for n in neighbors]
 
             if node_transform:
                 updated_features[i] = node_transform(self.node_features[i], neighbor_features)
@@ -152,52 +121,48 @@ class Graph:
         self.node_features = updated_features
         return self.node_features
 
-
 def createGraph(data):
     """
     Creates a graph from the given data.
-    Each node is identified by its ADID and stores all associated data (including lat, lon, and strings).
+    Each node is identified by its ADID, and features include datetime, latitude, longitude,
+    and any additional data starting from index 4.
 
     Args:
-        data (list of lists): Each row contains [ADID, lat, lon, ..., additional_data].
+        data (list of lists): Each row contains [ADID, datetime, lat, lon, ..., additional_columns].
 
     Returns:
         Graph: A constructed graph with nodes and features.
     """
-    # Extract unique ADIDs
-    unique_adids = list(set(row[0] for row in data if len(row) > 3))
-
-    # Create a mapping of ADIDs to node data
-    adid_to_data = {adid: {"entries": []} for adid in unique_adids}
-
-    # Populate node data
-    for row in data:
-        if len(row) < 4:  # Ensure there are at least 4 columns: ADID, lat, lon, and one additional column
+    graph = Graph(0)  # Start with an empty graph
+    adid_to_node_map = {}  # Mapping from ADID to node index
+    df = pd.DataFrame(data)
+    print(df)
+    for row in df:
+        if len(row) < 4:  # Ensure there are at least 4 columns: ADID, datetime, lat, lon
             print(f"Skipping row due to insufficient columns: {row}")
             continue
 
-        adid = row[0]
+        adid = row[1]
         try:
-            # Extract latitude, longitude, and additional data
-            lat, lon = float(row[2]), float(row[3])
-            additional_data = row[4:]  # Store any remaining columns
+            # Extract datetime, latitude, longitude, and additional data
+            datetime = row[3]
+            lat, lon = float(row[4]), float(row[5])
+            additional_data = row[6:]  # Treat remaining columns as individual features
 
-            # Append data to the node's entries
-            adid_to_data[adid]["entries"].append({
-                "latitude": lat,
-                "longitude": lon,
-                "additional_data": additional_data
-            })
-        except ValueError as e:
+            if adid not in adid_to_node_map:
+                # Add a new node to the graph
+                node_index = graph.num_nodes
+                graph.add_node()
+                adid_to_node_map[adid] = node_index
+
+            # Update features of the node
+            node_index = adid_to_node_map[adid]
+            graph.node_features[node_index] = [datetime, lat, lon] + additional_data
+        except (ValueError, IndexError) as e:
             print(f"Skipping row due to invalid data: {row} - Error: {e}")
             continue
 
-    # Create the graph with nodes indexed by ADID
-    graph = Graph(len(unique_adids))
-    graph.node_features = adid_to_data  # Store the ADID-to-data mapping
-
     return graph
-
 
 def findTimeTogether(adid1, adid2):
     """
