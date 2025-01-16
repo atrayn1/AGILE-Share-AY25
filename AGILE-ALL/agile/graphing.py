@@ -6,6 +6,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from .filtering import query_adid, query_location  # Importing the functions
+import pandas as pd
 
 class Graph:
     def __init__(self, num_nodes):
