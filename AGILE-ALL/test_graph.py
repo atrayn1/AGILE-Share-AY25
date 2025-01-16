@@ -27,20 +27,19 @@ def process_data(file_path):
 
         print("Data processing complete.")
         print("Processed Data:")
-        print(data.head())
 
-        return data
+        return data.values.tolist(), data
 
     except Exception as e:
         print(f"An error occurred: {e}")
         return None
 
 # Path to the CSV file
-csv_file = "data/adid_dataset.csv"
+csv_file = "saved_data/adid_dataset.csv"
 
 # Read the CSV file using pandas
-data = process_data(csv_file)
-
+data, df = process_data(csv_file)
+print(df)
 # Create the graph
 graph = createGraph(data)
 
@@ -78,10 +77,11 @@ def testFindRelated():
     first_node_id = 0  # Adjust as needed for testing
     radius = 100  # Define a radius for neighbor search
 
-    related_nodes = findRelatedNodesForAll(first_node_id, graph, radius)
+    related_nodes = findRelatedNodesForAll(first_node_id, graph, radius, df)
     print(f"Related nodes for Node {first_node_id}: {related_nodes}")
 
 
 printNodeData()
 print_adjacency_matrix()
-
+print("\n")
+testFindRelated()

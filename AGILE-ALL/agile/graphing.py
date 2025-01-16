@@ -135,19 +135,19 @@ def createGraph(data):
     """
     graph = Graph(0)  # Start with an empty graph
     adid_to_node_map = {}  # Mapping from ADID to node index
-    df = pd.DataFrame(data)
-    print(df)
-    for row in df:
+    #df = pd.DataFrame(data)
+    #print(df)
+    for row in data:
         if len(row) < 4:  # Ensure there are at least 4 columns: ADID, datetime, lat, lon
             print(f"Skipping row due to insufficient columns: {row}")
             continue
 
-        adid = row[1]
+        adid = row[0]
         try:
             # Extract datetime, latitude, longitude, and additional data
-            datetime = row[3]
-            lat, lon = float(row[4]), float(row[5])
-            additional_data = row[6:]  # Treat remaining columns as individual features
+            datetime = row[2]
+            lat, lon = float(row[3]), float(row[4])
+            additional_data = row[5:]  # Treat remaining columns as individual features
 
             if adid not in adid_to_node_map:
                 # Add a new node to the graph
@@ -157,7 +157,11 @@ def createGraph(data):
 
             # Update features of the node
             node_index = adid_to_node_map[adid]
-            graph.node_features[node_index] = [datetime, lat, lon] + additional_data
+            if isinstance(graph.node_features[node_index], list):
+                graph.node_features[node_index].append([datetime, lat, lon] + additional_data)
+            else:
+                graph.node_features[node_index] = [[datetime, lat, lon] + additional_data]
+
         except (ValueError, IndexError) as e:
             print(f"Skipping row due to invalid data: {row} - Error: {e}")
             continue
@@ -215,27 +219,11 @@ def findWeight(adid1, adid2, timeTogether, timeAtSamePlace):
     return weight
 
 
-def findRelatedNodes(lat: float, long: float, radius: str, df: pd.DataFrame):
+def findRelatedNodesForAll(node_id: int, graph, radius: str, df: pd.DataFrame):
     """
-    Finds related ad IDs within a certain radius of the given latitude and longitude.
-
-    Parameters:
-        lat (float): Latitude of the location.
-        long (float): Longitude of the location.
-        radius (str): The radius within which to search for related ads.
-        df (pd.DataFrame): A DataFrame containing ad data with columns 'ad_id', 'latitude', and 'longitude'.
-
-    Returns:
-        list: A list of related ad IDs within the specified radius.
-    """
-    # Call the query_location function to find related ads
-    related_ads = query_location(lat=str(lat), long=str(long), radius=radius, df=df)
-
-    return related_ads
-
-def findRelatedNodesForAll(node_id: int, graph, radius: str):
-    """
-    Finds related ad IDs for a single node in the graph using the graph's node features.
+    For a specified node, goes through each entry in the node and searches the rest of 
+    the dataset for all other ADIDs that are within a specified radius using the 
+    function built by the previous team: query_location()
 
     Parameters:
         node_id (int): The ID of the node in the graph.
@@ -248,27 +236,26 @@ def findRelatedNodesForAll(node_id: int, graph, radius: str):
     # Get the node's data from the graph
     node_data = graph.node_features[node_id]
 
-    # Ensure the node has location data
-    if "entries" not in node_data or not node_data["entries"]:
-        raise ValueError(f"Node {node_id} does not have location data.")
+    # Ensure the node has at least one entry (list) with location data (latitude and longitude)
+    if len(node_data) == 0:
+        raise ValueError(f"Node {node_id} does not have any feature data.")
 
-    # Use the first entry's latitude and longitude for querying
-    lat = node_data["entries"][0]["latitude"]
-    long = node_data["entries"][0]["longitude"]
+    # Initialize the list to store related results
+    all_related_results = []
 
-    # Convert the graph's node features into a DataFrame for compatibility
-    df_data = []
-    for idx, data in enumerate(graph.node_features):
-        for entry in data.get("entries", []):
-            df_data.append({
-                "ad_id": idx,
-                "latitude": entry["latitude"],
-                "longitude": entry["longitude"]
-            })
-    df = pd.DataFrame(df_data)
+    # Iterate over each entry in the node's features
+    for entry in node_data:
+        lat = entry[1]  # Latitude is in the second position in the list
+        lon = entry[2]  # Longitude is in the third position in the list
 
-    # Find related nodes using findRelatedNodes
-    return findRelatedNodes(lat, long, radius, df)
+        # Call query_location() for each entry to find related nodes within the radius
+        result = query_location(lat=str(lat), long=str(lon), radius=radius, df=df)
+        
+        # Append the result (if not empty) to the list of all related results
+        if result is not None and not result.empty:
+            all_related_results.append(result)
+
+    return all_related_results
 
 def createEdgesFromRelatedNodes(node_id: int, graph, radius: str):
     """
