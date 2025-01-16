@@ -658,7 +658,7 @@ elif nav_bar == 'Graph':
                 adid = st.text_input('Advertiser ID')
                 radius = st.slider('Radius (meters)', min_value=1, max_value=100, value=10)
                 # we could filter by strength of the edges 
-                weight_strength = st.slider('Edge Weight', min_value=1, max_value=10. value=1)        
+                weight_strength = st.slider('Edge Weight', min_value=1, max_value=10, value=1)        
                 if st.form_submit_button('Query'):
                     with st.spinner(text="Computing..."):
                         st.session_state.data = query_adid(adid, st.session_state.data) # Filter the data
