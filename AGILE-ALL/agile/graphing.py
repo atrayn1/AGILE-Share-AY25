@@ -1,125 +1,153 @@
 """
 Assistance from ChatGPT
 January 2025
+MIDN 1/C Nick Summers, Alex Traynor, Anuj Sirsikar
 """
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from .filtering import query_adid, query_location  # Importing the functions
 import pandas as pd
 
-class Graph:
-    def __init__(self, num_nodes):
+class Node:
+    def __init__(self, adid, features=None):
         """
-        Initializes the graph.
+        Initializes the Node.
 
         Args:
-            num_nodes (int): Initial number of nodes in the graph.
+            adid (str): The ADID associated with this node.
+            features (list, optional): Features of the node. Defaults to None.
         """
-        self.num_nodes = num_nodes
-        self.adjacency_matrix = torch.zeros((num_nodes, num_nodes))
-        self.node_features = []  # List to store features for each node
-        self.edge_features = []  # List to store edge features
+        self.adid = adid
+        self.features = features if features else []
+        self.neighbors = []  # List to store neighboring node indices
 
-    def add_node(self, features=None):
+    def add_neighbor(self, node):
+        """
+        Adds a neighbor to this node.
+
+        Args:
+            node (Node): The node to be added as a neighbor.
+        """
+        if node not in self.neighbors:
+            self.neighbors.append(node)
+
+    def remove_neighbor(self, node):
+        """
+        Removes a neighbor from this node.
+
+        Args:
+            node (Node): The node to be removed from neighbors.
+        """
+        if node in self.neighbors:
+            self.neighbors.remove(node)
+
+
+class Graph:
+    def __init__(self):
+        """
+        Initializes the graph with no nodes and an empty adjacency matrix.
+        """
+        self.nodes = []  # List to store nodes
+        self.num_nodes = 0  # Variable to track the number of nodes
+        self.adjacency_matrix = torch.zeros((0, 0))  # Initialize the adjacency matrix
+    
+    def get_nodes(self):
+        return self.nodes
+
+    def getNode(self, index):
+        return self.nodes[index]
+
+    def add_node(self, adid, features=None):
         """
         Adds a new node to the graph.
 
         Args:
+            adid (str): The ADID associated with the new node.
             features (list, optional): Features of the new node. Defaults to None.
         """
+        node = Node(adid, features)
+        self.nodes.append(node)
         self.num_nodes += 1
-        # Expand adjacency matrix
-        new_adj = torch.zeros((self.num_nodes, self.num_nodes))
-        new_adj[:-1, :-1] = self.adjacency_matrix
-        self.adjacency_matrix = new_adj
 
-        # Add new node features
-        if features is None:
-            features = []
-        self.node_features.append(features)
+        # Update the adjacency matrix to include the new node
+        new_adj_matrix = torch.zeros((self.num_nodes, self.num_nodes))
+        if self.num_nodes > 1:
+            new_adj_matrix[:-1, :-1] = self.adjacency_matrix
+        self.adjacency_matrix = new_adj_matrix
+
+        return node
 
     def remove_node(self, node):
         """
         Removes a node from the graph.
 
         Args:
-            node (int): Index of the node to remove.
+            node (Node): The node to remove from the graph.
         """
-        if node >= self.num_nodes or node < 0:
-            raise ValueError("Node index out of bounds.")
+        if node in self.nodes:
+            index = self.nodes.index(node)
+            self.nodes.remove(node)
+            self.num_nodes -= 1
 
-        # Remove from adjacency matrix
-        self.adjacency_matrix = torch.cat((
-            self.adjacency_matrix[:node],
-            self.adjacency_matrix[node + 1:]
-        ), dim=0)
-        self.adjacency_matrix = torch.cat((
-            self.adjacency_matrix[:, :node],
-            self.adjacency_matrix[:, node + 1:]
-        ), dim=1)
+            # Update adjacency matrix to reflect node removal
+            self.adjacency_matrix = torch.cat((
+                self.adjacency_matrix[:index],
+                self.adjacency_matrix[index + 1:]
+            ), dim=0)
+            self.adjacency_matrix = torch.cat((
+                self.adjacency_matrix[:, :index],
+                self.adjacency_matrix[:, index + 1:]
+            ), dim=1)
 
-        # Remove node features
-        self.node_features.pop(node)
+            # Also remove this node from the neighbors of all other nodes
+            for n in self.nodes:
+                n.remove_neighbor(node)
 
-        self.num_nodes -= 1
-
-    def add_edge(self, node1, node2, weight=1.0):
+    def add_edge(self, node1, node2, weight):
         """
-        Adds an edge to the graph.
+        Adds an edge between two nodes in the graph.
 
         Args:
-            node1 (int): Index of the first node.
-            node2 (int): Index of the second node.
-            weight (float): Weight of the edge.
+            node1 (Node): The first node.
+            node2 (Node): The second node.
         """
-        self.adjacency_matrix[node1, node2] = weight
-        self.adjacency_matrix[node2, node1] = weight  # Assuming an undirected graph
+        node1.add_neighbor(node2)
+        node2.add_neighbor(node1)
 
-    def set_node_features(self, features):
-        """
-        Sets the features for the nodes.
-
-        Args:
-            features (list): A list where each element is a list of features for a node.
-        """
-        assert len(features) == self.num_nodes, "Feature size mismatch with number of nodes."
-        self.node_features = features
+        # Update the adjacency matrix to reflect the edge
+        idx1 = self.nodes.index(node1)
+        idx2 = self.nodes.index(node2)
+        self.adjacency_matrix[idx1, idx2] = weight
+        self.adjacency_matrix[idx2, idx1] = weight
 
     def get_neighbors(self, node):
         """
         Gets the neighbors of a node.
 
         Args:
-            node (int): Index of the node.
+            node (Node): The node whose neighbors are to be retrieved.
 
         Returns:
-            List[int]: Indices of neighboring nodes.
+            List[Node]: A list of neighboring nodes.
         """
-        neighbors = torch.where(self.adjacency_matrix[node] > 0)[0].tolist()
-        return neighbors
+        return node.neighbors
 
-    def forward_pass(self, node_transform=None):
+    def get_node_by_adid(self, adid):
         """
-        Performs a forward pass on the graph.
+        Retrieves a node by its ADID.
 
         Args:
-            node_transform (callable): A function to transform node features.
+            adid (str): The ADID to search for.
 
         Returns:
-            List: Updated node features.
+            Node: The node with the specified ADID, or None if not found.
         """
-        updated_features = self.node_features[:]
-
-        for i in range(self.num_nodes):
-            neighbors = self.get_neighbors(i)
-            neighbor_features = [self.node_features[n] for n in neighbors]
-
-            if node_transform:
-                updated_features[i] = node_transform(self.node_features[i], neighbor_features)
-
-        self.node_features = updated_features
-        return self.node_features
+        for node in self.nodes:
+            if node.adid == adid:
+                return node
+        return None
 
 def createGraph(data):
     """
@@ -133,10 +161,9 @@ def createGraph(data):
     Returns:
         Graph: A constructed graph with nodes and features.
     """
-    graph = Graph(0)  # Start with an empty graph
+    graph = Graph()  # Start with an empty graph
     adid_to_node_map = {}  # Mapping from ADID to node index
-    #df = pd.DataFrame(data)
-    #print(df)
+
     for row in data:
         if len(row) < 4:  # Ensure there are at least 4 columns: ADID, datetime, lat, lon
             print(f"Skipping row due to insufficient columns: {row}")
@@ -151,48 +178,18 @@ def createGraph(data):
 
             if adid not in adid_to_node_map:
                 # Add a new node to the graph
-                node_index = graph.num_nodes
-                graph.add_node()
-                adid_to_node_map[adid] = node_index
+                node = graph.add_node(adid)  # Include ADID when adding the new node
+                adid_to_node_map[adid] = node
 
             # Update features of the node
-            node_index = adid_to_node_map[adid]
-            if isinstance(graph.node_features[node_index], list):
-                graph.node_features[node_index].append([datetime, lat, lon] + additional_data)
-            else:
-                graph.node_features[node_index] = [[datetime, lat, lon] + additional_data]
+            node = adid_to_node_map[adid]
+            node.features.append([adid, datetime, lat, lon] + additional_data)
 
         except (ValueError, IndexError) as e:
             print(f"Skipping row due to invalid data: {row} - Error: {e}")
             continue
 
     return graph
-
-def findTimeTogether(adid1, adid2):
-    """
-    Finds the time spent together by two entities identified by their ADIDs.
-
-    Args:
-        adid1 (str): The first ADID.
-        adid2 (str): The second ADID.
-
-    Returns:
-        int: The time spent together. Currently does nothing.
-    """
-    return 0
-
-def findTimeAtSamePlace(adid1, adid2):
-    """
-    Finds the time spent at the same place by two entities identified by their ADIDs.
-
-    Args:
-        adid1 (str): The first ADID.
-        adid2 (str): The second ADID.
-
-    Returns:
-        int: The time spent at the same place, not necessarily the same time. Currently does nothing.
-    """
-    return 0
 
 def findWeight(adid1, adid2, timeTogether, timeAtSamePlace):
     """
@@ -219,64 +216,94 @@ def findWeight(adid1, adid2, timeTogether, timeAtSamePlace):
     return weight
 
 
-def findRelatedNodesForAll(node_id: int, graph, radius: str, df: pd.DataFrame):
+def findRelatedNodes(main_node, graph, radius: str, df: pd.DataFrame):
     """
     For a specified node, goes through each entry in the node and searches the rest of 
     the dataset for all other ADIDs that are within a specified radius using the 
-    function built by the previous team: query_location()
+    function built by the previous team: query_location().
 
     Parameters:
-        node_id (int): The ID of the node in the graph.
+        main_node (Node): The node object in the graph.
         graph (Graph): The graph object created by createGraph().
         radius (str): The radius within which to search for related ads.
+        df (pd.DataFrame): The dataset used for finding related nodes.
 
     Returns:
-        list: A list of related ad IDs for the given node.
+        pd.DataFrame: A DataFrame of related ad IDs for the given node.
     """
     # Get the node's data from the graph
-    node_data = graph.node_features[node_id]
+    node_data = main_node.features
+    exclude_adid = df.iloc[0]["advertiser_id"]
+    filtered_df = df[df["advertiser_id"] != exclude_adid]
 
     # Ensure the node has at least one entry (list) with location data (latitude and longitude)
     if len(node_data) == 0:
-        raise ValueError(f"Node {node_id} does not have any feature data.")
+        raise ValueError(f"Node {main_node.adid} does not have any feature data.")
 
-    # Initialize the list to store related results
-    all_related_results = []
+    # Initialize the DataFrame to store related results
+    all_related_results = pd.DataFrame(
+        columns=["advertiser_id", "advertiser_id_alias", "datetime", "latitude", "longitude", "geohash"]
+    )
 
     # Iterate over each entry in the node's features
     for entry in node_data:
-        lat = entry[1]  # Latitude is in the second position in the list
-        lon = entry[2]  # Longitude is in the third position in the list
+        lat = entry[2]  # Latitude is in the second position in the list
+        lon = entry[3]  # Longitude is in the third position in the list
 
         # Call query_location() for each entry to find related nodes within the radius
-        result = query_location(lat=str(lat), long=str(lon), radius=radius, df=df)
-        
-        # Append the result (if not empty) to the list of all related results
-        if result is not None and not result.empty:
-            all_related_results.append(result)
+        result = query_location(lat=str(lat), long=str(lon), radius=radius, df=filtered_df)
+
+        # If result is not empty, convert it to a DataFrame and concatenate with all_related_results
+        if result is not None and len(result) > 0:
+            df_result = pd.DataFrame(
+                result,
+                columns=["advertiser_id", "advertiser_id_alias", "datetime", "latitude", "longitude", "geohash"],
+            )
+
+            # Remove rows from filtered_df that match df_result
+            filtered_df = filtered_df[~filtered_df.set_index(
+                ["advertiser_id", "datetime", "latitude", "longitude", "geohash"]
+            ).index.isin(
+                df_result.set_index(["advertiser_id", "datetime", "latitude", "longitude", "geohash"]).index
+            )]
+
+            # Concatenate the new results into all_related_results
+            all_related_results = pd.concat([all_related_results, df_result], ignore_index=True)
 
     return all_related_results
 
-def createEdgesFromRelatedNodes(node_id: int, graph, radius: str):
+def connectRelatedNodesToBaseNode(base_node, graph, radius: str, df: pd.DataFrame, weight):
     """
-    Uses the list of related nodes from findRelatedNodesForAll to create edges with a weight of 1
-    between the given node and each related node.
+    Runs findRelatedNodes on a specified node and creates an edge between the node
+    and each unique related node (by advertiser_id) returned by findRelatedNodes.
 
     Parameters:
-        node_id (int): The ID of the node in the graph.
-        graph (Graph): The graph object created by createGraph().
-        radius (str): The radius within which to search for related ads.
+        base_node (Node): The base node to process.
+        graph (Graph): The graph object.
+        radius (str): The radius within which to search for related nodes.
+        df (pd.DataFrame): The dataset used for finding related nodes.
+        weight (float, optional): The weight of the edges to add. Defaults to 1.0.
 
     Returns:
         None
     """
-    # Get the related nodes for the given node
-    related_nodes = findRelatedNodesForAll(node_id, graph, radius)
 
-    # Add edges to the graph with a weight of 1
-    for related_node_id in related_nodes:
-        graph.add_edge(node_id, related_node_id, weight=1.0)
+    # Step 1: Find the related nodes based on the base_node's features
+    related_nodes_adids = findRelatedNodes(base_node, graph, radius, df)
+    print(related_nodes_adids)
+    
+    # Step 2: Iterate through each row in the DataFrame
+    for _, row in related_nodes_adids.iterrows():
+        adid = row["advertiser_id"]  # Extract the advertiser_id from the row
+        related_node = graph.get_node_by_adid(adid)  # Get the node object using the ADID
 
+        if related_node and related_node != base_node:
+            # Step 3: Add an edge between the base node and the related node
+            graph.add_edge(base_node, related_node, weight)
+            print(f"Added an edge between base node {base_node.adid} and related node {related_node.adid}.")
 
-if __name__ == "__main__":
-    createGraph()
+def connectRelatedNodes(graph, radius: str, df: pd.DataFrame, weight):
+    for node in graph.get_nodes():
+        print(f"Running connectRelatedNodesToBaseNode for node {node.adid}.")
+        connectRelatedNodesToBaseNode(node, graph, radius, df, weight)
+

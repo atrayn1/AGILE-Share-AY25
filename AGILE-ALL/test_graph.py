@@ -1,8 +1,8 @@
 import pandas as pd
-from agile.graphing import createGraph, findRelatedNodesForAll
+from agile.graphing import createGraph, findRelatedNodes, connectRelatedNodes
 import pygeohash as gh
 from agile.utils.dataframes import modify_and_sort_columns, clean_and_verify_columns
-
+import time
 
 # Main script
 def process_data(file_path):
@@ -55,7 +55,7 @@ def printNodeData():
             break
         print(f"Node {i}: {node_features}")
 
-def print_adjacency_matrix(n=5):
+def print_adjacency_matrix(n=10):
     """
     Print the first n rows and columns of the adjacency matrix.
 
@@ -77,11 +77,17 @@ def testFindRelated():
     first_node_id = 0  # Adjust as needed for testing
     radius = 100  # Define a radius for neighbor search
 
-    related_nodes = findRelatedNodesForAll(first_node_id, graph, radius, df)
+    related_nodes = findRelatedNodes(graph.getNode(0), graph, radius, df)
     print(f"Related nodes for Node {first_node_id}: {related_nodes}")
 
 
-printNodeData()
+#printNodeData()
 print_adjacency_matrix()
 print("\n")
-testFindRelated()
+#testFindRelated()
+start_time = time.time()
+connectRelatedNodes(graph, 100, df, 1.0)
+end_time = time.time()
+elapsed_time = end_time - start_time
+print(f"Execution time for connectRelatedNodes: {elapsed_time:.2f} seconds")
+print_adjacency_matrix()   
