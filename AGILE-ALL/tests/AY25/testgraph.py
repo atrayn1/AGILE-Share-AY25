@@ -1,6 +1,6 @@
 import pandas as pd
-from agile.graphing import createGraph, findRelatedNodes, connectRelatedNodes
-import pygeohash as gh
+from ...agile.graphing import createGraph, findRelatedNodes, connectRelatedNodes
+import pygeohash as gh # type: ignore
 from agile.utils.dataframes import modify_and_sort_columns, clean_and_verify_columns
 import time
 
@@ -33,7 +33,7 @@ def process_data(file_path):
     except Exception as e:
         print(f"An error occurred: {e}")
         return None
-
+"""
 # Path to the CSV file
 csv_file = "saved_data/adid_dataset.csv"
 
@@ -42,6 +42,7 @@ data, df = process_data(csv_file)
 print(df)
 # Create the graph
 graph = createGraph(data)
+"""
 
 def printNodeData():
     """
@@ -80,7 +81,7 @@ def testFindRelated():
     related_nodes = findRelatedNodes(graph.getNode(0), graph, radius, df)
     print(f"Related nodes for Node {first_node_id}: {related_nodes}")
 
-
+"""
 #printNodeData()
 print_adjacency_matrix()
 print("\n")
@@ -91,3 +92,4 @@ end_time = time.time()
 elapsed_time = end_time - start_time
 print(f"Execution time for connectRelatedNodes: {elapsed_time:.2f} seconds")
 print_adjacency_matrix()   
+"""

@@ -188,33 +188,8 @@ def createGraph(data):
         except (ValueError, IndexError) as e:
             print(f"Skipping row due to invalid data: {row} - Error: {e}")
             continue
-
+    
     return graph
-
-def findWeight(adid1, adid2, timeTogether, timeAtSamePlace):
-    """
-    Finds the weight between two nodes identified by their ADIDs.
-
-    Args:
-        adid1 (str): The first ADID.
-        adid2 (str): The second ADID.
-        timeTogether (int): The amount of time spent together.
-        timeAtSamePlace (int): The amount of time spent at the same place.
-
-    Returns:
-        float: The weight between the two nodes.
-    """
-    together_time = findTimeTogether(adid1, adid2)
-    same_place_time = findTimeAtSamePlace(adid1, adid2)
-
-    weight = 0
-    if together_time >= timeTogether:
-        weight += together_time
-    if same_place_time >= timeAtSamePlace:
-        weight += same_place_time
-
-    return weight
-
 
 def findRelatedNodes(main_node, graph, radius: str, df: pd.DataFrame):
     """
@@ -303,6 +278,23 @@ def connectRelatedNodesToBaseNode(base_node, graph, radius: str, df: pd.DataFram
             print(f"Added an edge between base node {base_node.adid} and related node {related_node.adid}.")
 
 def connectRelatedNodes(graph, radius: str, df: pd.DataFrame, weight):
+    """
+    Connects all nodes in the graph based on proximity within a specified radius.
+
+    This function iterates through all nodes in the graph, using the features 
+    stored in each node (e.g., latitude, longitude) to identify related nodes 
+    that have been within a certain radius of each other. For each pair of related nodes, 
+    an edge is added between them with the specified weight.
+
+    Parameters:
+        graph (Graph): The graph object containing nodes and edges.
+        radius (str): The radius within which to search for proximity connections 
+                      (e.g., "10km" or "5mi").
+        df (pd.DataFrame): A DataFrame containing the dataset used to check node proximity.
+                           The DataFrame should include columns such as 'advertiser_id',
+                           'latitude', and 'longitude' for location data.
+        weight (float): The weight to assign to the edges connecting related nodes.
+    """
     for node in graph.get_nodes():
         print(f"Running connectRelatedNodesToBaseNode for node {node.adid}.")
         connectRelatedNodesToBaseNode(node, graph, radius, df, weight)
