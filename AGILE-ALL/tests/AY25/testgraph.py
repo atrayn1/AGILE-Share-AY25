@@ -1,5 +1,5 @@
 import pandas as pd
-from ...agile.graphing import createGraph, findRelatedNodes, connectRelatedNodes
+from agile.graphing import createGraph, findRelatedNodes, connectRelatedNodes
 import pygeohash as gh # type: ignore
 from agile.utils.dataframes import modify_and_sort_columns, clean_and_verify_columns
 import time
