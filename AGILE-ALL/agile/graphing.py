@@ -10,6 +10,7 @@ import torch.nn.functional as F
 from .filtering import query_adid, query_location  # Importing the functions
 import pandas as pd
 from agile.prediction import haversine
+import numpy as np
 
 class Node:
     def __init__(self, adid, features=None):
@@ -336,11 +337,11 @@ def frequencyOfColocation(df: pd.DataFrame, adid_1: str, adid_2: str, x_time: in
         for _, row2 in adid2_data.iterrows():
             # Calculate the distance using the haversine function
             distance = haversine(row1['latitude'], row1['longitude'], row2['latitude'], row2['longitude'])*1000
-            print(distance)
+            #print(distance)
 
             # Calculate the time difference in minutes
             time_diff = abs((row1['datetime'] - row2['datetime']).total_seconds() / 60)
-            print(time_diff)
+            #print(time_diff)
 
             # Check if the first condition is met: within radius and within x_time
             if distance <= radius and time_diff <= x_time:
@@ -354,8 +355,8 @@ def frequencyOfColocation(df: pd.DataFrame, adid_1: str, adid_2: str, x_time: in
                         # Calculate the distance and time difference for the second appearance
                         second_distance = haversine(row3['latitude'], row3['longitude'], row4['latitude'], row4['longitude'])*1000
                         second_time_diff = abs((row3['datetime'] - row4['datetime']).total_seconds() / 60)
-                        print(second_distance)
-                        print(second_time_diff)
+                        #print(second_distance)
+                        #print(second_time_diff)
 
                         # Ensure the second appearance meets all conditions
                         if (
@@ -364,7 +365,37 @@ def frequencyOfColocation(df: pd.DataFrame, adid_1: str, adid_2: str, x_time: in
                             and abs((row3['datetime'] - row2['datetime']).total_seconds() / 60) >= y_time
                         ):
                             colocations += 1
-                            print(f"First colocation: {row1} and {row2}")
-                            print(f"Second colocation: {row3} and {row4}")
+                            #print(f"First colocation: {row1} and {row2}")
+                            #print(f"Second colocation: {row3} and {row4}")
 
     return colocations
+
+def findAllFrequencyOfColocation(df: pd.DataFrame, x_time: int, y_time: int, radius: float) -> pd.DataFrame:
+    """
+    Computes the colocation frequency between every pair of ADIDs and stores the results in a matrix.
+
+    Parameters:
+        df (pd.DataFrame): The dataset containing ADID locations and timestamps.
+        x_time (int): The minimum time difference (in minutes) to consider.
+        y_time (int): The minimum time gap (in minutes) before considering repeated colocation.
+        radius (float): The maximum distance (in meters) to consider for colocation.
+
+    Returns:
+        pd.DataFrame: A matrix where each cell (i, j) contains the colocation frequency between ADID_i and ADID_j.
+    """
+    # Get unique ADIDs
+    unique_adids = df['advertiser_id'].unique()
+    num_adids = len(unique_adids)
+
+    # Initialize an adjacency matrix filled with zeros
+    colocation_matrix = pd.DataFrame(np.zeros((num_adids, num_adids)), index=unique_adids, columns=unique_adids)
+
+    # Iterate through all unique pairs of ADIDs
+    for i, adid_1 in enumerate(unique_adids):
+        for j, adid_2 in enumerate(unique_adids):
+            if i < j:  # Avoid redundant calculations (matrix is symmetric)
+                count = frequencyOfColocation(df, adid_1, adid_2, x_time, y_time, radius)
+                colocation_matrix.loc[adid_1, adid_2] = count
+                colocation_matrix.loc[adid_2, adid_1] = count  # Mirror the value
+
+    return colocation_matrix

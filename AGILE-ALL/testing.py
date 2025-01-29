@@ -1,5 +1,5 @@
 from tests.AY25.testgraph import process_data
-from agile.graphing import createGraph, findRelatedNodes, connectRelatedNodes, frequencyOfColocation
+from agile.graphing import createGraph, findAllFrequencyOfColocation, findRelatedNodes, connectRelatedNodes, frequencyOfColocation
 import time
 
 # Path to the CSV file
@@ -49,19 +49,21 @@ def testFindRelated():
     related_nodes = findRelatedNodes(graph.getNode(0), graph, radius, df)
     print(f"Related nodes for Node {first_node_id}: {related_nodes}")
 
+"""
 start_time = time.time()
 colocations = frequencyOfColocation(df, "adid_1", "adid_2", 5, 5, 100)
 end_time = time.time()
 print(colocations)
 elapsed_time = end_time - start_time
 print(f"Execution time for frequencyOfColocation: {elapsed_time:.2f} seconds")
+""" 
 
 start_time = time.time()
-colocations = frequencyOfColocation(df, "adid_5", "adid_2", 5, 5, 100)
+colocations = findAllFrequencyOfColocation(df, 200, 5, 100)
 end_time = time.time()
 print(colocations)
 elapsed_time = end_time - start_time
-print(f"Execution time for frequencyOfColocation: {elapsed_time:.2f} seconds")
+print(f"Execution time for findAllFrequencyOfColocation: {elapsed_time:.2f} seconds")
 
 
 """
