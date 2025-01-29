@@ -59,7 +59,7 @@ print(f"Execution time for frequencyOfColocation: {elapsed_time:.2f} seconds")
 """ 
 
 start_time = time.time()
-colocations = findAllFrequencyOfColocation(df, 200, 5, 100)
+colocations = findAllFrequencyOfColocation(df, 25, 5, 1500)
 end_time = time.time()
 print(colocations)
 elapsed_time = end_time - start_time
