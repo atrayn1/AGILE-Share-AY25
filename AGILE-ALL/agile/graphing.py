@@ -9,6 +9,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from .filtering import query_adid, query_location  # Importing the functions
 import pandas as pd
+from agile.prediction import haversine
 
 class Node:
     def __init__(self, adid, features=None):
@@ -299,3 +300,71 @@ def connectRelatedNodes(graph, radius: str, df: pd.DataFrame, weight):
         print(f"Running connectRelatedNodesToBaseNode for node {node.adid}.")
         connectRelatedNodesToBaseNode(node, graph, radius, df, weight)
 
+def frequencyOfColocation(df: pd.DataFrame, adid_1: str, adid_2: str, x_time: int, y_time: int, radius: float) -> int:
+    """
+    Calculates the number of times two ADIDs were colocated within a given distance (in meters) 
+    and within x_time minutes of each other, while appearing again in the same conditions at least y_time minutes later.
+
+    Parameters:
+        df (pd.DataFrame): The dataset containing the data.
+        adid_1 (str): The first advertiser ID to check.
+        adid_2 (str): The second advertiser ID to check.
+        x_time (int): The maximum time difference (in minutes) to consider for the first colocation.
+        y_time (int): The minimum time difference (in minutes) between two consecutive colocations.
+        radius (float): The maximum distance (in meters) to consider for colocation.
+
+    Returns:
+        int: The number of colocations satisfying the conditions.
+    """
+    # Filter the dataframe for the two specified ADIDs
+    filtered_df = df[df['advertiser_id'].isin([adid_1, adid_2])].copy()
+
+    # Convert datetime column to pandas datetime format
+    filtered_df['datetime'] = pd.to_datetime(filtered_df['datetime'])
+
+    # Separate data for each ADID
+    adid1_data = filtered_df[filtered_df['advertiser_id'] == adid_1]
+    adid2_data = filtered_df[filtered_df['advertiser_id'] == adid_2]
+    adid1_data = adid1_data.assign(datetime=pd.to_datetime(df['datetime'])).sort_values(by='datetime').reset_index(drop=True)
+    adid2_data = adid2_data.assign(datetime=pd.to_datetime(df['datetime'])).sort_values(by='datetime').reset_index(drop=True)
+
+    # Initialize a counter for valid colocations
+    colocations = 0
+
+    # Compare each row in adid1_data to each row in adid2_data
+    for _, row1 in adid1_data.iterrows():
+        for _, row2 in adid2_data.iterrows():
+            # Calculate the distance using the haversine function
+            distance = haversine(row1['latitude'], row1['longitude'], row2['latitude'], row2['longitude'])*1000
+            print(distance)
+
+            # Calculate the time difference in minutes
+            time_diff = abs((row1['datetime'] - row2['datetime']).total_seconds() / 60)
+            print(time_diff)
+
+            # Check if the first condition is met: within radius and within x_time
+            if distance <= radius and time_diff <= x_time:
+                # Now, check for a second appearance within radius and x_time but at least y_time later
+                for _, row3 in adid1_data.iterrows():
+                    for _, row4 in adid2_data.iterrows():
+                        # Skip the same rows
+                        if row1.equals(row3) and row2.equals(row4):
+                            continue
+
+                        # Calculate the distance and time difference for the second appearance
+                        second_distance = haversine(row3['latitude'], row3['longitude'], row4['latitude'], row4['longitude'])*1000
+                        second_time_diff = abs((row3['datetime'] - row4['datetime']).total_seconds() / 60)
+                        print(second_distance)
+                        print(second_time_diff)
+
+                        # Ensure the second appearance meets all conditions
+                        if (
+                            second_distance <= radius
+                            and second_time_diff <= x_time
+                            and abs((row3['datetime'] - row2['datetime']).total_seconds() / 60) >= y_time
+                        ):
+                            colocations += 1
+                            print(f"First colocation: {row1} and {row2}")
+                            print(f"Second colocation: {row3} and {row4}")
+
+    return colocations
