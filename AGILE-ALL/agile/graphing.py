@@ -11,6 +11,8 @@ from .filtering import query_adid, query_location  # Importing the functions
 import pandas as pd
 from agile.prediction import haversine
 import numpy as np
+import math
+from datetime import timedelta
 
 class Node:
     def __init__(self, adid, features=None):
@@ -404,3 +406,37 @@ def findAllFrequencyOfColocation(df: pd.DataFrame, x_time: int, y_time: int, rad
                 colocation_matrix.loc[adid_2, adid_1] = count  # Mirror the value
 
     return colocation_matrix
+
+
+#NEED TO TEST TO MAKE SURE
+# Main function to calculate the total time spent within a certain radius
+def dwellTimeWithinProximity(base_node, other_node, radius_meters: float):
+    person1_data = base_node.features
+    person2_data = other_node.features
+    total_time = timedelta(seconds=0)
+
+    # Iterate through consecutive time points for both people
+    for i in range(len(person1_data) - 1):  # Person 1's time intervals
+        id1, timestamp1_start, lat1_start, lon1_start, geohash1_start = person1_data[i]
+        timestamp1_end, lat1_end, lon1_end, geohash1_end = person1_data[i+1][1:5]
+        
+        for j in range(len(person2_data) - 1):  # Person 2's time intervals
+            id2, timestamp2_start, lat2_start, lon2_start, geohash2_start = person2_data[j]
+            timestamp2_end, lat2_end, lon2_end, geohash2_end = person2_data[j+1][1:5]
+
+            # Check if the intervals overlap (time-wise)
+            overlap_start = max(timestamp1_start, timestamp2_start)
+            overlap_end = min(timestamp1_end, timestamp2_end)
+            
+            if overlap_start < overlap_end:
+                # Calculate the distance between the start of each person's interval
+                distance_start = haversine(lat1_start, lon1_start, lat2_start, lon2_start)*1000
+                distance_end = haversine(lat1_end, lon1_end, lat2_end, lon2_end)*1000
+
+                # If both are within the radius at the start or end of the interval
+                if distance_start <= radius_meters and distance_end <= radius_meters:
+                    overlap_duration = (overlap_end - overlap_start).total_seconds()
+                    total_time += timedelta(seconds=overlap_duration)
+
+    return total_time.total_seconds()
+

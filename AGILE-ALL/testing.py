@@ -1,9 +1,9 @@
 from tests.AY25.testgraph import process_data
-from agile.graphing import createGraph, findAllFrequencyOfColocation, findRelatedNodes, connectRelatedNodes, frequencyOfColocation
+from agile.graphing import createGraph, findAllFrequencyOfColocation, findRelatedNodes, connectRelatedNodes, frequencyOfColocation, dwellTimeWithinProximity
 import time
 
 # Path to the CSV file
-csv_file = "data/testing_data.csv"
+csv_file = "saved_data/adid_dataset.csv"
 
 # Read the CSV file using pandas
 data, df = process_data(csv_file)
@@ -57,14 +57,14 @@ print(colocations)
 elapsed_time = end_time - start_time
 print(f"Execution time for frequencyOfColocation: {elapsed_time:.2f} seconds")
 """ 
-
+'''
 start_time = time.time()
 colocations = findAllFrequencyOfColocation(df, 200, 5, 100)
 end_time = time.time()
 print(colocations)
 elapsed_time = end_time - start_time
 print(f"Execution time for findAllFrequencyOfColocation: {elapsed_time:.2f} seconds")
-
+'''
 
 """
 #printNodeData()
@@ -78,3 +78,6 @@ elapsed_time = end_time - start_time
 print(f"Execution time for connectRelatedNodes: {elapsed_time:.2f} seconds")
 print_adjacency_matrix()   
 """
+
+#testing dwell time stuff
+print(dwellTimeWithinProximity(graph.get_nodes()[0], graph.get_nodes()[1], 5000))
