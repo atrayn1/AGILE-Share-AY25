@@ -410,6 +410,10 @@ def findAllFrequencyOfColocation(df: pd.DataFrame, x_time: int, y_time: int, rad
 
 #NEED TO TEST TO MAKE SURE
 # Main function to calculate the total time spent within a certain radius
+# IMPORTANT:
+# This only does it for two nodes, if this is accurate, then insert it into another 
+# function that will, if a certain time is hit, will add an edge between those two nodes
+# in question. 
 def dwellTimeWithinProximity(base_node, other_node, radius: float):
     '''
     How to deal with the time intervals:
