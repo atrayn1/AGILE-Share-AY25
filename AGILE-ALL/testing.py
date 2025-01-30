@@ -3,7 +3,7 @@ from agile.graphing import createGraph, findAllFrequencyOfColocation, findRelate
 import time
 
 # Path to the CSV file
-csv_file = "saved_data/adid_dataset.csv"
+csv_file = "saved_data/test_location_data_no_gh.csv"
 
 # Read the CSV file using pandas
 data, df = process_data(csv_file)
@@ -80,4 +80,5 @@ print_adjacency_matrix()
 """
 
 #testing dwell time stuff
-print(dwellTimeWithinProximity(graph.get_nodes()[0], graph.get_nodes()[1], 5000))
+# this is in hours btw
+print(dwellTimeWithinProximity(graph.get_nodes()[0], graph.get_nodes()[1], 100))

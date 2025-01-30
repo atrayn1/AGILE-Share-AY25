@@ -410,33 +410,80 @@ def findAllFrequencyOfColocation(df: pd.DataFrame, x_time: int, y_time: int, rad
 
 #NEED TO TEST TO MAKE SURE
 # Main function to calculate the total time spent within a certain radius
-def dwellTimeWithinProximity(base_node, other_node, radius_meters: float):
+def dwellTimeWithinProximity(base_node, other_node, radius: float):
+    '''
+    How to deal with the time intervals:
+    - if the next time stamp is like 30 minutes away or if there is no next timestamp,
+      then that timestamp will be the last one. 
+      If there are no other timestamps in the proximity, the duration for one stamp will
+      be set to 30 minutes to provide a standardized estimate.
+      - can change that 30 to 15 minutes depending on results ... 
+    '''
     person1_data = base_node.features
     person2_data = other_node.features
-    total_time = timedelta(seconds=0)
 
-    # Iterate through consecutive time points for both people
-    for i in range(len(person1_data) - 1):  # Person 1's time intervals
-        id1, timestamp1_start, lat1_start, lon1_start, geohash1_start = person1_data[i]
-        timestamp1_end, lat1_end, lon1_end, geohash1_end = person1_data[i+1][1:5]
+    #for testing
+    #print("1:")
+    #print(person1_data)
+    #print("2:")
+    #print(person2_data)
+
+    total_overlap_time = 0  # in seconds
+
+    # Loop through each timestamp for both persons and check if they are within the radius
+    for i in range(len(person1_data)):
+        id1, timestamp1_start, lat1_start, lon1_start = person1_data[i][:4]
+
+        # Set default time interval as 30 minutes for the first person
+        timestamp1_end = timestamp1_start + timedelta(minutes=15)
+        interval_duration1 = 1800  # 30 minutes in seconds
         
-        for j in range(len(person2_data) - 1):  # Person 2's time intervals
-            id2, timestamp2_start, lat2_start, lon2_start, geohash2_start = person2_data[j]
-            timestamp2_end, lat2_end, lon2_end, geohash2_end = person2_data[j+1][1:5]
+        # Check if there is another instance for Person 1 within the radius and 30 minutes
+        next_instance1 = None
+        for j in range(i + 1, len(person1_data)):
+            id1_next, timestamp1_next, lat1_next, lon1_next = person1_data[j][:4]
+            distance = haversine(lat1_start, lon1_start, lat1_next, lon1_next)*1000 # convert to meters
+            if distance <= radius and abs((timestamp1_next - timestamp1_start).total_seconds()) <= 1800:
+                next_instance1 = j
+                break
+        
+        if next_instance1 is not None:
+            timestamp1_end = person1_data[next_instance1][1]
+            interval_duration1 = (timestamp1_end - timestamp1_start).total_seconds()
 
-            # Check if the intervals overlap (time-wise)
-            overlap_start = max(timestamp1_start, timestamp2_start)
-            overlap_end = min(timestamp1_end, timestamp2_end)
-            
-            if overlap_start < overlap_end:
-                # Calculate the distance between the start of each person's interval
-                distance_start = haversine(lat1_start, lon1_start, lat2_start, lon2_start)*1000
-                distance_end = haversine(lat1_end, lon1_end, lat2_end, lon2_end)*1000
+        # Loop through each timestamp for Person 2 to check for overlap
+        for k in range(len(person2_data)):
+            id2, timestamp2_start, lat2_start, lon2_start = person2_data[k][:4]
 
-                # If both are within the radius at the start or end of the interval
-                if distance_start <= radius_meters and distance_end <= radius_meters:
+            # Check if Person 2's point is within the radius of Person 1's point
+            distance = haversine(lat1_start, lon1_start, lat2_start, lon2_start)*1000 # to convert to meters
+            if distance <= radius:
+                # Set default time interval for Person 2
+                timestamp2_end = timestamp2_start + timedelta(minutes=15)
+                interval_duration2 = 1800  # 30 minutes in seconds
+                
+                # Check if there is another instance for Person 2 within the radius and 30 minutes
+                next_instance2 = None
+                for l in range(k + 1, len(person2_data)):
+                    id2_next, timestamp2_next, lat2_next, lon2_next = person2_data[l][:4]
+                    distance = haversine(lat2_start, lon2_start, lat2_next, lon2_next)*1000 # convert to meters
+                    if distance <= radius and abs((timestamp2_next - timestamp2_start).total_seconds()) <= 1800:
+                        next_instance2 = l
+                        break
+
+                if next_instance2 is not None:
+                    timestamp2_end = person2_data[next_instance2][1]
+                    interval_duration2 = (timestamp2_end - timestamp2_start).total_seconds()
+
+                # Calculate overlap between time intervals of Person 1 and Person 2
+                overlap_start = max(timestamp1_start, timestamp2_start)
+                overlap_end = min(timestamp1_end, timestamp2_end)
+
+                if overlap_start < overlap_end:  # There is overlap
                     overlap_duration = (overlap_end - overlap_start).total_seconds()
-                    total_time += timedelta(seconds=overlap_duration)
+                    total_overlap_time += overlap_duration
 
-    return total_time.total_seconds()
+    # Convert total overlap time from seconds to hours
+    total_overlap_time_hours = total_overlap_time / 3600
+    return total_overlap_time_hours
 
