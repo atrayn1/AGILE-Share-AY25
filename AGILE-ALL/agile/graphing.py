@@ -399,3 +399,52 @@ def findAllFrequencyOfColocation(df: pd.DataFrame, x_time: int, y_time: int, rad
                 colocation_matrix.loc[adid_2, adid_1] = count  # Mirror the value
 
     return colocation_matrix
+
+def mergeResults(adj_matrix1: list, adj_matrix2: list, x: float) -> torch.Tensor:
+    """
+    Merges two adjacency matrices by weighting them based on a given factor x.
+
+    Parameters:
+        adj_matrix1 (list): The first adjacency matrix (list of lists).
+        adj_matrix2 (list): The second adjacency matrix (list of lists).
+        x (float): A value between 0 and 1 indicating how much weight to give to adj_matrix1.
+                   The remaining weight (1 - x) is given to adj_matrix2.
+
+    Returns:
+        torch.Tensor: The merged adjacency matrix as a PyTorch tensor.
+    """
+    if not (0 <= x <= 1):
+        raise ValueError("x must be between 0 and 1")
+
+    tensor1 = torch.tensor(adj_matrix1, dtype=torch.float32)
+    tensor2 = torch.tensor(adj_matrix2, dtype=torch.float32)
+
+    if tensor1.shape != tensor2.shape:
+        raise ValueError("Adjacency matrices must have the same shape")
+
+    tensorFinal = ((1 - x) * tensor1) + ((x) * tensor2)
+
+    return tensorFinal
+
+def update_graph_with_matrix(graph, adjacency_matrix: torch.Tensor):
+    """
+    Updates the graph's adjacency matrix and assigns neighbors to each node.
+
+    Parameters:
+        graph: The graph object to update.
+        adjacency_matrix (torch.Tensor): The new adjacency matrix.
+    """
+    # Update the adjacency matrix in the graph
+    graph.adjacency_matrix = adjacency_matrix
+
+    # Reset and update neighbors for each node
+    num_nodes = adjacency_matrix.shape[0]
+    nodes = graph.get_nodes()
+
+    for i in range(len(nodes)):
+        node = nodes[i]  # Assuming graph.nodes is index-based
+        node.neighbors = []  # Reset neighbors
+
+        for j in range(num_nodes):
+            if adjacency_matrix[i, j] > 0:  # If there is a connection
+                node.neighbors.append(nodes[j])

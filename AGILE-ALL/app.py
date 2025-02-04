@@ -633,6 +633,7 @@ elif nav_bar == 'Report':
             except:
                 generated_report_df = st.info('No reports have been generated yet.')
 
+# AY 25 Addition
 elif nav_bar == 'Graph':
 
     sidebar.title('Graph')
@@ -640,11 +641,69 @@ elif nav_bar == 'Graph':
     sidebar.write("The module below generates a graph with the given dataset.")
 
     sidebar.subheader('Generate Graph')
-    
-    graph_sb = sidebar.container() #'Graph'
+
+    graph_sb = sidebar.container()
+
+    with graph_sb:
+        st.title('Graph Controls')
+        st.info(
+            'Query a graph displaying the relationships of interest for a single advertising ID. '
+            'The radius is the circular radius around each point for the advertising ID to search for these points of interest. '
+            'The radius is in meters.'
+        )
+
+        # Form for graph input controls
+        graph_form = st.form(key='graph_controls_form')
+        with graph_form:
+            # Input fields for querying the graph
+            adid = st.text_input('Advertiser ID')
+            radius = st.slider('Radius (meters)', min_value=1, max_value=100, value=10)
+            weight_strength = st.slider('Edge Weight', min_value=1, max_value=10, value=1)
+
+            # Submit button for the form
+            if st.form_submit_button('Generate Graph'):
+                with st.spinner(text="Generating graph..."):
+                    # Create the graph object
+                    graph = createGraph(st.session_state.data.values.tolist())
+
+                    # Connect related nodes in the graph
+                    connectRelatedNodes(graph, radius, st.session_state.data, weight_strength)
+
+                    # Save the graph object to session state for access in other containers
+                    st.session_state.graph = graph
+
+    # Display the graph overview and adjacency matrix in the overview_c container
+    with overview_c:
+        st.title('Graph Overview')
+
+        if 'graph' in st.session_state:
+            graph = st.session_state.graph
+
+            # Access and display the adjacency matrix
+            st.subheader("Adjacency Matrix")
+            rows, cols = graph.adjacency_matrix.shape
+            st.write(f"The adjacency matrix has {rows} rows and {cols} columns.")
+
+            # Retrieve ADIDs for labeling the adjacency matrix
+            adid_labels = [node.adid for node in graph.get_nodes()]
+
+            # Convert the adjacency matrix to a DataFrame with ADID labels
+            adjacency_df = pd.DataFrame(
+                graph.adjacency_matrix,
+                columns=adid_labels,
+                index=adid_labels,
+            )
+
+            # Display the adjacency matrix as a table
+            st.dataframe(adjacency_df, use_container_width=True)
+
+            st.success("Graph successfully generated!")
+        else:
+            st.warning("Please generate a graph using the controls in the sidebar.")
 
 else:
     pass #Nothing should happen, it should never be here
+
 
 # if the button is clicked, reset the data seen by the user to what the user uploaded originally
 # this is done by saving the original data to a pickle file, and reloading it
