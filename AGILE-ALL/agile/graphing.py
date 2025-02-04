@@ -9,7 +9,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from .filtering import query_adid, query_location  # Importing the functions
 import pandas as pd
-from agile.prediction import haversine
+from .prediction import haversine
 import numpy as np
 
 class Node:

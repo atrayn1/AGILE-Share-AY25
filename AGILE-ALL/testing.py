@@ -3,7 +3,7 @@ from agile.graphing import createGraph, findAllFrequencyOfColocation, findRelate
 import time
 
 # Path to the CSV file
-csv_file = "data/testing_data.csv"
+csv_file = "data/frequencyofcolocation_dataset.csv"
 
 # Read the CSV file using pandas
 data, df = process_data(csv_file)
@@ -58,6 +58,7 @@ elapsed_time = end_time - start_time
 print(f"Execution time for frequencyOfColocation: {elapsed_time:.2f} seconds")
 """ 
 
+
 start_time = time.time()
 colocations = findAllFrequencyOfColocation(df, 25, 5, 1500)
 end_time = time.time()
@@ -66,7 +67,7 @@ elapsed_time = end_time - start_time
 print(f"Execution time for findAllFrequencyOfColocation: {elapsed_time:.2f} seconds")
 
 
-"""
+'''
 #printNodeData()
 print_adjacency_matrix()
 print("\n")
@@ -77,4 +78,4 @@ end_time = time.time()
 elapsed_time = end_time - start_time
 print(f"Execution time for connectRelatedNodes: {elapsed_time:.2f} seconds")
 print_adjacency_matrix()   
-"""
+'''
