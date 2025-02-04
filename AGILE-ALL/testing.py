@@ -58,14 +58,14 @@ elapsed_time = end_time - start_time
 print(f"Execution time for frequencyOfColocation: {elapsed_time:.2f} seconds")
 """ 
 
-"""
+
 start_time = time.time()
-colocations = findAllFrequencyOfColocation(df, 25, 5, 1500)
+colocations = findAllFrequencyOfColocation(df, 25, 5, 100)
 end_time = time.time()
 print(colocations)
 elapsed_time = end_time - start_time
 print(f"Execution time for findAllFrequencyOfColocation: {elapsed_time:.2f} seconds")
-"""
+
 
 '''
 #printNodeData()
@@ -80,18 +80,20 @@ print(f"Execution time for connectRelatedNodes: {elapsed_time:.2f} seconds")
 print_adjacency_matrix()   
 '''
 
-testMatrix1 = [
+"""
+testMatrix1 = pd.DataFrame([
     [5, 10, 15],
     [15, 10, 5],
     [5, 5, 5]
-]
+])
 
-testMatrix2 = [
+testMatrix2 = pd.DataFrame([
     [10, 4, 1],
     [2, 6, 8],
     [9, 3, 5]
-]
+])
 
 print(mergeResults(testMatrix1, testMatrix2, 0))
 print(mergeResults(testMatrix1, testMatrix2, 1))
 print(mergeResults(testMatrix1, testMatrix2, .5))
+"""

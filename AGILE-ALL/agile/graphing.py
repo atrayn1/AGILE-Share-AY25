@@ -416,8 +416,8 @@ def mergeResults(adj_matrix1: list, adj_matrix2: list, x: float) -> torch.Tensor
     if not (0 <= x <= 1):
         raise ValueError("x must be between 0 and 1")
 
-    tensor1 = torch.tensor(adj_matrix1, dtype=torch.float32)
-    tensor2 = torch.tensor(adj_matrix2, dtype=torch.float32)
+    tensor1 = torch.tensor(adj_matrix1.values.tolist(), dtype=torch.float32)
+    tensor2 = torch.tensor(adj_matrix2.values.tolist(), dtype=torch.float32)
 
     if tensor1.shape != tensor2.shape:
         raise ValueError("Adjacency matrices must have the same shape")
@@ -448,3 +448,32 @@ def update_graph_with_matrix(graph, adjacency_matrix: torch.Tensor):
         for j in range(num_nodes):
             if adjacency_matrix[i, j] > 0:  # If there is a connection
                 node.neighbors.append(nodes[j])
+
+def connectNodes(graph, x, df, x_time, radius):
+    """
+    Connects nodes in a graph based on colocation frequency within a given time and distance.
+
+    This function calculates the frequency of colocation between nodes (ADIDs) based on a dataset,
+    merges the adjacency matrices using a weighted factor `x`, and updates the graph with the final matrix.
+
+    Parameters:
+        graph (Graph): The graph object to update.
+        x (float): The weighting factor (between 0 and 1) used when merging adjacency matrices.
+        df (pd.DataFrame): The dataset containing location and time data for ADIDs.
+        x_time (int): The time threshold (in minutes) for considering colocation.
+        radius (float): The maximum distance (in meters) for colocation.
+
+    Returns:
+        None: The function updates the graph in-place with new connections.
+    """
+    # Compute the adjacency matrix based on colocation frequency
+    matrix1 = findAllFrequencyOfColocation(df, x_time, x_time, radius)
+
+    # Clone the first matrix to create a second identical matrix
+    matrix2 = matrix1.copy()
+
+    # Merge the two matrices based on the weighting factor x
+    finalMatrix = mergeResults(matrix1, matrix2, x)
+
+    # Update the graph with the final adjacency matrix
+    update_graph_with_matrix(graph, finalMatrix)

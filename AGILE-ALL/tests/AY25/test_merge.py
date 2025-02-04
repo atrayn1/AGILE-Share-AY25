@@ -1,19 +1,19 @@
 import pytest
 import torch
 from agile.graphing import mergeResults
-
+import pandas as pd
 # Test matrices
-testMatrix1 = [
+testMatrix1 = pd.DataFrame([
     [5, 10, 15],
     [15, 10, 5],
     [5, 5, 5]
-]
+])
 
-testMatrix2 = [
+testMatrix2 = pd.DataFrame([
     [10, 4, 1],
     [2, 6, 8],
     [9, 3, 5]
-]
+])
 
 def test_mergeResults_x_0():
     expected = torch.tensor([[10.,  4.,  1.],
