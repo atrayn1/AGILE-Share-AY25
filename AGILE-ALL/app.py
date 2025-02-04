@@ -33,6 +33,9 @@ from agile.report import Report
 from agile.centrality import compute_top_centrality
 from agile.overview import adid_value_counts
 
+# AY 25 Addition
+from agile.graphing import createGraph, connectNodes
+
 from streamlit_option_menu import option_menu
 import pygeohash as gh
 
@@ -667,7 +670,8 @@ elif nav_bar == 'Graph':
                     graph = createGraph(st.session_state.data.values.tolist())
 
                     # Connect related nodes in the graph
-                    connectRelatedNodes(graph, radius, st.session_state.data, weight_strength)
+                    #connectRelatedNodes(graph, radius, st.session_state.data, weight_strength)
+                    connectNodes(graph, 1, st.session_state.data, 25, 100)
 
                     # Save the graph object to session state for access in other containers
                     st.session_state.graph = graph
@@ -679,25 +683,28 @@ elif nav_bar == 'Graph':
         if 'graph' in st.session_state:
             graph = st.session_state.graph
 
-            # Access and display the adjacency matrix
-            st.subheader("Adjacency Matrix")
-            rows, cols = graph.adjacency_matrix.shape
-            st.write(f"The adjacency matrix has {rows} rows and {cols} columns.")
+            st.subheader("Graph Nodes and Relationships")
 
-            # Retrieve ADIDs for labeling the adjacency matrix
-            adid_labels = [node.adid for node in graph.get_nodes()]
+            for node in graph.get_nodes():
+                with st.expander(f"Node: {node.adid}"):
+                    st.write(f"**ADID:** {node.adid}")
+                    
+                    # Retrieve neighbors and relationship strengths
+                    neighbors = node.neighbors
+                    neighbor_info = []
+                    
+                    for neighbor in neighbors:
+                        neighbor_index = graph.nodes.index(neighbor)
+                        strength = graph.adjacency_matrix[graph.nodes.index(node), neighbor_index].item()
+                        neighbor_info.append({"Neighbor ADID": neighbor.adid, "Relationship Strength": strength})
+                    
+                    # Convert to DataFrame and display
+                    if neighbor_info:
+                        neighbor_df = pd.DataFrame(neighbor_info)
+                        st.dataframe(neighbor_df, use_container_width=True)
+                    else:
+                        st.write("No neighbors found for this node.")
 
-            # Convert the adjacency matrix to a DataFrame with ADID labels
-            adjacency_df = pd.DataFrame(
-                graph.adjacency_matrix,
-                columns=adid_labels,
-                index=adid_labels,
-            )
-
-            # Display the adjacency matrix as a table
-            st.dataframe(adjacency_df, use_container_width=True)
-
-            st.success("Graph successfully generated!")
         else:
             st.warning("Please generate a graph using the controls in the sidebar.")
 
