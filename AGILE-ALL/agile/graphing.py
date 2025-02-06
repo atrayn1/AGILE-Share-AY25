@@ -449,7 +449,7 @@ def update_graph_with_matrix(graph, adjacency_matrix: torch.Tensor):
             if adjacency_matrix[i, j] > 0:  # If there is a connection
                 node.neighbors.append(nodes[j])
 
-def connectNodes(graph, x, df, x_time, radius):
+def connectNodes(graph, x, df, x_time, y_time, radius):
     """
     Connects nodes in a graph based on colocation frequency within a given time and distance.
 
@@ -467,7 +467,7 @@ def connectNodes(graph, x, df, x_time, radius):
         None: The function updates the graph in-place with new connections.
     """
     # Compute the adjacency matrix based on colocation frequency
-    matrix1 = findAllFrequencyOfColocation(df, x_time, x_time, radius)
+    matrix1 = findAllFrequencyOfColocation(df, x_time, y_time, radius)
 
     # Clone the first matrix to create a second identical matrix
     matrix2 = matrix1.copy()
