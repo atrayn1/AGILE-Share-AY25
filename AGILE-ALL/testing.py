@@ -1,9 +1,9 @@
 from tests.AY25.testgraph import process_data
-from agile.graphing import createGraph, findAllFrequencyOfColocation, findRelatedNodes, connectRelatedNodes, mergeResults
+from agile.graphing import createGraph, findAllFrequencyOfColocation, findRelatedNodes, connectRelatedNodes, frequencyOfColocation, dwellTimeAdjacencyMatrix
 import time
 
 # Path to the CSV file
-csv_file = "data/frequencyofcolocation_dataset.csv"
+csv_file = "data/dwelltime_testset3.csv"
 
 # Read the CSV file using pandas
 data, df = process_data(csv_file)
@@ -78,22 +78,11 @@ end_time = time.time()
 elapsed_time = end_time - start_time
 print(f"Execution time for connectRelatedNodes: {elapsed_time:.2f} seconds")
 print_adjacency_matrix()   
-'''
-
 """
-testMatrix1 = pd.DataFrame([
-    [5, 10, 15],
-    [15, 10, 5],
-    [5, 5, 5]
-])
 
-testMatrix2 = pd.DataFrame([
-    [10, 4, 1],
-    [2, 6, 8],
-    [9, 3, 5]
-])
+#testing dwell time stuff
+# this is in hours btw
+#print(dwellTimeWithinProximity(graph.get_nodes()[0], graph.get_nodes()[1], 100))
 
-print(mergeResults(testMatrix1, testMatrix2, 0))
-print(mergeResults(testMatrix1, testMatrix2, 1))
-print(mergeResults(testMatrix1, testMatrix2, .5))
-"""
+#print(dwellTimeWithinProximity(df, "adid_1", "adid_2"))
+print(dwellTimeAdjacencyMatrix(df))
