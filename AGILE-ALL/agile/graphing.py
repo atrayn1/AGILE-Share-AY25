@@ -9,7 +9,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from .filtering import query_adid, query_location  # Importing the functions
 import pandas as pd
-from agile.prediction import haversine
+from .prediction import haversine
 import numpy as np
 import math
 from datetime import timedelta
@@ -407,104 +407,51 @@ def findAllFrequencyOfColocation(df: pd.DataFrame, x_time: int, y_time: int, rad
 
     return colocation_matrix
 
-def get_continuous_periods(df, adid, max_time_diff=300, max_distance=100):
+def mergeResults(adj_matrix1: list, adj_matrix2: list, x: float) -> torch.Tensor:
     """
-    Identify continuous time periods for a given ADID where the time between successive
-    data points is less than `max_time_diff` and the distance is within `max_distance`.
-    
-    :param df: DataFrame containing ['advertiser_id', 'datetime', 'latitude', 'longitude']
-    :param adid: The ADID to filter for
-    :param max_time_diff: Maximum allowed time difference between consecutive points
-    :param max_distance: Maximum allowed distance between consecutive points
-    :return: List of tuples (start_time, end_time) for continuous periods
+    Merges two adjacency matrices by weighting them based on a given factor x.
+
+    Parameters:
+        adj_matrix1 (list): The first adjacency matrix (list of lists).
+        adj_matrix2 (list): The second adjacency matrix (list of lists).
+        x (float): A value between 0 and 1 indicating how much weight to give to adj_matrix1.
+                   The remaining weight (1 - x) is given to adj_matrix2.
+
+    Returns:
+        torch.Tensor: The merged adjacency matrix as a PyTorch tensor.
     """
-    df = df[df['advertiser_id'] == adid].reset_index(drop=True)
-    periods = []
-    current_start = df.iloc[0]['datetime']
-    current_end = df.iloc[0]['datetime']
-    
-    for i in range(1, len(df)):
-        time_diff = (df.iloc[i]['datetime'] - df.iloc[i - 1]['datetime']).total_seconds()
-        distance = haversine(df.iloc[i]['latitude'], df.iloc[i]['longitude'], 
-                             df.iloc[i - 1]['latitude'], df.iloc[i - 1]['longitude'])
-        
-        if time_diff <= max_time_diff and distance <= max_distance:
-            # Extend the current period if the time and distance conditions are met
-            current_end = df.iloc[i]['datetime']
-        else:
-            # No overlap, record the current period and start a new one
-            periods.append((current_start, current_end))
-            current_start = df.iloc[i]['datetime']
-            current_end = df.iloc[i]['datetime']
-    
-    # Add the last period
-    periods.append((current_start, current_end))
-    
-    return periods
+    if not (0 <= x <= 1):
+        raise ValueError("x must be between 0 and 1")
 
-def dwellTimeWithinProximity(periods1, periods2):
+    tensor1 = torch.tensor(adj_matrix1, dtype=torch.float32)
+    tensor2 = torch.tensor(adj_matrix2, dtype=torch.float32)
+
+    if tensor1.shape != tensor2.shape:
+        raise ValueError("Adjacency matrices must have the same shape")
+
+    tensorFinal = ((1 - x) * tensor1) + ((x) * tensor2)
+
+    return tensorFinal
+
+def update_graph_with_matrix(graph, adjacency_matrix: torch.Tensor):
     """
-    Calculate the total overlap time between two ADIDs based on their continuous time periods.
-    
-    :param periods1: First ADID
-    :param periods2: Second ADID
-    :return: Total overlap time in seconds
+    Updates the graph's adjacency matrix and assigns neighbors to each node.
+
+    Parameters:
+        graph: The graph object to update.
+        adjacency_matrix (torch.Tensor): The new adjacency matrix.
     """
+    # Update the adjacency matrix in the graph
+    graph.adjacency_matrix = adjacency_matrix
 
-    print(f"1st ADID continuous periods: {periods1}")
-    print(f"2nd ADID continuous periods: {periods2}")
-    
-    total_overlap_time = 0
-    
-    # Compare all pairs of periods from both ADIDs
-    for start1, end1 in periods1:
-        for start2, end2 in periods2:
-            # Check if the periods overlap
-            overlap_start = max(start1, start2)
-            overlap_end = min(end1, end2)
-            
-            if overlap_start < overlap_end:
-                overlap_duration = (overlap_end - overlap_start).total_seconds()
-                total_overlap_time += overlap_duration
-                print(f"Overlap found: Start: {overlap_start}, End: {overlap_end}, Duration: {overlap_duration}s")
-    
-    print(f"Total overlap time: {total_overlap_time} seconds")
-    return total_overlap_time
+    # Reset and update neighbors for each node
+    num_nodes = adjacency_matrix.shape[0]
+    nodes = graph.get_nodes()
 
-def dwellTimeAdjacencyMatrix(df, max_time_diff=300, max_distance=100):
-    """
-    Create an adjacency matrix of overlap times between all unique ADIDs in the dataframe.
-    
-    :param df: DataFrame containing ['advertiser_id', 'datetime', 'latitude', 'longitude']
-    :param max_time_diff: Maximum allowed time difference between consecutive points (in seconds)
-    :param max_distance: Maximum allowed distance between consecutive points (in meters)
-    :return: Adjacency matrix as a list of lists, where each entry represents the overlap time between two ADIDs
-    """
-    # Extract unique ADIDs from the dataframe
-    adids = df['advertiser_id'].unique()
-    num_adids = len(adids)
-    
-    # Precompute continuous periods for each ADID and store them in a list
-    adid_periods = [get_continuous_periods(df, adid, max_time_diff, max_distance) for adid in adids]
-    
-    # Initialize the adjacency matrix with zeros
-    adjacency_matrix = [[0] * num_adids for _ in range(num_adids)]
-    
-    # Loop through each unique pair of ADIDs
-    for i in range(num_adids):
-        for j in range(i + 1, num_adids):  # Start from i + 1 to avoid i == j
-            overlap_time = dwellTimeWithinProximity(adid_periods[i], adid_periods[j])
-            adjacency_matrix[i][j] = overlap_time
-            adjacency_matrix[j][i] = overlap_time  # Ensure symmetry
-    
-    return adjacency_matrix
+    for i in range(len(nodes)):
+        node = nodes[i]  # Assuming graph.nodes is index-based
+        node.neighbors = []  # Reset neighbors
 
-
-
-
-
-
-
-
-
-
+        for j in range(num_nodes):
+            if adjacency_matrix[i, j] > 0:  # If there is a connection
+                node.neighbors.append(nodes[j])
