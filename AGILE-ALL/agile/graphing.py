@@ -423,8 +423,8 @@ def mergeResults(adj_matrix1: list, adj_matrix2: list, x: float) -> torch.Tensor
     if not (0 <= x <= 1):
         raise ValueError("x must be between 0 and 1")
 
-    tensor1 = torch.tensor(adj_matrix1, dtype=torch.float32)
-    tensor2 = torch.tensor(adj_matrix2, dtype=torch.float32)
+    tensor1 = torch.tensor(adj_matrix1.values.tolist(), dtype=torch.float32)
+    tensor2 = torch.tensor(adj_matrix2.values.tolist(), dtype=torch.float32)
 
     if tensor1.shape != tensor2.shape:
         raise ValueError("Adjacency matrices must have the same shape")

@@ -33,6 +33,9 @@ from agile.report import Report
 from agile.centrality import compute_top_centrality
 from agile.overview import adid_value_counts
 
+# AY 25 Addition
+from agile.graphing import createGraph, connectNodes
+
 from streamlit_option_menu import option_menu
 import pygeohash as gh
 
@@ -656,9 +659,17 @@ elif nav_bar == 'Graph':
         graph_form = st.form(key='graph_controls_form')
         with graph_form:
             # Input fields for querying the graph
-            adid = st.text_input('Advertiser ID')
-            radius = st.slider('Radius (meters)', min_value=1, max_value=100, value=10)
-            weight_strength = st.slider('Edge Weight', min_value=1, max_value=10, value=1)
+            adid = st.text_input('Advertiser ID (currently not functional)')  # Placeholder for ADID query
+            radius = st.number_input('Radius (meters)', min_value=0, value=100)
+            x_time = st.number_input('Minimum Time Difference (x_time) in minutes', min_value=1, value=25)
+            y_time = st.number_input('Minimum Time Gap (y_time) in minutes before considering repeated colocation', min_value=1, value=30)
+            edge_weight_scale = st.slider(
+                'Edge Weight Scale', 
+                min_value=0, 
+                max_value=100, 
+                value=50, 
+                help="0 makes the edge completely based on frequency of colocation, while 100 makes the edge based completely on dwell time within proximity. Otherwise, it is based on a percentage of each."
+            )
 
             # Submit button for the form
             if st.form_submit_button('Generate Graph'):
@@ -666,11 +677,12 @@ elif nav_bar == 'Graph':
                     # Create the graph object
                     graph = createGraph(st.session_state.data.values.tolist())
 
-                    # Connect related nodes in the graph
-                    connectRelatedNodes(graph, radius, st.session_state.data, weight_strength)
+                    # Connect related nodes in the graph with the provided parameters
+                    connectNodes(graph, edge_weight_scale, st.session_state.data, x_time, y_time, radius)
 
                     # Save the graph object to session state for access in other containers
                     st.session_state.graph = graph
+
 
     # Display the graph overview and adjacency matrix in the overview_c container
     with overview_c:
@@ -679,25 +691,28 @@ elif nav_bar == 'Graph':
         if 'graph' in st.session_state:
             graph = st.session_state.graph
 
-            # Access and display the adjacency matrix
-            st.subheader("Adjacency Matrix")
-            rows, cols = graph.adjacency_matrix.shape
-            st.write(f"The adjacency matrix has {rows} rows and {cols} columns.")
+            st.subheader("Graph Nodes and Relationships")
 
-            # Retrieve ADIDs for labeling the adjacency matrix
-            adid_labels = [node.adid for node in graph.get_nodes()]
+            for node in graph.get_nodes():
+                # Only create an expander if the node has neighbors
+                neighbors = node.neighbors
+                if neighbors:
+                    with st.expander(f"Node: {node.adid}"):
+                        st.write(f"**ADID:** {node.adid}")
 
-            # Convert the adjacency matrix to a DataFrame with ADID labels
-            adjacency_df = pd.DataFrame(
-                graph.adjacency_matrix,
-                columns=adid_labels,
-                index=adid_labels,
-            )
+                        # Retrieve neighbors and relationship strengths
+                        neighbor_info = []
+                        for neighbor in neighbors:
+                            neighbor_index = graph.nodes.index(neighbor)
+                            strength = graph.adjacency_matrix[graph.nodes.index(node), neighbor_index].item()
+                            neighbor_info.append({"Neighbor ADID": neighbor.adid, "Relationship Strength": strength})
 
-            # Display the adjacency matrix as a table
-            st.dataframe(adjacency_df, use_container_width=True)
-
-            st.success("Graph successfully generated!")
+                        # Convert to DataFrame and display
+                        neighbor_df = pd.DataFrame(neighbor_info)
+                        st.dataframe(neighbor_df, use_container_width=True)
+                else:
+                    pass
+                    # st.write(f"**ADID:** {node.adid} - No neighbors found.")
         else:
             st.warning("Please generate a graph using the controls in the sidebar.")
 

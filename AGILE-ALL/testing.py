@@ -58,14 +58,14 @@ elapsed_time = end_time - start_time
 print(f"Execution time for frequencyOfColocation: {elapsed_time:.2f} seconds")
 """ 
 
-"""
+
 start_time = time.time()
-colocations = findAllFrequencyOfColocation(df, 25, 5, 1500)
+colocations = findAllFrequencyOfColocation(df, 25, 5, 100)
 end_time = time.time()
 print(colocations)
 elapsed_time = end_time - start_time
 print(f"Execution time for findAllFrequencyOfColocation: {elapsed_time:.2f} seconds")
-"""
+
 
 '''
 #printNodeData()
