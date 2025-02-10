@@ -635,7 +635,7 @@ elif nav_bar == 'Report':
                 generated_report_df = st.dataframe(st.session_state.generated_reports[['Alias','ADID']])
             except:
                 generated_report_df = st.info('No reports have been generated yet.')
-
+                
 # AY 25 Addition
 elif nav_bar == 'Graph':
 
@@ -663,13 +663,13 @@ elif nav_bar == 'Graph':
             radius = st.number_input('Radius (meters)', min_value=0, value=100)
             x_time = st.number_input('Minimum Time Difference (x_time) in minutes to be together to be considered colocated', min_value=1, value=5)
             y_time = st.number_input('Minimum Time Gap (y_time) in minutes before considering repeated colocation', min_value=1, value=5)
-            edge_weight_scale = st.slider(
-                'Edge Weight Scale', 
-                min_value=0, 
-                max_value=100, 
-                value=50, 
-                help="0 makes the edge completely based on frequency of colocation, while 100 makes the edge based completely on dwell time within proximity. Otherwise, it is based on a percentage of each."
-            )
+            edge_weight_scale = 100 # st.slider(
+                #'Edge Weight Scale', 
+                #min_value=0, 
+                #max_value=100, 
+                #value=50, 
+                #help="0 makes the edge completely based on frequency of colocation, while 100 makes the edge based completely on dwell time within proximity. Otherwise, it is based on a percentage of each."
+            #)
 
             # Submit button for the form
             if st.form_submit_button('Generate Graph'):
@@ -678,7 +678,7 @@ elif nav_bar == 'Graph':
                     graph = createGraph(st.session_state.data.values.tolist())
 
                     # Connect related nodes in the graph with the provided parameters
-                    connectNodes(graph, edge_weight_scale / 100, st.session_state.data, x_time, y_time, radius, )
+                    st.session_state.colocation_matrix, st.session_state.dwellTime_matrix = connectNodes(graph, edge_weight_scale / 100, st.session_state.data, x_time, y_time, radius)
 
                     # Save the graph object to session state for access in other containers
                     st.session_state.graph = graph
@@ -686,12 +686,9 @@ elif nav_bar == 'Graph':
 
     # Display the graph overview and adjacency matrix in the overview_c container
     with overview_c:
-        st.title('Graph Overview')
 
         if 'graph' in st.session_state:
             graph = st.session_state.graph
-
-            st.subheader("Graph Nodes and Relationships")
 
             for node in graph.get_nodes():
                 # Only create an expander if the node has neighbors
@@ -705,7 +702,16 @@ elif nav_bar == 'Graph':
                         for neighbor in neighbors:
                             neighbor_index = graph.nodes.index(neighbor)
                             strength = graph.adjacency_matrix[graph.nodes.index(node), neighbor_index].item()
-                            neighbor_info.append({"Neighbor ADID": neighbor.adid, "Relationship Strength": strength})
+                            neighbor_info.append({"Neighbor ADID": neighbor.adid, "Relationship Strength (minutes of average dwell time)": strength})
+
+                        # Extract the adjacency matrices for colocations and dwell time
+                        colocations_strength = st.session_state.colocation_matrix[graph.nodes.index(node)][graph.nodes.index(neighbor)]
+                        dwell_time_strength = st.session_state.dwellTime_matrix[graph.nodes.index(node)][graph.nodes.index(neighbor)]
+
+                        # Add colocations and dwell time information to the table
+                        for info in neighbor_info:
+                            info["Number of Colocations"] = colocations_strength
+                            info["Total Dwell Time (minutes)"] = dwell_time_strength
 
                         # Convert to DataFrame and display
                         neighbor_df = pd.DataFrame(neighbor_info)
