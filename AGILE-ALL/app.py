@@ -716,6 +716,27 @@ elif nav_bar == 'Graph':
         else:
             st.warning("Please generate a graph using the controls in the sidebar.")
 
+    with graph_sb:
+         # Tell the graph which Ad Id you would like to focus on and 
+         # the radius size to focus on
+        graph_analysis = st.container()
+        with graph_analysis:
+            st.subheader('Graph Controls')
+            st.info('Query a graph displaying the relationships of interest of a single advertising ID. The radius is the \
+                    circular radius around each point for the advertising ID to search for these points of interest. The radius is in meters.')
+            graph_form = st.form(key='polyline')
+            with graph_form:
+                adid = st.text_input('Advertiser ID')
+                radius = st.slider('Radius (meters)', min_value=1, max_value=100, value=10)
+                # we could filter by strength of the edges 
+                weight_strength = st.slider('Edge Weight', min_value=1, max_value=10, value=1)        
+                if st.form_submit_button('Query'):
+                    with st.spinner(text="Computing..."):
+                        st.session_state.data = query_adid(adid, st.session_state.data) # Filter the data
+                        res = find_all_nearby_nodes(st.session_state.data, radius)
+                        results_c.write(res)
+
+
 else:
     pass #Nothing should happen, it should never be here
 
