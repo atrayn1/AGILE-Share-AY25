@@ -7,7 +7,6 @@ MIDN 1/C Nick Summers, Alex Traynor, Anuj Sirsikar
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from .filtering import query_adid, query_location  # Importing the functions
 import pandas as pd
 from .prediction import haversine
 import numpy as np
@@ -56,7 +55,9 @@ class Graph:
         self.nodes = []  # List to store nodes
         self.num_nodes = 0  # Variable to track the number of nodes
         self.adjacency_matrix = torch.zeros((0, 0))  # Initialize the adjacency matrix
-    
+        self.colocations_matrix = torch.zeros((0,0))
+        self.dwell_time_matrix = torch.zeros((0,0))
+
     def get_nodes(self):
         return self.nodes
 
@@ -195,119 +196,6 @@ def createGraph(data):
     
     return graph
 
-def findRelatedNodes(main_node, graph, radius: str, df: pd.DataFrame):
-    """
-    For a specified node, goes through each entry in the node and searches the rest of 
-    the dataset for all other ADIDs that are within a specified radius using the 
-    function built by the previous team: query_location().
-
-    Parameters:
-        main_node (Node): The node object in the graph.
-        graph (Graph): The graph object created by createGraph().
-        radius (str): The radius within which to search for related ads.
-        df (pd.DataFrame): The dataset used for finding related nodes.
-
-    Returns:
-        pd.DataFrame: A DataFrame of related ad IDs for the given node.
-    """
-    # Get the node's data from the graph
-    node_data = main_node.features
-    exclude_adid = df.iloc[0]["advertiser_id"]
-    filtered_df = df[df["advertiser_id"] != exclude_adid]
-
-    # Ensure the node has at least one entry (list) with location data (latitude and longitude)
-    if len(node_data) == 0:
-        raise ValueError(f"Node {main_node.adid} does not have any feature data.")
-
-    # Initialize the DataFrame to store related results
-    all_related_results = pd.DataFrame(
-        columns=["advertiser_id", "advertiser_id_alias", "datetime", "latitude", "longitude", "geohash"]
-    )
-
-    # Iterate over each entry in the node's features
-    for entry in node_data:
-        lat = entry[2]  # Latitude is in the second position in the list
-        lon = entry[3]  # Longitude is in the third position in the list
-
-        # Call query_location() for each entry to find related nodes within the radius
-        result = query_location(lat=str(lat), long=str(lon), radius=radius, df=filtered_df)
-
-        # If result is not empty, convert it to a DataFrame and concatenate with all_related_results
-        if result is not None and len(result) > 0:
-            df_result = pd.DataFrame(
-                result,
-                columns=["advertiser_id", "advertiser_id_alias", "datetime", "latitude", "longitude", "geohash"],
-            )
-
-            # Remove rows from filtered_df that match df_result
-            filtered_df = filtered_df[~filtered_df.set_index(
-                ["advertiser_id", "datetime", "latitude", "longitude", "geohash"]
-            ).index.isin(
-                df_result.set_index(["advertiser_id", "datetime", "latitude", "longitude", "geohash"]).index
-            )]
-
-            # Concatenate the new results into all_related_results
-            all_related_results = pd.concat([all_related_results, df_result], ignore_index=True)
-
-    return all_related_results
-
-def connectRelatedNodesToBaseNode(base_node, graph, radius: str, df: pd.DataFrame, weight):
-    """
-    Runs findRelatedNodes on a specified node and creates an edge between the node
-    and each unique related node (by advertiser_id) returned by findRelatedNodes.
-
-    So bascially, this just adds one weight to nodes that share locations, but not nessecessarily 
-    at the same time. So, I guess the next step would be to see if the time that the two Ad Id's 
-    were at the same location, occured at the same/similiar time. Maybe that duration of time could 
-    be one of the edge factors that a slider could control...
-
-    Parameters:
-        base_node (Node): The base node to process.
-        graph (Graph): The graph object.
-        radius (str): The radius within which to search for related nodes.
-        df (pd.DataFrame): The dataset used for finding related nodes.
-        weight (float, optional): The weight of the edges to add. Defaults to 1.0.
-
-    Returns:
-        None
-    """
-
-    # Step 1: Find the related nodes based on the base_node's features
-    related_nodes_adids = findRelatedNodes(base_node, graph, radius, df)
-    print(related_nodes_adids)
-    
-    # Step 2: Iterate through each row in the DataFrame
-    for _, row in related_nodes_adids.iterrows():
-        adid = row["advertiser_id"]  # Extract the advertiser_id from the row
-        related_node = graph.get_node_by_adid(adid)  # Get the node object using the ADID
-
-        if related_node and related_node != base_node:
-            # Step 3: Add an edge between the base node and the related node
-            graph.add_edge(base_node, related_node, weight)
-            print(f"Added an edge between base node {base_node.adid} and related node {related_node.adid}.")
-
-def connectRelatedNodes(graph, radius: str, df: pd.DataFrame, weight):
-    """
-    Connects all nodes in the graph based on proximity within a specified radius.
-
-    This function iterates through all nodes in the graph, using the features 
-    stored in each node (e.g., latitude, longitude) to identify related nodes 
-    that have been within a certain radius of each other. For each pair of related nodes, 
-    an edge is added between them with the specified weight.
-
-    Parameters:
-        graph (Graph): The graph object containing nodes and edges.
-        radius (str): The radius within which to search for proximity connections 
-                      (e.g., "10km" or "5mi").
-        df (pd.DataFrame): A DataFrame containing the dataset used to check node proximity.
-                           The DataFrame should include columns such as 'advertiser_id',
-                           'latitude', and 'longitude' for location data.
-        weight (float): The weight to assign to the edges connecting related nodes.
-    """
-    for node in graph.get_nodes():
-        print(f"Running connectRelatedNodesToBaseNode for node {node.adid}.")
-        connectRelatedNodesToBaseNode(node, graph, radius, df, weight)
-
 def frequencyOfColocation(periods1, periods2, x_time) -> int:
     """
     Counts the number of times two ADIDs were colocated for at least x_time seconds.
@@ -404,7 +292,7 @@ def mergeResults(adj_matrix1: list, adj_matrix2: list, x: float) -> torch.Tensor
 
     return tensorFinal
 
-def update_graph_with_matrix(graph, adjacency_matrix: torch.Tensor):
+def update_graph_with_matrix(graph, adjacency_matrix: torch.Tensor, matrix1, matrix2):
     """
     Updates the graph's adjacency matrix and assigns neighbors to each node.
 
@@ -414,6 +302,8 @@ def update_graph_with_matrix(graph, adjacency_matrix: torch.Tensor):
     """
     # Update the adjacency matrix in the graph
     graph.adjacency_matrix = adjacency_matrix
+    graph.colocations_matrix = torch.tensor(matrix1, dtype=torch.float32)
+    graph.dwell_time_matrix = torch.tensor(matrix2, dtype=torch.float32)
 
     # Reset and update neighbors for each node
     num_nodes = adjacency_matrix.shape[0]
@@ -427,7 +317,7 @@ def update_graph_with_matrix(graph, adjacency_matrix: torch.Tensor):
             if adjacency_matrix[i, j] > 0:  # If there is a connection
                 node.neighbors.append(nodes[j])
 
-def connectNodes(graph, x, df, x_time, y_time, radius):
+def connectNodes(graph, x, df, min_time_together, max_time_diff, radius):
     """
     Connects nodes in a graph based on colocation frequency within a given time and distance.
 
@@ -438,24 +328,24 @@ def connectNodes(graph, x, df, x_time, y_time, radius):
         graph (Graph): The graph object to update.
         x (float): The weighting factor (between 0 and 1) used when merging adjacency matrices.
         df (pd.DataFrame): The dataset containing location and time data for ADIDs.
-        x_time (int): The time threshold (in minutes) for considering colocation.
-        y_time (int): The minimum time gap (in minutes) before considering repeated colocation.        
+        min_time_together: Minimum amount of time ADIDs must be colocated to be considered together.
+        max_time_diff: Maximum allowed time difference between consecutive points (in seconds)      
         radius (float): The maximum distance (in meters) for colocation.
 
     Returns:
         None: The function updates the graph in-place with new connections.
     """
     # Compute the adjacency matrix based on colocation frequency
-    matrix1 = findAllFrequencyOfColocation(df, x_time, y_time, radius)
+    matrix1 = findAllFrequencyOfColocation(df, min_time_together, max_time_diff, radius)
 
     # Clone the first matrix to create a second identical matrix
-    matrix2 = dwellTimeAdjacencyMatrix(df, y_time*60, radius)
+    matrix2 = dwellTimeAdjacencyMatrix(df, min_time_together, max_time_diff, radius)
 
     # Merge the two matrices based on the weighting factor x
     finalMatrix = mergeResults(matrix1, matrix2, x)
     print(finalMatrix)
     # Update the graph with the final adjacency matrix
-    update_graph_with_matrix(graph, finalMatrix)
+    update_graph_with_matrix(graph, finalMatrix, matrix1, matrix2)
 
     return matrix1, matrix2
 
@@ -466,10 +356,11 @@ def get_continuous_periods(df, adid, max_time_diff, max_distance):
     
     :param df: DataFrame containing ['advertiser_id', 'datetime', 'latitude', 'longitude']
     :param adid: The ADID to filter for
-    :param max_time_diff: Maximum allowed time difference between consecutive points
+    :param max_time_diff: Maximum allowed time difference between consecutive points before a new period begins
     :param max_distance: Maximum allowed distance between consecutive points
     :return: List of tuples (start_time, end_time) for continuous periods
     """
+    print(max_time_diff)
     df = df[df['advertiser_id'] == adid].reset_index(drop=True)
     periods = []
     current_start = df.iloc[0]['datetime']
@@ -484,15 +375,20 @@ def get_continuous_periods(df, adid, max_time_diff, max_distance):
             # Extend the current period if the time and distance conditions are met
             current_end = df.iloc[i]['datetime']
         else:
-            # No overlap, record the current period and start a new one
-            periods.append((current_start, current_end))
+            # Check if the time difference is greater than the allowed threshold before appending
+            if (current_end - current_start).total_seconds() >= max_time_diff:
+                periods.append((current_start, current_end))
+            
+            # Start a new period
             current_start = df.iloc[i]['datetime']
             current_end = df.iloc[i]['datetime']
     
-    # Add the last period
-    periods.append((current_start, current_end))
+    # Add the last period if the time difference is greater than max_time_diff
+    if (current_end - current_start).total_seconds() >= max_time_diff:
+        periods.append((current_start, current_end))
     
     return periods
+
 
 def dwellTimeWithinProximity(periods1, periods2):
     """
@@ -521,15 +417,17 @@ def dwellTimeWithinProximity(periods1, periods2):
                 print(f"Overlap found: Start: {overlap_start}, End: {overlap_end}, Duration: {overlap_duration}s")
     
     print(f"Total overlap time: {total_overlap_time} seconds")
-    return total_overlap_time
+    return total_overlap_time / 60
 
-def dwellTimeAdjacencyMatrix(df, max_time_diff, max_distance):
+def dwellTimeAdjacencyMatrix(df, min_time_together, max_time_diff, max_distance):
     """
     Create an adjacency matrix of overlap times between all unique ADIDs in the dataframe.
     
-    :param df: DataFrame containing ['advertiser_id', 'datetime', 'latitude', 'longitude']
-    :param max_time_diff: Maximum allowed time difference between consecutive points (in seconds)
-    :param max_distance: Maximum allowed distance between consecutive points (in meters)
+    df: DataFrame containing ['advertiser_id', 'datetime', 'latitude', 'longitude']
+    min_time_together: Minimum amount of time ADIDs must be colocated to be considered together (in minutes)
+    max_time_diff: Maximum allowed time difference between consecutive points (in minutes)
+    max_distance: Maximum allowed distance between consecutive points (in meters)
+
     :return: Adjacency matrix as a list of lists, where each entry represents the overlap time between two ADIDs
     """
     # Extract unique ADIDs from the dataframe
@@ -537,7 +435,7 @@ def dwellTimeAdjacencyMatrix(df, max_time_diff, max_distance):
     num_adids = len(adids)
     
     # Precompute continuous periods for each ADID and store them in a list
-    adid_periods = [get_continuous_periods(df, adid, max_time_diff, max_distance) for adid in adids]
+    adid_periods = [get_continuous_periods(df, adid, max_time_diff*60, max_distance) for adid in adids]
     
     # Initialize the adjacency matrix with zeros
     adjacency_matrix = [[0] * num_adids for _ in range(num_adids)]
@@ -546,6 +444,8 @@ def dwellTimeAdjacencyMatrix(df, max_time_diff, max_distance):
     for i in range(num_adids):
         for j in range(i + 1, num_adids):  # Start from i + 1 to avoid i == j
             overlap_time = dwellTimeWithinProximity(adid_periods[i], adid_periods[j])
+            if overlap_time < min_time_together:
+                overlap_time = 0
             adjacency_matrix[i][j] = overlap_time
             adjacency_matrix[j][i] = overlap_time  # Ensure symmetry
     

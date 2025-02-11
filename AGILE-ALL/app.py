@@ -264,9 +264,6 @@ if nav_bar == 'Data':
                         save('saved_df.pkl',st.session_state.data)
                 
                         #st.session_state.file_source = os.path.abspath('./saved_data/saved_df.pkl')
-                
-    
-
 
 elif nav_bar == 'Filtering':
 
@@ -678,7 +675,7 @@ elif nav_bar == 'Graph':
                     graph = createGraph(st.session_state.data.values.tolist())
 
                     # Connect related nodes in the graph with the provided parameters
-                    st.session_state.colocation_matrix, st.session_state.dwellTime_matrix = connectNodes(graph, edge_weight_scale / 100, st.session_state.data, x_time, y_time, radius)
+                    connectNodes(graph, edge_weight_scale / 100, st.session_state.data, x_time, y_time, radius)
 
                     # Save the graph object to session state for access in other containers
                     st.session_state.graph = graph
@@ -702,16 +699,13 @@ elif nav_bar == 'Graph':
                         for neighbor in neighbors:
                             neighbor_index = graph.nodes.index(neighbor)
                             strength = graph.adjacency_matrix[graph.nodes.index(node), neighbor_index].item()
-                            neighbor_info.append({"Neighbor ADID": neighbor.adid, "Relationship Strength (minutes of average dwell time)": strength})
 
-                        # Extract the adjacency matrices for colocations and dwell time
-                        colocations_strength = st.session_state.colocation_matrix[graph.nodes.index(node)][graph.nodes.index(neighbor)]
-                        dwell_time_strength = st.session_state.dwellTime_matrix[graph.nodes.index(node)][graph.nodes.index(neighbor)]
+                            # Extract the adjacency matrices for colocations and dwell time
+                            colocations_strength = graph.colocations_matrix[graph.nodes.index(node), neighbor_index].item()
+                            dwell_time_strength = graph.dwell_time_matrix[graph.nodes.index(node), neighbor_index].item()
 
-                        # Add colocations and dwell time information to the table
-                        for info in neighbor_info:
-                            info["Number of Colocations"] = colocations_strength
-                            info["Total Dwell Time (minutes)"] = dwell_time_strength
+                            # Add colocations and dwell time information to the table
+                            neighbor_info.append({"Neighbor ADID": neighbor.adid, "Relationship Strength (minutes of average dwell time)": strength, "Number of Colocations": colocations_strength, "Total Dwell Time (minutes)": dwell_time_strength})
 
                         # Convert to DataFrame and display
                         neighbor_df = pd.DataFrame(neighbor_info)
