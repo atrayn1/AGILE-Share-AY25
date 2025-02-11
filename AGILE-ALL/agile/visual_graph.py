@@ -7,16 +7,16 @@ from networkx.algorithms.community import girvan_newman
 
 # Define an adjacency matrix (Example: 4 people)
 # need this matrix to be the adjacency matrix we actually use
-adj_matrix = np.array([[0, 1, 0, 0],
-                       [1, 0, 1, 0],
-                       [1, 1, 1, 1],
-                       [0, 0, 1, 0]])
+adj_matrix = np.array([[0, 1862, 37978, 0],
+[1862, 0, 1606, 37978],
+[37978, 1606, 0, 0],
+[0, 37978, 0, 0]])
 
 # Create a NetworkX graph from the adjacency matrix
 G = nx.from_numpy_array(adj_matrix)
 
 # Assume these are the people represented by each row of the adjacency matrix
-people = ["Alice", "Bob", "Charlie", "David"]
+people = ["adid_1", "adid_2", "adid_3", "adid_4"]
 
 # Create a layout for the graph (position of nodes)
 pos = nx.spring_layout(G, k=0.5, seed=42)  # k controls the "spread" of nodes

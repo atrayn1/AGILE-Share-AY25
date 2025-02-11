@@ -1,9 +1,10 @@
 from tests.AY25.testgraph import process_data
-from agile.graphing import createGraph, findAllFrequencyOfColocation, findRelatedNodes, connectRelatedNodes, frequencyOfColocation, dwellTimeAdjacencyMatrix
+from agile.graphing import createGraph, findAllFrequencyOfColocation, findRelatedNodes, connectRelatedNodes, connectNodes, frequencyOfColocation, dwellTimeAdjacencyMatrix
 import time
+import pandas as pd
 
 # Path to the CSV file
-csv_file = "data/dwelltime_testset3.csv"
+csv_file = "data/4adids_dwelltime.csv"
 
 # Read the CSV file using pandas
 data, df = process_data(csv_file)
@@ -24,19 +25,16 @@ def printNodeData():
             break
         print(f"Node {i}: {node_features}")
 
-def print_adjacency_matrix(n=10):
-    """
-    Print the first n rows and columns of the adjacency matrix.
+def print_adjacency_matrix():
+    # Convert the DataFrame to a NumPy array for easier manipulation
+    adj_matrix = df.to_numpy()
+    
+    # Print the adjacency matrix in the desired format
+    print("[")
+    for row in adj_matrix:
+        print(f" {list(row)},")
+    print("]")
 
-    Parameters:
-        n (int): The number of rows and columns to display. Default is 5.
-    """
-    print("Adjacency Matrix (Partial View):")
-    rows, cols = graph.adjacency_matrix.shape
-    # Ensure n does not exceed matrix dimensions
-    n = min(n, rows, cols)
-    for i in range(n):
-        print(graph.adjacency_matrix[i, :n].tolist())
 
 def testFindRelated():
     """
@@ -58,19 +56,19 @@ elapsed_time = end_time - start_time
 print(f"Execution time for frequencyOfColocation: {elapsed_time:.2f} seconds")
 """ 
 
-
+'''
 start_time = time.time()
 colocations = findAllFrequencyOfColocation(df, 25, 5, 100)
 end_time = time.time()
 print(colocations)
 elapsed_time = end_time - start_time
 print(f"Execution time for findAllFrequencyOfColocation: {elapsed_time:.2f} seconds")
+'''
 
+connectNodes(graph, 0, df, 5, 5, 100)
+print(graph.adjacency_matrix.numpy())
 
 '''
-#printNodeData()
-print_adjacency_matrix()
-print("\n")
 #testFindRelated()
 start_time = time.time()
 connectRelatedNodes(graph, 100, df, 1.0)
@@ -78,11 +76,12 @@ end_time = time.time()
 elapsed_time = end_time - start_time
 print(f"Execution time for connectRelatedNodes: {elapsed_time:.2f} seconds")
 print_adjacency_matrix()   
-"""
-
+'''
+'''
 #testing dwell time stuff
 # this is in hours btw
 #print(dwellTimeWithinProximity(graph.get_nodes()[0], graph.get_nodes()[1], 100))
 
 #print(dwellTimeWithinProximity(df, "adid_1", "adid_2"))
 print(dwellTimeAdjacencyMatrix(df))
+'''
