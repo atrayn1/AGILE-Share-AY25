@@ -33,6 +33,9 @@ from agile.report import Report
 from agile.centrality import compute_top_centrality
 from agile.overview import adid_value_counts
 
+# AY 25 Addition
+from agile.graphing import createGraph, connectNodes
+
 from streamlit_option_menu import option_menu
 import pygeohash as gh
 
@@ -633,6 +636,7 @@ elif nav_bar == 'Report':
             except:
                 generated_report_df = st.info('No reports have been generated yet.')
 
+# AY 25 Addition
 elif nav_bar == 'Graph':
 
     sidebar.title('Graph')
@@ -640,11 +644,73 @@ elif nav_bar == 'Graph':
     sidebar.write("The module below generates a graph with the given dataset.")
 
     sidebar.subheader('Generate Graph')
-    
-    graph_sb = sidebar.container() #'Graph'
+
+    graph_sb = sidebar.container()
+
+    with graph_sb:
+        st.title('Graph Controls')
+        st.info(
+            'Query a graph displaying the relationships of interest for a single advertising ID. '
+            'The radius is the circular radius around each point for the advertising ID to search for these points of interest. '
+            'The radius is in meters.'
+        )
+
+        # Form for graph input controls
+        graph_form = st.form(key='graph_controls_form')
+        with graph_form:
+            # Input fields for querying the graph
+            adid = st.text_input('Advertiser ID')
+            radius = st.slider('Radius (meters)', min_value=1, max_value=100, value=10)
+            weight_strength = st.slider('Edge Weight', min_value=1, max_value=10, value=1)
+
+            # Submit button for the form
+            if st.form_submit_button('Generate Graph'):
+                with st.spinner(text="Generating graph..."):
+                    # Create the graph object
+                    graph = createGraph(st.session_state.data.values.tolist())
+
+                    # Connect related nodes in the graph
+                    #connectRelatedNodes(graph, radius, st.session_state.data, weight_strength)
+                    connectNodes(graph, 1, st.session_state.data, 25, 100)
+
+                    # Save the graph object to session state for access in other containers
+                    st.session_state.graph = graph
+
+    # Display the graph overview and adjacency matrix in the overview_c container
+    with overview_c:
+        st.title('Graph Overview')
+
+        if 'graph' in st.session_state:
+            graph = st.session_state.graph
+
+            st.subheader("Graph Nodes and Relationships")
+
+            for node in graph.get_nodes():
+                with st.expander(f"Node: {node.adid}"):
+                    st.write(f"**ADID:** {node.adid}")
+                    
+                    # Retrieve neighbors and relationship strengths
+                    neighbors = node.neighbors
+                    neighbor_info = []
+                    
+                    for neighbor in neighbors:
+                        neighbor_index = graph.nodes.index(neighbor)
+                        strength = graph.adjacency_matrix[graph.nodes.index(node), neighbor_index].item()
+                        neighbor_info.append({"Neighbor ADID": neighbor.adid, "Relationship Strength": strength})
+                    
+                    # Convert to DataFrame and display
+                    if neighbor_info:
+                        neighbor_df = pd.DataFrame(neighbor_info)
+                        st.dataframe(neighbor_df, use_container_width=True)
+                    else:
+                        st.write("No neighbors found for this node.")
+
+        else:
+            st.warning("Please generate a graph using the controls in the sidebar.")
 
 else:
     pass #Nothing should happen, it should never be here
+
 
 # if the button is clicked, reset the data seen by the user to what the user uploaded originally
 # this is done by saving the original data to a pickle file, and reloading it

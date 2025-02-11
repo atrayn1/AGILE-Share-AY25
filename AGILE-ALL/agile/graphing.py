@@ -9,6 +9,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 from .filtering import query_adid, query_location  # Importing the functions
 import pandas as pd
+from .prediction import haversine
+import numpy as np
 
 class Node:
     def __init__(self, adid, features=None):
@@ -299,3 +301,179 @@ def connectRelatedNodes(graph, radius: str, df: pd.DataFrame, weight):
         print(f"Running connectRelatedNodesToBaseNode for node {node.adid}.")
         connectRelatedNodesToBaseNode(node, graph, radius, df, weight)
 
+def frequencyOfColocation(df: pd.DataFrame, adid_1: str, adid_2: str, x_time: int, y_time: int, radius: float) -> int:
+    """
+    Calculates the number of times two ADIDs were colocated within a given distance (in meters) 
+    and within x_time minutes of each other, while appearing again in the same conditions at least y_time minutes later.
+
+    Parameters:
+        df (pd.DataFrame): The dataset containing the data.
+        adid_1 (str): The first advertiser ID to check.
+        adid_2 (str): The second advertiser ID to check.
+        x_time (int): The maximum time difference (in minutes) to consider for the first colocation.
+        y_time (int): The minimum time difference (in minutes) between two consecutive colocations.
+        radius (float): The maximum distance (in meters) to consider for colocation.
+
+    Returns:
+        int: The number of colocations satisfying the conditions.
+    """
+    # Filter the dataframe for the two specified ADIDs
+    filtered_df = df[df['advertiser_id'].isin([adid_1, adid_2])].copy()
+
+    # Convert datetime column to pandas datetime format
+    filtered_df['datetime'] = pd.to_datetime(filtered_df['datetime'])
+
+    # Separate data for each ADID
+    adid1_data = filtered_df[filtered_df['advertiser_id'] == adid_1]
+    adid2_data = filtered_df[filtered_df['advertiser_id'] == adid_2]
+    adid1_data = adid1_data.assign(datetime=pd.to_datetime(df['datetime'])).sort_values(by='datetime').reset_index(drop=True)
+    adid2_data = adid2_data.assign(datetime=pd.to_datetime(df['datetime'])).sort_values(by='datetime').reset_index(drop=True)
+
+    # Initialize a counter for valid colocations
+    colocations = 0
+
+    # Compare each row in adid1_data to each row in adid2_data
+    for _, row1 in adid1_data.iterrows():
+        for _, row2 in adid2_data.iterrows():
+            # Calculate the distance using the haversine function
+            distance = haversine(row1['latitude'], row1['longitude'], row2['latitude'], row2['longitude'])*1000
+            #print(distance)
+
+            # Calculate the time difference in minutes
+            time_diff = abs((row1['datetime'] - row2['datetime']).total_seconds() / 60)
+            #print(time_diff)
+
+            # Check if the first condition is met: within radius and within x_time
+            if distance <= radius and time_diff <= x_time:
+                # Now, check for a second appearance within radius and x_time but at least y_time later
+                for _, row3 in adid1_data.iterrows():
+                    for _, row4 in adid2_data.iterrows():
+                        # Skip the same rows
+                        if row1.equals(row3) and row2.equals(row4):
+                            continue
+
+                        # Calculate the distance and time difference for the second appearance
+                        second_distance = haversine(row3['latitude'], row3['longitude'], row4['latitude'], row4['longitude'])*1000
+                        second_time_diff = abs((row3['datetime'] - row4['datetime']).total_seconds() / 60)
+                        #print(second_distance)
+                        #print(second_time_diff)
+
+                        # Ensure the second appearance meets all conditions
+                        if (
+                            second_distance <= radius
+                            and second_time_diff <= x_time
+                            and abs((row3['datetime'] - row2['datetime']).total_seconds() / 60) >= y_time
+                        ):
+                            colocations += 1
+                            #print(f"First colocation: {row1} and {row2}")
+                            #print(f"Second colocation: {row3} and {row4}")
+
+    return colocations
+
+def findAllFrequencyOfColocation(df: pd.DataFrame, x_time: int, y_time: int, radius: float) -> pd.DataFrame:
+    """
+    Computes the colocation frequency between every pair of ADIDs and stores the results in a matrix.
+
+    Parameters:
+        df (pd.DataFrame): The dataset containing ADID locations and timestamps.
+        x_time (int): The minimum time difference (in minutes) to consider.
+        y_time (int): The minimum time gap (in minutes) before considering repeated colocation.
+        radius (float): The maximum distance (in meters) to consider for colocation.
+
+    Returns:
+        pd.DataFrame: A matrix where each cell (i, j) contains the colocation frequency between ADID_i and ADID_j.
+    """
+    # Get unique ADIDs
+    unique_adids = df['advertiser_id'].unique()
+    num_adids = len(unique_adids)
+
+    # Initialize an adjacency matrix filled with zeros
+    colocation_matrix = pd.DataFrame(np.zeros((num_adids, num_adids)), index=unique_adids, columns=unique_adids)
+
+    # Iterate through all unique pairs of ADIDs
+    for i, adid_1 in enumerate(unique_adids):
+        for j, adid_2 in enumerate(unique_adids):
+            if i < j:  # Avoid redundant calculations (matrix is symmetric)
+                count = frequencyOfColocation(df, adid_1, adid_2, x_time, y_time, radius)
+                colocation_matrix.loc[adid_1, adid_2] = count
+                colocation_matrix.loc[adid_2, adid_1] = count  # Mirror the value
+
+    return colocation_matrix
+
+def mergeResults(adj_matrix1: list, adj_matrix2: list, x: float) -> torch.Tensor:
+    """
+    Merges two adjacency matrices by weighting them based on a given factor x.
+
+    Parameters:
+        adj_matrix1 (list): The first adjacency matrix (list of lists).
+        adj_matrix2 (list): The second adjacency matrix (list of lists).
+        x (float): A value between 0 and 1 indicating how much weight to give to adj_matrix1.
+                   The remaining weight (1 - x) is given to adj_matrix2.
+
+    Returns:
+        torch.Tensor: The merged adjacency matrix as a PyTorch tensor.
+    """
+    if not (0 <= x <= 1):
+        raise ValueError("x must be between 0 and 1")
+
+    tensor1 = torch.tensor(adj_matrix1.values.tolist(), dtype=torch.float32)
+    tensor2 = torch.tensor(adj_matrix2.values.tolist(), dtype=torch.float32)
+
+    if tensor1.shape != tensor2.shape:
+        raise ValueError("Adjacency matrices must have the same shape")
+
+    tensorFinal = ((1 - x) * tensor1) + ((x) * tensor2)
+
+    return tensorFinal
+
+def update_graph_with_matrix(graph, adjacency_matrix: torch.Tensor):
+    """
+    Updates the graph's adjacency matrix and assigns neighbors to each node.
+
+    Parameters:
+        graph: The graph object to update.
+        adjacency_matrix (torch.Tensor): The new adjacency matrix.
+    """
+    # Update the adjacency matrix in the graph
+    graph.adjacency_matrix = adjacency_matrix
+
+    # Reset and update neighbors for each node
+    num_nodes = adjacency_matrix.shape[0]
+    nodes = graph.get_nodes()
+
+    for i in range(len(nodes)):
+        node = nodes[i]  # Assuming graph.nodes is index-based
+        node.neighbors = []  # Reset neighbors
+
+        for j in range(num_nodes):
+            if adjacency_matrix[i, j] > 0:  # If there is a connection
+                node.neighbors.append(nodes[j])
+
+def connectNodes(graph, x, df, x_time, radius):
+    """
+    Connects nodes in a graph based on colocation frequency within a given time and distance.
+
+    This function calculates the frequency of colocation between nodes (ADIDs) based on a dataset,
+    merges the adjacency matrices using a weighted factor `x`, and updates the graph with the final matrix.
+
+    Parameters:
+        graph (Graph): The graph object to update.
+        x (float): The weighting factor (between 0 and 1) used when merging adjacency matrices.
+        df (pd.DataFrame): The dataset containing location and time data for ADIDs.
+        x_time (int): The time threshold (in minutes) for considering colocation.
+        radius (float): The maximum distance (in meters) for colocation.
+
+    Returns:
+        None: The function updates the graph in-place with new connections.
+    """
+    # Compute the adjacency matrix based on colocation frequency
+    matrix1 = findAllFrequencyOfColocation(df, x_time, x_time, radius)
+
+    # Clone the first matrix to create a second identical matrix
+    matrix2 = matrix1.copy()
+
+    # Merge the two matrices based on the weighting factor x
+    finalMatrix = mergeResults(matrix1, matrix2, x)
+
+    # Update the graph with the final adjacency matrix
+    update_graph_with_matrix(graph, finalMatrix)
