@@ -19,7 +19,26 @@ G = nx.from_numpy_array(adj_matrix)
 people = ["adid_1", "adid_2", "adid_3", "adid_4"]
 
 # Create a layout for the graph (position of nodes)
-pos = nx.spring_layout(G, k=0.5, seed=42)  # k controls the "spread" of nodes
+#pos = nx.spring_layout(G, k=0.5, seed=42)  # k controls the "spread" of nodes
+#pos = nx.circular_layout(G)  # Creates a circular layout
+pos = nx.spectral_layout(G)  # Uses the spectral layout, often good for community detection
+
+# Adjust the layout based on edge weights (stronger edges pull nodes closer)
+for edge in G.edges():
+    x0, y0 = pos[edge[0]]
+    x1, y1 = pos[edge[1]]
+    
+    # Adjust the distance based on edge weight (higher weight -> closer nodes)
+    edge_weight = adj_matrix[edge[0], edge[1]]
+    
+    # You can use a scaling factor to control how much the edge weight affects the distance
+    scaling_factor = 0.001  # Experiment with this value to control the effect
+    distance = edge_weight * scaling_factor
+    
+    # Update positions to pull nodes closer for stronger edges
+    pos[edge[0]] = (x0 + distance, y0 + distance)
+    pos[edge[1]] = (x1 - distance, y1 - distance)
+
 
 # Extract node positions
 nodes_x = [pos[node][0] for node in G.nodes()]
@@ -28,6 +47,10 @@ nodes_y = [pos[node][1] for node in G.nodes()]
 # Calculate node size based on degree (connections)
 node_sizes = [G.degree(node) * 10 for node in G.nodes()]  # Degree-based size scaling
 
+# not sure how to use this:
+centrality = nx.betweenness_centrality(G)  # or closeness_centrality, degree_centrality, etc.
+#node_sizes = [centrality[node] * 5000 for node in G.nodes()]
+
 # Detect communities (optional: community detection)
 communities = girvan_newman(G)
 first_community = next(communities)  # Get the first split (you can adjust this)
@@ -35,6 +58,10 @@ first_community = next(communities)  # Get the first split (you can adjust this)
 # Assign colors to communities
 community_colors = {node: i for i, community in enumerate(first_community) for node in community}
 node_colors = [community_colors[node] for node in G.nodes()]
+
+# Assign node shapes based on community
+community_shapes = {0: 'circle', 1: 'square', 2: 'diamond', 3: 'triangle', 4: 'star', 5: 'hexagon', 6: 'pentagon', 7: 'x', 8: 'bowtie'}  # Define shape for each community
+node_shapes = [community_shapes[community_colors[node]] for node in G.nodes()]
 
 # Prepare hover info (additional details when hovering over nodes)
 hover_info = [f"Name: {name}<br>Connections: {G.degree(name)}" for name in people]
@@ -51,6 +78,8 @@ nodes = go.Scatter(
         size=node_sizes,  # Vary size based on node degree
         color=node_colors,  # Color based on community
         colorscale='Viridis',  # Color scale for communities
+        colorbar=dict(title="Community"),
+        symbol=node_shapes,
         line=dict(color='black', width=1)
     )
 )
@@ -81,7 +110,9 @@ fig = go.Figure(data=[edges, nodes])
 # Customize the layout of the graph
 fig.update_layout(
     title="Human Network Graph",
-    showlegend=False,
+    showlegend=True,
+    legend_title="Communities",
+    legend=dict(x=0.85, y=0.95),
     hovermode='closest',
     xaxis=dict(showgrid=False, zeroline=False),
     yaxis=dict(showgrid=False, zeroline=False)
@@ -93,4 +124,4 @@ fig.show()
 # To add the plot to the existing AGILE webpage
 # I want this html file to go straight to the 
 # visual_graphs directory
-#fig.write_html("visual_graphs/interactive_network_graph.html")
+#fig.write_html("interactive_network_graph.html")

@@ -739,13 +739,11 @@ elif nav_bar == 'Graph':
                         st.session_state.data = query_adid(adid, st.session_state.data) # Filter the data
                         res = find_all_nearby_nodes(st.session_state.data, radius)
                         results_c.write(res)
-                    
-                    # Display the interactive graph
-                    # Doesn't work yet -- Maybe this is not the right plavce for it
-                    st.title("Interactive Human Network Graph")
-                    st.components.v1.html(open("agile/visual_graphs/interactive_network_graph.html", 'r').read(), height=600)
 
-
+        # Don't know how to make this work 
+        # Display the interactive network graph HTML
+        #st.subheader('Interactive Network Graph')
+        #st.components.v1.html(open('agile/interactive_network_graph.html', 'r').read(), height=800)
 else:
     pass #Nothing should happen, it should never be here
 
@@ -785,4 +783,3 @@ with preview_c:
     # If Data means if they have uploaded a file
     if st.session_state.uploaded:
         st.dataframe(st.session_state.data)
-
