@@ -3,6 +3,10 @@
 # Sam Chanow
 # 2022-2023
 
+# IMPORTANT
+# Look at line 743 to see where I tried to display the graph
+# Don't think I put it in the right spot
+
 import streamlit as st
 import streamlit.components.v1 as components
 import csv
@@ -735,6 +739,11 @@ elif nav_bar == 'Graph':
                         st.session_state.data = query_adid(adid, st.session_state.data) # Filter the data
                         res = find_all_nearby_nodes(st.session_state.data, radius)
                         results_c.write(res)
+                    
+                    # Display the interactive graph
+                    # Doesn't work yet -- Maybe this is not the right plavce for it
+                    st.title("Interactive Human Network Graph")
+                    st.components.v1.html(open("agile/visual_graphs/interactive_network_graph.html", 'r').read(), height=600)
 
 
 else:
