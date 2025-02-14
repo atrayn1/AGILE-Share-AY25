@@ -356,11 +356,10 @@ def get_continuous_periods(df, adid, max_time_diff, max_distance):
     
     :param df: DataFrame containing ['advertiser_id', 'datetime', 'latitude', 'longitude']
     :param adid: The ADID to filter for
-    :param max_time_diff: Maximum allowed time difference between consecutive points before a new period begins
+    :param max_time_diff: Maximum allowed time difference between consecutive points
     :param max_distance: Maximum allowed distance between consecutive points
     :return: List of tuples (start_time, end_time) for continuous periods
     """
-    print(max_time_diff)
     df = df[df['advertiser_id'] == adid].reset_index(drop=True)
     periods = []
     current_start = df.iloc[0]['datetime']
@@ -375,19 +374,17 @@ def get_continuous_periods(df, adid, max_time_diff, max_distance):
             # Extend the current period if the time and distance conditions are met
             current_end = df.iloc[i]['datetime']
         else:
-            # Check if the time difference is greater than the allowed threshold before appending
-            if (current_end - current_start).total_seconds() >= max_time_diff:
-                periods.append((current_start, current_end))
-            
-            # Start a new period
+            # No overlap, record the current period and start a new one
+            periods.append((current_start, current_end))
             current_start = df.iloc[i]['datetime']
             current_end = df.iloc[i]['datetime']
     
-    # Add the last period if the time difference is greater than max_time_diff
-    if (current_end - current_start).total_seconds() >= max_time_diff:
-        periods.append((current_start, current_end))
+    # Add the last period
+    periods.append((current_start, current_end))
     
     return periods
+
+
 
 
 def dwellTimeWithinProximity(periods1, periods2):

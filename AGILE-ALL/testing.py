@@ -1,15 +1,18 @@
 from tests.AY25.testgraph import process_data
-from agile.graphing import createGraph, findAllFrequencyOfColocation, findRelatedNodes, connectRelatedNodes, frequencyOfColocation, dwellTimeAdjacencyMatrix
+from agile.graphing import createGraph, findAllFrequencyOfColocation, frequencyOfColocation, dwellTimeAdjacencyMatrix, mergeResults
 import time
 
 # Path to the CSV file
-csv_file = "data/dwelltime_testset3.csv"
+csv_file = "data/dwelltime_testset.csv"
 
 # Read the CSV file using pandas
 data, df = process_data(csv_file)
 print(df)
 # Create the graph
 graph = createGraph(data)
+
+colocations = findAllFrequencyOfColocation(df, 5, 5, 100)
+print(colocations)
 
 """
 start_time = time.time()
@@ -18,16 +21,6 @@ end_time = time.time()
 print(colocations)
 elapsed_time = end_time - start_time
 print(f"Execution time for frequencyOfColocation: {elapsed_time:.2f} seconds")
-""" 
-
-"""
-start_time = time.time()from .filtering import query_adid, query_location  # Importing the functions
-
-colocations = findAllFrequencyOfColocation(df, 5, 3, 100)
-end_time = time.time()
-print(colocations)
-elapsed_time = end_time - start_time
-print(f"Execution time for findAllFrequencyOfColocation: {elapsed_time:.2f} seconds")
 """
 
 """
@@ -48,4 +41,4 @@ print_adjacency_matrix()
 #print(dwellTimeWithinProximity(graph.get_nodes()[0], graph.get_nodes()[1], 100))
 
 #print(dwellTimeWithinProximity(df, "adid_1", "adid_2"))
-#print(dwellTimeAdjacencyMatrix(df, 300, 100))
+print(dwellTimeAdjacencyMatrix(df, 5, 5, 100))
