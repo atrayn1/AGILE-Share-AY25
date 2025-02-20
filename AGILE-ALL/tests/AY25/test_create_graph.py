@@ -1,6 +1,6 @@
 import pytest
 import torch
-from agile.graphing import createGraph, findAllFrequencyOfColocation, dwellTimeAdjacencyMatrix, mergeResults
+from agile.graphing import createGraph, mergeResults, connectNodes
 from .testgraph import process_data
 import numpy as np
 
@@ -13,14 +13,15 @@ def setup_data():
     data, df = process_data(csv_file)
     graph = createGraph(data)
     
+    frequency_result, adjacency_result = connectNodes(graph, 1, df, 5, 5, 100)
+
     # Run these expensive operations only once
-    frequency_result = findAllFrequencyOfColocation(df, 5, 5, 100)
-    adjacency_result = dwellTimeAdjacencyMatrix(df, 5, 5, 100)
-    
-    return df, frequency_result, adjacency_result
+    result = mergeResults(frequency_result, adjacency_result, 0)
+
+    return df, frequency_result, adjacency_result, result, graph
 
 def test_findAllFrequencyOfColocation(setup_data):
-    df, frequency_result, _ = setup_data
+    df, frequency_result, _, _, _ = setup_data
     # Test for expected list of lists output for findAllFrequencyOfColocation
     expected_output = [
         [0., 1., 3., 0.],
@@ -36,7 +37,7 @@ def test_findAllFrequencyOfColocation(setup_data):
     assert result == expected_output, f"Expected {expected_output}, but got {result}"
 
 def test_dwellTimeAdjacencyMatrix(setup_data):
-    df, _, adjacency_result = setup_data
+    df, _, adjacency_result, _, _ = setup_data
     # Test for expected list of lists output for dwellTimeAdjacencyMatrix
     expected_output = [[0, 13.333333333333334, 34.666666666666664, 0], 
                         [13.333333333333334, 0, 13.333333333333334, 34.666666666666664], 
@@ -51,7 +52,7 @@ def test_dwellTimeAdjacencyMatrix(setup_data):
     assert result == expected_output, f"Expected {expected_output}, but got {result}"
 
 def test_mergeResults(setup_data):
-    df, frequency_result, adjacency_result = setup_data
+    df, frequency_result, adjacency_result, result, _ = setup_data
     # Test for expected list of lists output for mergeResults
     expected_output = [
         [np.nan, 13.333333015441895, 11.555556297302246, np.nan],
@@ -60,10 +61,14 @@ def test_mergeResults(setup_data):
         [np.nan, 11.555556297302246, np.nan, np.nan]
     ]
     
-    result = mergeResults(frequency_result, adjacency_result, 0)
-    
     # Convert result tensor to list of lists
     result_list = result.tolist()  # Converts tensor to a Python list
     
     # Check if the output matches the expected list of lists
     assert result_list[0][1] == expected_output[0][1] and result_list[0][2] == expected_output[0][2] and result_list[1][0] == expected_output[1][0] and result_list[1][2] == expected_output[1][2] and  result_list[1][3] == expected_output[1][3] and result_list[2][0] == expected_output[2][0] and result_list[2][1] == expected_output[2][1] and result_list[3][1] == expected_output[3][1], f"Expected {expected_output}, but got {result_list}"
+
+def test_num_edges(setup_data):
+    df, _, adjacency_result, _, graph = setup_data
+    
+    # Check if the output matches the expected list of lists
+    assert len(graph.edges) == 4, f"Expected 4, but got {result}"

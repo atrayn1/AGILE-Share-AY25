@@ -1,5 +1,5 @@
 from tests.AY25.testgraph import process_data
-from agile.graphing import createGraph, findAllFrequencyOfColocation, frequencyOfColocation, dwellTimeAdjacencyMatrix, mergeResults
+from agile.graphing import createGraph, findAllFrequencyOfColocation, frequencyOfColocation, dwellTimeAdjacencyMatrix, mergeResults, connectNodes
 import time
 
 # Path to the CSV file
@@ -11,9 +11,15 @@ print(df)
 # Create the graph
 graph = createGraph(data)
 
+connectNodes(graph, 1, df, 5, 5, 100)
+
+for edge in graph.edges:
+    print(edge.__repr__())
+
+"""
 colocations = findAllFrequencyOfColocation(df, 5, 5, 100)
 print(colocations)
-
+"""
 """
 start_time = time.time()
 colocations = frequencyOfColocation(df, "adid_1", "adid_2", 5, 5, 100)
@@ -41,4 +47,4 @@ print_adjacency_matrix()
 #print(dwellTimeWithinProximity(graph.get_nodes()[0], graph.get_nodes()[1], 100))
 
 #print(dwellTimeWithinProximity(df, "adid_1", "adid_2"))
-print(dwellTimeAdjacencyMatrix(df, 5, 5, 100))
+#print(dwellTimeAdjacencyMatrix(df, 5, 5, 100))
