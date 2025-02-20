@@ -1,9 +1,10 @@
 from tests.AY25.testgraph import process_data
-from agile.graphing import createGraph, findAllFrequencyOfColocation, frequencyOfColocation, dwellTimeAdjacencyMatrix, mergeResults, connectNodes
+from agile.graphing import createGraph, findAllFrequencyOfColocation, frequencyOfColocation, mergeResults, connectNodes
+from agile.classifier import classifyEdges
 import time
 
 # Path to the CSV file
-csv_file = "data/dwelltime_testset.csv"
+csv_file = "data/hainan.csv"
 
 # Read the CSV file using pandas
 data, df = process_data(csv_file)
@@ -11,10 +12,9 @@ print(df)
 # Create the graph
 graph = createGraph(data)
 
-connectNodes(graph, 1, df, 5, 5, 100)
+connectNodes(graph, 1, df, 5, 5, 50)
 
-for edge in graph.edges:
-    print(edge.__repr__())
+classifyEdges(graph, 50)
 
 """
 colocations = findAllFrequencyOfColocation(df, 5, 5, 100)

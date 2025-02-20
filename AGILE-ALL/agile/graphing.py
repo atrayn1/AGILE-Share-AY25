@@ -149,6 +149,7 @@ class Graph:
         self.adjacency_matrix = torch.zeros((0, 0))  # Adjacency matrix
         self.colocations_matrix = torch.zeros((0, 0))  # Colocation matrix
         self.dwell_time_matrix = torch.zeros((0, 0))  # Dwell time matrix
+        self.relationship_type = None
 
     def add_node(self, adid, features=None):
         """
