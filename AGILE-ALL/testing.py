@@ -1,6 +1,7 @@
 from tests.AY25.testgraph import process_data
 from agile.graphing import createGraph, findAllFrequencyOfColocation, frequencyOfColocation, mergeResults, connectNodes
 from agile.classifier import classifyEdges
+from agile.visual_graph import visualize_graph
 import time
 
 # Path to the CSV file
@@ -14,7 +15,7 @@ graph = createGraph(data)
 
 connectNodes(graph, 1, df, 5, 5, 50)
 
-classifyEdges(graph, 50)
+#classifyEdges(graph, 50)
 
 """
 colocations = findAllFrequencyOfColocation(df, 5, 5, 100)
