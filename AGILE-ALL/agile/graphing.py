@@ -4,9 +4,6 @@ January 2025
 MIDN 1/C Nick Summers, Alex Traynor, Anuj Sirsikar
 """
 
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
 import pandas as pd
 from .prediction import haversine
 import numpy as np
@@ -27,12 +24,11 @@ class Node:
         self.neighbors = []  # List to store neighboring node indices
         self.edges = []  # List to store edges connected to this node
         self.continuous_periods = []  # List to store continuous time periods
-        self.continuous_periods_coords = []  # List to store continuous time periods
 
     def getEdge(self, node):
-        print("here")
+        #print("here")
         for edge in self.edges:
-            print(edge.node1.adid)
+            #print(edge.node1.adid)
             if(edge.forNode(node)):
                 return edge
         return None
@@ -95,9 +91,6 @@ class Edge:
         self.overlap_periods = []
 
     def forNode(self, node):
-        print(self.node1.adid)
-        print(self.node2.adid)
-        print(node.adid)
         if(self.node1.adid == node.adid or self.node2.adid == node.adid):
             return True
         return False
@@ -127,14 +120,14 @@ class Graph:
         nodes (list): A list of all nodes in the graph.
         num_nodes (int): The total number of nodes in the graph.
         edges (list): A list of all edges in the graph.
-        adjacency_matrix (torch.Tensor): The adjacency matrix representing node connections.
-        colocations_matrix (torch.Tensor): A matrix storing colocation data.
-        dwell_time_matrix (torch.Tensor): A matrix storing dwell time data.
+        adjacency_matrix (np.ndarray): The adjacency matrix representing node connections.
+        colocations_matrix (np.ndarray): A matrix storing colocation data.
+        dwell_time_matrix (np.ndarray): A matrix storing dwell time data.
 
     Methods:
         add_node(adid, features=None): Adds a new node to the graph.
         remove_node(node): Removes a node from the graph and updates the adjacency matrix.
-        add_edge(node1, node2, weight): Adds a new edge between two nodes and updates the adjacency matrix.
+        add_edge(node1, node2): Adds a new edge between two nodes and updates the adjacency matrix.
         remove_edge(node1, node2): Removes an edge between two nodes and updates the adjacency matrix.
         get_neighbors(node): Returns the neighbors of a given node.
         get_node_by_adid(adid): Retrieves a node by its ADID.
@@ -146,9 +139,9 @@ class Graph:
         self.nodes = []  # List of nodes
         self.num_nodes = 0  # Number of nodes
         self.edges = []  # List of edges
-        self.adjacency_matrix = torch.zeros((0, 0))  # Adjacency matrix
-        self.colocations_matrix = torch.zeros((0, 0))  # Colocation matrix
-        self.dwell_time_matrix = torch.zeros((0, 0))  # Dwell time matrix
+        self.adjacency_matrix = np.zeros((0, 0))  # Adjacency matrix
+        self.colocations_matrix = np.zeros((0, 0))  # Colocation matrix
+        self.dwell_time_matrix = np.zeros((0, 0))  # Dwell time matrix
         self.relationship_type = None
 
     def add_node(self, adid, features=None):
@@ -167,7 +160,7 @@ class Graph:
         self.num_nodes += 1
 
         # Update adjacency matrix to account for the new node
-        new_adj_matrix = torch.zeros((self.num_nodes, self.num_nodes))
+        new_adj_matrix = np.zeros((self.num_nodes, self.num_nodes))
         if self.num_nodes > 1:
             new_adj_matrix[:-1, :-1] = self.adjacency_matrix
         self.adjacency_matrix = new_adj_matrix
@@ -186,15 +179,15 @@ class Graph:
             self.nodes.remove(node)
             self.num_nodes -= 1
 
-            # Update adjacency matrix
-            self.adjacency_matrix = torch.cat((
-                self.adjacency_matrix[:index],
-                self.adjacency_matrix[index + 1:]
-            ), dim=0)
-            self.adjacency_matrix = torch.cat((
+            # Update adjacency matrix by removing the corresponding row and column
+            self.adjacency_matrix = np.concatenate((
+                self.adjacency_matrix[:index, :],
+                self.adjacency_matrix[index + 1:, :]
+            ), axis=0)
+            self.adjacency_matrix = np.concatenate((
                 self.adjacency_matrix[:, :index],
                 self.adjacency_matrix[:, index + 1:]
-            ), dim=1)
+            ), axis=1)
 
             # Remove this node from the neighbors of all other nodes
             for n in self.nodes:
@@ -276,6 +269,15 @@ class Graph:
                 return node
         return None
     
+    def get_node_names(self):
+        """
+        Returns a list of ADID values for all nodes in the graph.
+        
+        Returns:
+            list: A list containing the adid of each node.
+        """
+        return [node.adid for node in self.nodes]
+    
 def createGraph(data):
     """
     Creates a graph from the given data.
@@ -318,47 +320,40 @@ def createGraph(data):
     
     return graph
 
-def mergeResults(adj_matrix1: list, adj_matrix2: list, x: float) -> torch.Tensor:
+def mergeResults(adj_matrix1: list, adj_matrix2: list, x: float) -> np.ndarray:
     """
-    Merges two adjacency matrices by weighting them based on a given factor x.
+    Merges two adjacency matrices by performing element-wise division of the second matrix by the first matrix.
 
     Parameters:
         adj_matrix1 (list): The first adjacency matrix (list of lists).
         adj_matrix2 (list): The second adjacency matrix (list of lists).
-        x (float): A value between 0 and 1 indicating how much weight to give to adj_matrix1.
-                   The remaining weight (1 - x) is given to adj_matrix2.
+        x (float): Unused parameter, retained for compatibility.
 
     Returns:
-        torch.Tensor: The merged adjacency matrix as a PyTorch tensor.
+        np.ndarray: The merged adjacency matrix as a NumPy array.
     """
-    if not (0 <= x <= 1):
-        raise ValueError("x must be between 0 and 1")
+    array1 = np.array(adj_matrix1, dtype=np.float32)
+    array2 = np.array(adj_matrix2, dtype=np.float32)
 
-    tensor1 = torch.tensor(adj_matrix1, dtype=torch.float32)
-    tensor2 = torch.tensor(adj_matrix2, dtype=torch.float32)
-
-    if tensor1.shape != tensor2.shape:
+    if array1.shape != array2.shape:
         raise ValueError("Adjacency matrices must have the same shape")
-    print("x: ", x)
-    #tensorFinal = tensor1 + tensor2
-    print(tensor1)
-    print(tensor2)
-    tensorFinal = (tensor2) / (tensor1)
+    
+    return array2 / array1
 
-    return tensorFinal
-
-def update_graph_with_matrix(graph, adjacency_matrix: torch.Tensor, matrix1, matrix2):
+def update_graph_with_matrix(graph, adjacency_matrix: np.ndarray, matrix1, matrix2):
     """
     Updates the graph's adjacency matrix and assigns neighbors to each node.
 
     Parameters:
         graph: The graph object to update.
-        adjacency_matrix (torch.Tensor): The new adjacency matrix.
+        adjacency_matrix (np.ndarray): The new adjacency matrix.
+        matrix1 (list or np.ndarray): The first matrix (e.g., colocation data).
+        matrix2 (list or np.ndarray): The second matrix (e.g., dwell time data).
     """
     # Update the adjacency matrix in the graph
-    graph.adjacency_matrix = adjacency_matrix
-    graph.colocations_matrix = torch.tensor(matrix1, dtype=torch.float32)
-    graph.dwell_time_matrix = torch.tensor(matrix2, dtype=torch.float32)
+    graph.adjacency_matrix = np.array(adjacency_matrix, dtype=np.float32)
+    graph.colocations_matrix = np.array(matrix1, dtype=np.float32)
+    graph.dwell_time_matrix = np.array(matrix2, dtype=np.float32)
 
     # Reset and update neighbors for each node
     num_nodes = adjacency_matrix.shape[0]
@@ -371,6 +366,7 @@ def update_graph_with_matrix(graph, adjacency_matrix: torch.Tensor, matrix1, mat
         for j in range(num_nodes):
             if adjacency_matrix[i, j] > 0:  # If there is a connection
                 node.neighbors.append(nodes[j])
+
 
 def connectNodes(graph, x, df, min_time_together, max_time_diff, radius):
     """
@@ -598,7 +594,7 @@ def findAllDwellTimeWithinProximity(graph, min_time_together):
                 edge.addOverlapTime(overlap_time)
                 edge.addOverlapPeriods(overlap_periods)
 
-            print("overlap, ", overlap_periods)
+            #print("overlap, ", overlap_periods)
             if overlap_time < min_time_together:
                 overlap_time = 0
             adjacency_matrix[i][j] = overlap_time

@@ -1,51 +1,71 @@
+import sys
+import numpy as np
 from tests.AY25.testgraph import process_data
-from agile.graphing import createGraph, findAllFrequencyOfColocation, frequencyOfColocation, mergeResults, connectNodes
+from agile.graphing import createGraph, connectNodes
 from agile.classifier import classifyEdges
-from agile.visual_graph import visualize_graph
-import time
+from visual_graph import generate_visualization
 
-# Path to the CSV file
-csv_file = "data/hainan.csv"
+# Default parameters
+DEFAULT_CSV_FILE = "data/hainan.csv"
+DEFAULT_MIN_TIME_TOGETHER = 3
+DEFAULT_MAX_TIME_DIFF = 10
+DEFAULT_RADIUS = 50
 
-# Read the CSV file using pandas
-data, df = process_data(csv_file)
-print(df)
-# Create the graph
-graph = createGraph(data)
+def start_visualization(csv_file, min_time_together, max_time_diff, radius):
+    """
+    Processes the CSV file, creates a graph, connects nodes, and generates an interactive visualization.
 
-connectNodes(graph, 1, df, 5, 5, 50)
+    Args:
+        csv_file (str): Path to the CSV file.
+        min_time_together (int): Minimum time spent together for connection.
+        max_time_diff (int): Maximum time difference allowed between interactions.
+        radius (int): The spatial radius for considering a connection.
 
-#classifyEdges(graph, 50)
+    Returns:
+        tuple: The graph object and adjacency matrix.
+    """
+    data, df = process_data(csv_file)
+    print(df)  # Print dataframe for debugging
+    graph = createGraph(data)
+    connectNodes(graph, 1, df, min_time_together, max_time_diff, radius)
+    adj_matrix = np.nan_to_num(graph.adjacency_matrix, nan=0.0)
 
-"""
-colocations = findAllFrequencyOfColocation(df, 5, 5, 100)
-print(colocations)
-"""
-"""
-start_time = time.time()
-colocations = frequencyOfColocation(df, "adid_1", "adid_2", 5, 5, 100)
-end_time = time.time()
-print(colocations)
-elapsed_time = end_time - start_time
-print(f"Execution time for frequencyOfColocation: {elapsed_time:.2f} seconds")
-"""
+    generate_visualization(graph, adj_matrix)
 
-"""
-#printNodeData()
-print_adjacency_matrix()
-print("\n")
-#testFindRelated()
-start_time = time.time()
-connectRelatedNodes(graph, 100, df, 1.0)
-end_time = time.time()
-elapsed_time = end_time - start_time
-print(f"Execution time for connectRelatedNodes: {elapsed_time:.2f} seconds")
-print_adjacency_matrix()   
-"""
+    return graph, adj_matrix
 
-#testing dwell time stuff
-# this is in hours btw
-#print(dwellTimeWithinProximity(graph.get_nodes()[0], graph.get_nodes()[1], 100))
+def start_classifier(csv_file=DEFAULT_CSV_FILE, min_time_together=DEFAULT_MIN_TIME_TOGETHER, max_time_diff=DEFAULT_MAX_TIME_DIFF, radius=DEFAULT_RADIUS):
+    """
+    Processes the CSV file, creates a graph, connects nodes, and classifies edges.
 
-#print(dwellTimeWithinProximity(df, "adid_1", "adid_2"))
-#print(dwellTimeAdjacencyMatrix(df, 5, 5, 100))
+    Args:
+        csv_file (str): Path to the CSV file.
+        min_time_together (int): Minimum time spent together for connection.
+        max_time_diff (int): Maximum time difference allowed between interactions.
+        radius (int): The spatial radius for considering a connection.
+    """
+    data, df = process_data(csv_file)
+    print(df)
+    graph = createGraph(data)
+    connectNodes(graph, 1, df, min_time_together, max_time_diff, radius)
+    classifyEdges(graph, 50)
+
+# Check if command-line arguments are provided
+if len(sys.argv) > 1:
+    # Read command-line arguments
+    csv_file = sys.argv[1] if len(sys.argv) > 1 else DEFAULT_CSV_FILE
+    min_time_together = int(sys.argv[2]) if len(sys.argv) > 2 else DEFAULT_MIN_TIME_TOGETHER
+    max_time_diff = int(sys.argv[3]) if len(sys.argv) > 3 else DEFAULT_MAX_TIME_DIFF
+    radius = int(sys.argv[4]) if len(sys.argv) > 4 else DEFAULT_RADIUS
+    print(f"Running with parameters: {csv_file}, {min_time_together}, {max_time_diff}, {radius}")
+
+else:
+    # Use default values
+    csv_file = DEFAULT_CSV_FILE
+    min_time_together = DEFAULT_MIN_TIME_TOGETHER
+    max_time_diff = DEFAULT_MAX_TIME_DIFF
+    radius = DEFAULT_RADIUS
+    print(f"Running with default parameters: {csv_file}, {min_time_together}, {max_time_diff}, {radius}")
+
+# Start visualization
+start_visualization(csv_file, min_time_together, max_time_diff, radius)
