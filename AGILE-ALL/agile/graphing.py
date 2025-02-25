@@ -9,6 +9,7 @@ from .prediction import haversine
 import numpy as np
 import math
 from datetime import timedelta
+import sys
 
 class Node:
     def __init__(self, adid, features=None):
@@ -20,10 +21,11 @@ class Node:
             features (list, optional): Features of the node. Defaults to None.
         """
         self.adid = adid
-        self.features = features if features else []
+        self.original_datapoints = [] # List to store all lats/longs/timestamps
         self.neighbors = []  # List to store neighboring node indices
         self.edges = []  # List to store edges connected to this node
         self.continuous_periods = []  # List to store continuous time periods
+        self.squares = [] # List to store what square something is a part of
 
     def getEdge(self, node):
         #print("here")
@@ -290,30 +292,34 @@ def createGraph(data):
     Returns:
         Graph: A constructed graph with nodes and features.
     """
-    graph = Graph()  # Start with an empty graph
-    adid_to_node_map = {}  # Mapping from ADID to node index
+    min_lat, max_lat, min_lon, max_lon = preprocess(data)
+    
+    graph = Graph()
+    adid_to_node_map = {}
 
     for row in data:
-        if len(row) < 4:  # Ensure there are at least 4 columns: ADID, datetime, lat, lon
+        if len(row) < 4:
             print(f"Skipping row due to insufficient columns: {row}")
             continue
 
         adid = row[0]
         try:
-            # Extract datetime, latitude, longitude, and additional data
+            debug_print("Creating graph: Adding {} node.".format(adid))
             datetime = row[2]
-            lat, lon = float(row[3]), float(row[4])
-            additional_data = row[5:]  # Treat remaining columns as individual features
+            coords = (float(row[3]), float(row[4]))
+            additional_data = row[5:]
 
             if adid not in adid_to_node_map:
-                # Add a new node to the graph
-                node = graph.add_node(adid)  # Include ADID when adding the new node
+                node = graph.add_node(adid)
                 adid_to_node_map[adid] = node
 
-            # Update features of the node
             node = adid_to_node_map[adid]
-            node.features.append([adid, datetime, lat, lon] + additional_data)
-
+            node.original_datapoints.append([datetime, coords])
+            
+            # Assign grid square index to the node
+            grid_index = get_grid_square(coords, (min_lat, min_lon), (max_lat, max_lon), width_meters=100)
+            node.squares.append(grid_index)
+        
         except (ValueError, IndexError) as e:
             print(f"Skipping row due to invalid data: {row} - Error: {e}")
             continue
@@ -332,6 +338,7 @@ def mergeResults(adj_matrix1: list, adj_matrix2: list, x: float) -> np.ndarray:
     Returns:
         np.ndarray: The merged adjacency matrix as a NumPy array.
     """
+    debug_print("Merging matricies...")
     array1 = np.array(adj_matrix1, dtype=np.float32)
     array2 = np.array(adj_matrix2, dtype=np.float32)
 
@@ -351,6 +358,7 @@ def update_graph_with_matrix(graph, adjacency_matrix: np.ndarray, matrix1, matri
         matrix2 (list or np.ndarray): The second matrix (e.g., dwell time data).
     """
     # Update the adjacency matrix in the graph
+    debug_print("Updating graph with matrix...")
     graph.adjacency_matrix = np.array(adjacency_matrix, dtype=np.float32)
     graph.colocations_matrix = np.array(matrix1, dtype=np.float32)
     graph.dwell_time_matrix = np.array(matrix2, dtype=np.float32)
@@ -367,8 +375,7 @@ def update_graph_with_matrix(graph, adjacency_matrix: np.ndarray, matrix1, matri
             if adjacency_matrix[i, j] > 0:  # If there is a connection
                 node.neighbors.append(nodes[j])
 
-
-def connectNodes(graph, x, df, min_time_together, max_time_diff, radius):
+def connectNodes(graph, x, min_time_together, max_time_diff, radius):
     """
     Connects nodes in a graph based on colocation frequency within a given time and distance.
 
@@ -386,7 +393,7 @@ def connectNodes(graph, x, df, min_time_together, max_time_diff, radius):
     Returns:
         None: The function updates the graph in-place with new connections.
     """
-    findAllContinuousPeriods(graph, df, max_time_diff*60, radius)
+    findAllContinuousPeriods(graph, max_time_diff*60, radius)
 
     # Compute the adjacency matrix based on colocation frequency
     matrix1 = findAllFrequencyOfColocation(graph, min_time_together)
@@ -402,7 +409,7 @@ def connectNodes(graph, x, df, min_time_together, max_time_diff, radius):
 
     return matrix1, matrix2
 
-def findAllContinuousPeriods(graph, df, max_time_diff, max_distance):
+def findAllContinuousPeriods(graph, max_time_diff, max_distance):
     """
     Computes and sets the continuous periods for every node in the graph.
 
@@ -412,61 +419,81 @@ def findAllContinuousPeriods(graph, df, max_time_diff, max_distance):
         max_time_diff (int): Maximum allowed time difference between consecutive points.
         max_distance (float): Maximum allowed distance between consecutive points.
     """
+    debug_print("Finding continuous periods...")
     for node in graph.nodes:
-        periods = get_continuous_periods(df, node.adid, max_time_diff, max_distance)
+        periods = get_continuous_periods(node, max_time_diff, max_distance)
         node.continuous_periods = periods
 
-def get_continuous_periods(df, adid, max_time_diff=300, max_distance=100):
+def get_continuous_periods(node, max_time_diff, max_distance):
     """
-    Identify continuous time periods for a given ADID where the time between successive
+    Identify continuous time periods for a given node where the time between successive
     data points is less than `max_time_diff` and the distance is within `max_distance`.
     Also, return the average latitude and longitude for each continuous period.
     
-    :param df: DataFrame containing ['advertiser_id', 'datetime', 'latitude', 'longitude']
-    :param adid: The ADID to filter for
-    :param max_time_diff: Maximum allowed time difference between consecutive points
+    :param node: Node object containing `original_datapoints` as a list of [timestamp, (lat, long)]
+    :param max_time_diff: Maximum allowed time difference between consecutive points (in seconds)
     :param max_distance: Maximum allowed distance between consecutive points
-    :return: Two lists: periods and coords
+    :return: List of tuples containing continuous periods and their average coordinates
     """
-    df = df[df['advertiser_id'] == adid].reset_index(drop=True)
+    datapoints = node.original_datapoints
+    if not datapoints:
+        return []
+    
     periods = []
+    current_start = datapoints[0][0]
+    current_end = datapoints[0][0]
+    current_latitudes = [datapoints[0][1][0]]
+    current_longitudes = [datapoints[0][1][1]]
     
-    current_start = df.iloc[0]['datetime']
-    current_end = df.iloc[0]['datetime']
-    current_latitudes = [df.iloc[0]['latitude']]
-    current_longitudes = [df.iloc[0]['longitude']]
-    
-    for i in range(1, len(df)):
-        time_diff = (df.iloc[i]['datetime'] - df.iloc[i - 1]['datetime']).total_seconds()
-        distance = haversine(df.iloc[i]['latitude'], df.iloc[i]['longitude'], 
-                             df.iloc[i - 1]['latitude'], df.iloc[i - 1]['longitude'])
+    for i in range(1, len(datapoints)):
+        time_diff = (datapoints[i][0] - datapoints[i - 1][0]).total_seconds()
+        lat1, long1 = datapoints[i][1]
+        lat2, long2 = datapoints[i-1][1]
+        distance = haversine(lat1, long1, lat2, long2)
         
         if time_diff <= max_time_diff and distance <= max_distance:
             # Extend the current period if the time and distance conditions are met
-            current_end = df.iloc[i]['datetime']
-            current_latitudes.append(df.iloc[i]['latitude'])
-            current_longitudes.append(df.iloc[i]['longitude'])
+            current_end = datapoints[i][0]
+            current_latitudes.append(datapoints[i][1][0])
+            current_longitudes.append(datapoints[i][1][1])
         else:
             # No overlap, record the current period and start a new one
             average_latitude = sum(current_latitudes) / len(current_latitudes)
             average_longitude = sum(current_longitudes) / len(current_longitudes)
             periods.append([(current_start, current_end), (average_latitude, average_longitude)])
-            current_start = df.iloc[i]['datetime']
-            current_end = df.iloc[i]['datetime']
-            current_latitudes = [df.iloc[i]['latitude']]
-            current_longitudes = [df.iloc[i]['longitude']]
+            
+            current_start = datapoints[i][0]
+            current_end = datapoints[i][0]
+            current_latitudes = [datapoints[i][1][0]]
+            current_longitudes = [datapoints[i][1][1]]
     
     # Add the last period
     average_latitude = sum(current_latitudes) / len(current_latitudes)
     average_longitude = sum(current_longitudes) / len(current_longitudes)
-    #print(((current_start, current_end), (average_latitude, average_longitude)))
     periods.append([(current_start, current_end), (average_latitude, average_longitude)])
-    #print(periods)
+    
     return periods
 
 def frequencyOfColocation(periods1, periods2, x_time) -> int:
     """
     Counts the number of times two ADIDs were colocated for at least x_time seconds.
+
+    This function uses a two-pointer approach to efficiently find overlapping periods
+    between two lists of continuous time periods. Instead of comparing every pair 
+    (which would be O(N × M)), it processes the periods in a single pass (O(N + M)).
+
+    How It Works:
+    - Both lists `periods1` and `periods2` are assumed to be sorted by start time.
+    - Two pointers (`i` for `periods1`, `j` for `periods2`) iterate through both lists.
+    - If a period from one list ends before the other starts, move to the next period.
+    - If there is an overlap, calculate the overlap duration.
+    - If the overlap duration meets or exceeds `x_time`, count it as a colocation.
+    - Always advance the pointer for the period that ends first to avoid unnecessary comparisons.
+
+    Efficiency:
+    - **O(N + M) Time Complexity**: Each period is processed only once instead of checking all pairs.
+    - **Short-Circuiting**: If periods don’t overlap, the function skips unnecessary calculations.
+    - **Memory Efficient**: It only uses two integer counters (`i` and `j`), making it memory-friendly.
 
     Parameters:
         periods1 (list of tuples): Continuous periods for the first ADID [(start1, end1), ...].
@@ -477,25 +504,34 @@ def frequencyOfColocation(periods1, periods2, x_time) -> int:
         int: The number of times the two ADIDs were colocated for at least x_time seconds.
     """
     colocations = 0
+    i, j = 0, 0
+    
+    while i < len(periods1) and j < len(periods2):
+        start1, end1 = periods1[i][0]
+        start2, end2 = periods2[j][0]
 
-    # Compare all pairs of continuous periods
-    for x in periods1:
-        for y in periods2:
-            start1, end1 = x[0]
-            start2, end2 = y[0]
-            # Find the overlap between the two periods
-            overlap_start = max(start1, start2)
-            overlap_end = min(end1, end2)
+        # If one period ends before the other starts, move to the next relevant period
+        if end1 < start2:
+            i += 1
+            continue
+        if end2 < start1:
+            j += 1
+            continue
 
-            # Check if they are colocated for at least x_time seconds
-            overlap_duration = (overlap_end - overlap_start).total_seconds()
-            if overlap_duration >= x_time:
-                colocations += 1
-            # Additional check: If one period fully wraps around another
-            elif (start1 <= start2 and end1 >= end2) or (start2 <= start1 and end2 >= end1):
-                if (end2 - start1).total_seconds() >= x_time or (end1 - start2).total_seconds() >= x_time:
-                    colocations += 1
+        # Compute overlap duration only if there is a valid overlap
+        overlap_start = max(start1, start2)
+        overlap_end = min(end1, end2)
+        overlap_duration = (overlap_end - overlap_start).total_seconds()
 
+        if overlap_duration >= x_time:
+            colocations += 1
+
+        # Move the pointer for the period that ends first to continue processing
+        if end1 < end2:
+            i += 1
+        else:
+            j += 1
+    
     return colocations
 
 def findAllFrequencyOfColocation(graph, x_time: int) -> list:
@@ -509,6 +545,7 @@ def findAllFrequencyOfColocation(graph, x_time: int) -> list:
     Returns:
         list: A list of lists, where each inner list contains colocation frequencies for a node.
     """
+    debug_print("Finding frequency of colocations...")
     num_nodes = len(graph.nodes)
     
     # Initialize a list of lists to store colocation frequencies
@@ -537,11 +574,7 @@ def dwellTimeWithinProximity(periods1, periods2):
     :param periods1: First ADID's continuous periods, list of tuples (start_time, end_time)
     :param periods2: Second ADID's continuous periods, list of tuples (start_time, end_time)
     :return: Total overlap time in minutes and a list of overlap periods as tuples (start_time, end_time)
-    """
-
-    #print(f"1st ADID continuous periods: {periods1}")
-    #print(f"2nd ADID continuous periods: {periods2}")
-    
+    """    
     total_overlap_time = 0
     overlap_periods = []
     
@@ -575,6 +608,8 @@ def findAllDwellTimeWithinProximity(graph, min_time_together):
 
     :return: Adjacency matrix as a list of lists, where each entry represents the overlap time between two nodes.
     """
+    debug_print("Finding dwell time within proximities...")
+
     num_nodes = len(graph.nodes)
     
     # Initialize the adjacency matrix with zeros
@@ -601,3 +636,96 @@ def findAllDwellTimeWithinProximity(graph, min_time_together):
             adjacency_matrix[j][i] = overlap_time  # Ensure symmetry
             
     return adjacency_matrix
+
+def get_grid_square(query, min_point, max_point, width_meters):
+    """
+    Determines the grid square index for a given query point within a bounding box,
+    where each grid square represents a physical area of width_meters x width_meters.
+
+    The grid is numbered starting from 0 in the top-left corner, increasing to the right,
+    then wrapping to the next row downward.
+
+    Parameters:
+    - query: Tuple (lat, lon) for the query point.
+    - min_point: Tuple (min_lat, min_lon) representing the bottom-left corner of the bounding box.
+    - max_point: Tuple (max_lat, max_lon) representing the top-right corner of the bounding box.
+    - width_meters: The physical width (and height) of each grid square in meters.
+
+    Assumptions:
+    - The area is small enough that a constant conversion factor from meters to degrees is acceptable.
+    - One degree of latitude is roughly 111,320 meters.
+    - The conversion for longitude uses the average latitude of the bounding box.
+
+    Returns:
+    - The grid square index in which the query point falls.
+    """
+    query_lat, query_lon = query
+    min_lat, min_lon = min_point
+    max_lat, max_lon = max_point
+
+    # Approximate conversion factor for latitude (meters per degree)
+    meters_per_deg_lat = 111320.0
+    
+    # Use the average latitude of the bounding box to approximate meters per degree longitude
+    avg_lat = (min_lat + max_lat) / 2.0
+    meters_per_deg_lon = 111320.0 * math.cos(math.radians(avg_lat))
+    
+    # Convert the square width from meters to degrees for both latitude and longitude
+    delta_lat = width_meters / meters_per_deg_lat
+    delta_lon = width_meters / meters_per_deg_lon
+    
+    # Determine the number of rows and columns needed to cover the bounding box.
+    # Note: max_lat is at the top, min_lat is at the bottom.
+    num_rows = math.ceil((max_lat - min_lat) / delta_lat)
+    num_cols = math.ceil((max_lon - min_lon) / delta_lon)
+    
+    # Compute the row and column for the query point.
+    # Rows are counted from the top (max_lat) downwards.
+    row = int((max_lat - query_lat) / delta_lat)
+    col = int((query_lon - min_lon) / delta_lon)
+    
+    # Adjust in case the query point lies exactly on the boundary.
+    if row >= num_rows:
+        row = num_rows - 1
+    if col >= num_cols:
+        col = num_cols - 1
+    
+    # Compute the 1D grid square index in row-major order.
+    grid_index = row * num_cols + col
+    return grid_index
+
+def debug_print(message: str) -> None:
+    # Move the cursor up one line and clear that line
+    sys.stdout.write("\033[F")  # Move up one line
+    sys.stdout.write("\033[K")  # Clear the line
+    # Print the new message
+    print(message)
+
+def preprocess(data):
+    """
+    Preprocesses the data to determine the minimum and maximum latitude and longitude.
+    Also provides real-time updates using debug_print.
+    
+    Args:
+        data (list of lists): Each row contains [ADID, datetime, lat, lon, ..., additional_columns].
+    
+    Returns:
+        tuple: (min_lat, max_lat, min_lon, max_lon)
+    """
+    debug_print("Preprocessing data...")
+    min_lat, max_lat = float('inf'), float('-inf')
+    min_lon, max_lon = float('inf'), float('-inf')
+    
+    for row in data:
+        if len(row) < 4:
+            continue
+        try:
+            lat, lon = float(row[3]), float(row[4])
+            min_lat, max_lat = min(min_lat, lat), max(max_lat, lat)
+            min_lon, max_lon = min(min_lon, lon), max(max_lon, lon)
+        except ValueError:
+            continue
+    
+    debug_print("Preprocessing complete.\n")
+    return min_lat, max_lat, min_lon, max_lon
+

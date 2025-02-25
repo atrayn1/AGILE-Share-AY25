@@ -6,7 +6,7 @@ from agile.classifier import classifyEdges
 from visual_graph import generate_visualization
 
 # Default parameters
-DEFAULT_CSV_FILE = "data/hainan.csv"
+DEFAULT_CSV_FILE = "data/test_location_data_gh.csv"
 DEFAULT_MIN_TIME_TOGETHER = 3
 DEFAULT_MAX_TIME_DIFF = 10
 DEFAULT_RADIUS = 50
@@ -27,7 +27,7 @@ def start_visualization(csv_file, min_time_together, max_time_diff, radius):
     data, df = process_data(csv_file)
     print(df)  # Print dataframe for debugging
     graph = createGraph(data)
-    connectNodes(graph, 1, df, min_time_together, max_time_diff, radius)
+    connectNodes(graph, 1, min_time_together, max_time_diff, radius)
     adj_matrix = np.nan_to_num(graph.adjacency_matrix, nan=0.0)
 
     generate_visualization(graph, adj_matrix)
