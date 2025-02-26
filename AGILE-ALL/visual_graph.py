@@ -55,7 +55,7 @@ def generate_visualization(graph, adj_matrix, output_file="interactive_network_g
     first_community = next(communities)  # First split of communities
     community_colors = {node: i for i, community in enumerate(first_community) for node in community}
     node_colors = [community_colors[node] for node in G.nodes()]
-    '''
+    
 
     # Community detection (Girvan-Newman) 
     communities = girvan_newman(G) 
@@ -67,7 +67,8 @@ def generate_visualization(graph, adj_matrix, output_file="interactive_network_g
             community_colors[node] = community_index 
     # Assign a color to each node based on the community it belongs to 
     node_colors = [community_colors[node] for node in G.nodes()]  
-
+    '''
+    
     # Prepare hover info with all Node details
     hover_info = [
         (
@@ -91,7 +92,7 @@ def generate_visualization(graph, adj_matrix, output_file="interactive_network_g
         hovertext=hover_info,  # Unique hover text per node
         marker=dict(
             size=10,  # Fixed size for all nodes
-            color=node_colors,
+            color='blue',
             colorscale='Viridis',
             line=dict(color='black', width=1)
         )
