@@ -39,6 +39,8 @@ from agile.graphing import createGraph, connectNodes
 from streamlit_option_menu import option_menu
 import pygeohash as gh
 
+from visual_graph import generate_visualization
+
 # Make use of the whole screen
 st.set_page_config(layout="wide")
 
@@ -668,11 +670,17 @@ elif nav_bar == 'Graph':
                 #help="0 makes the edge completely based on frequency of colocation, while 100 makes the edge based completely on dwell time within proximity. Otherwise, it is based on a percentage of each."
             #)
 
+            # can make it so that this happens when 'generate graph' button is pressed ...
+            graph = createGraph(st.session_state.data.values.tolist())
+            adj_matrix = graph.adjacency_matrix  # Assuming this is how you get the adjacency matrix
+            print("nodes: ", len(adj_matrix))
+            generate_visualization(graph, adj_matrix)
+
             # Submit button for the form
             if st.form_submit_button('Generate Graph'):
                 with st.spinner(text="Generating graph..."):
                     # Create the graph object
-                    graph = createGraph(st.session_state.data.values.tolist())
+                    #graph = createGraph(st.session_state.data.values.tolist())
 
                     # Connect related nodes in the graph with the provided parameters
                     connectNodes(graph, edge_weight_scale / 100, st.session_state.data, x_time, y_time, radius)
@@ -680,6 +688,11 @@ elif nav_bar == 'Graph':
                     # Save the graph object to session state for access in other containers
                     st.session_state.graph = graph
 
+                    # [NEW STUFF]
+                    # Now, generate and display the visualization
+                    #adj_matrix = graph.get_adjacency_matrix()  # Assuming this is how you get the adjacency matrix
+                    #generate_visualization(graph, adj_matrix)  # This generates the Plotly graph and shows it directly
+                    # st.plotly_chart(fig)  
 
     # Display the graph overview and adjacency matrix in the overview_c container
     with overview_c:

@@ -1,3 +1,11 @@
+'''
+Things to note:
+If the graph gets large, rendering might be slower. 
+Consider using scattergl (Plotly’s WebGL-based scatter) for faster 
+rendering if you have a high number of nodes/edges.
+[I IMPLEMENTED THIS]
+'''
+
 import networkx as nx
 import numpy as np
 import plotly.graph_objects as go
@@ -83,7 +91,7 @@ def generate_visualization(graph, adj_matrix, output_file="interactive_network_g
         for node in graph.nodes
     ]
 
-    nodes = go.Scatter(
+    nodes = go.Scattergl(
         x=nodes_x, y=nodes_y,
         mode='markers+text',
         name='People',
@@ -108,7 +116,7 @@ def generate_visualization(graph, adj_matrix, output_file="interactive_network_g
         edges_y.extend([y0, y1, None])
 
     # Create the edges line plot
-    edges = go.Scatter(
+    edges = go.Scattergl(
         x=edges_x, y=edges_y,
         mode='lines',
         name='Connections',
