@@ -117,7 +117,9 @@ def generate_visualization(graph, adj_matrix, output_file="interactive_network_g
     )
 
     #fig.show()
-    st.plotly_chart(fig, use_container_width=True)
+    #st.plotly_chart(fig, use_container_width=True)
 
     # Save the interactive plot as an HTML file
     fig.write_html(output_file)
+
+    return fig

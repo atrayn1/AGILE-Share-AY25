@@ -737,12 +737,6 @@ elif nav_bar == 'Graph':
                     # Save the graph object to session state for access in other containers
                     st.session_state.graph = graph
 
-                    # [NEW STUFF]
-                    # Now, generate and display the visualization
-                    adj_matrix = np.nan_to_num(graph.adjacency_matrix, nan=0.0)
-                    generate_visualization(graph, adj_matrix)  # This generates the Plotly graph and shows it directly
-                    #st.plotly_chart(fig)  # not sure how to exactly use this...
-
     # Display the graph overview and adjacency matrix in the overview_c container
     with overview_c:
 
@@ -775,6 +769,18 @@ elif nav_bar == 'Graph':
                 else:
                     pass
                     # st.write(f"**ADID:** {node.adid} - No neighbors found.")
+        else:
+            st.warning("Please generate a graph using the controls in the sidebar.")
+
+    with results_c:
+        if 'graph' in st.session_state:
+            graph = st.session_state.graph
+
+            # [NEW STUFF]
+            # Now, generate and display the visualization
+            adj_matrix = np.nan_to_num(graph.adjacency_matrix, nan=0.0)
+            fig = generate_visualization(graph, adj_matrix)  # This generates the Plotly graph and shows it directly
+            st.plotly_chart(fig)  # not sure how to exactly use this...
         else:
             st.warning("Please generate a graph using the controls in the sidebar.")
 else:
