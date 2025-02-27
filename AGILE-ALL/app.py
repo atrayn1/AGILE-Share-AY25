@@ -731,6 +731,7 @@ elif nav_bar == 'Graph':
 
                     # Connect related nodes in the graph with the provided parameters
                     # st.session_state.data
+                    # TODO MAKE SURE THE CORRECT DATA IS INPUTTED IN HERE
                     connectNodes(graph, edge_weight_scale / 100, x_time, y_time, radius)
 
                     # Save the graph object to session state for access in other containers
@@ -748,7 +749,7 @@ elif nav_bar == 'Graph':
         if 'graph' in st.session_state:
             graph = st.session_state.graph
 
-            for node in graph.get_nodes():
+            for node in graph.nodes:
                 # Only create an expander if the node has neighbors
                 neighbors = node.neighbors
                 if neighbors:

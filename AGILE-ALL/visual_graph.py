@@ -9,6 +9,7 @@ rendering if you have a high number of nodes/edges.
 import networkx as nx
 import numpy as np
 import plotly.graph_objects as go
+import streamlit as st
 from networkx.algorithms.community import girvan_newman
 from tests.AY25.testgraph import process_data
 from agile.graphing import createGraph, connectNodes, Graph
@@ -115,7 +116,8 @@ def generate_visualization(graph, adj_matrix, output_file="interactive_network_g
         yaxis=dict(showgrid=False, zeroline=False, showticklabels=False)
     )
 
-    fig.show()
+    #fig.show()
+    st.plotly_chart(fig, use_container_width=True)
 
     # Save the interactive plot as an HTML file
     fig.write_html(output_file)
