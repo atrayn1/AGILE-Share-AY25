@@ -138,7 +138,60 @@ if nav_bar == 'Data':
     #relevant_features = ['datetime', 'latitude', 'longitude', 'advertiser_id']
     with data_upload_sb:
         raw_data = st.file_uploader('Upload Data File')
-        
+
+        # adding 'Demo' button 
+        demo_button = st.button('Load Demo Data')
+
+        if demo_button:
+            demo_file_path = 'data/hainan2.csv'
+
+            # Check if the demo CSV file exists in the current directory
+            if os.path.exists(demo_file_path):
+                # Load the demo data from the CSV file
+                st.session_state.data = pd.read_csv(demo_file_path, sep=',')
+                st.session_state.uploaded = True
+                st.session_state.file_source = demo_file_path
+
+                # Process the demo data
+                try:
+                    # Clean and verify columns (ensure required columns exist)
+                    st.session_state.data = clean_and_verify_columns(st.session_state.data)
+                except:
+                    preview_c.error('Error with modifying and sorting the columns. Please ensure your CSV file has the correct columns.')
+
+                try:
+                    # Convert 'datetime' column to pandas datetime type
+                    st.session_state.data['datetime'] = pd.to_datetime(st.session_state.data['datetime'], errors='coerce')
+                except:
+                    results_c.error('Could not convert "datetime" column to pd.DateTime type.')
+
+                # Generate geohashes if the column doesn't exist or isn't correct
+                if not 'geohash' in st.session_state.data.columns or not len(st.session_state.data['geohash'].iloc[0]) == 10:
+                    with st.spinner("Geohashing the data..."):
+                        st.session_state.data['geohash'] = st.session_state.data.apply(lambda d: gh.encode(d.latitude, d.longitude, precision=10), axis=1)
+
+                # Perform final preprocessing operations before displaying the data
+                try:
+                    st.session_state.data = modify_and_sort_columns(st.session_state.data)
+                except:
+                    results_c.error('Error with modifying and sorting the columns. Please ensure your CSV file has the correct columns.')
+                
+                # Generate aliases for ADIDs
+                st.session_state.alias_ids = generate_aliases(st.session_state.data)
+
+                # Check if all ADIDs were assigned an alias
+                if 'Unnamed_Alias' in st.session_state.alias_ids.values():
+                    preview_c.error("WARNING: Due to the amount of ADIDs in your data, not every ADID was assigned an alias.")
+
+                # Save the data to a pickle file for future use
+                with st.spinner("Saving the modified data locally for fast reaccessing..."):
+                    save('saved_df.pkl', st.session_state.data)
+
+                st.write("Demo Data Loaded Successfully")
+
+            else:
+                st.write("Demo file (hainan2.csv) not found.")
+
         # If a file has not yet been uploaded (this allows multiple form requests in unison)
         if raw_data and raw_data.name != st.session_state.file_source:
             st.session_state.data = pd.read_csv(raw_data, sep=',')
@@ -670,29 +723,24 @@ elif nav_bar == 'Graph':
                 #help="0 makes the edge completely based on frequency of colocation, while 100 makes the edge based completely on dwell time within proximity. Otherwise, it is based on a percentage of each."
             #)
 
-            # can make it so that this happens when 'generate graph' button is pressed ...
-            graph = createGraph(st.session_state.data.values.tolist())
-            adj_matrix = graph.adjacency_matrix  # Assuming this is how you get the adjacency matrix
-            print("nodes: ", len(adj_matrix))
-            generate_visualization(graph, adj_matrix)
-
             # Submit button for the form
             if st.form_submit_button('Generate Graph'):
                 with st.spinner(text="Generating graph..."):
                     # Create the graph object
-                    #graph = createGraph(st.session_state.data.values.tolist())
+                    graph = createGraph(st.session_state.data.values.tolist())
 
                     # Connect related nodes in the graph with the provided parameters
-                    connectNodes(graph, edge_weight_scale / 100, st.session_state.data, x_time, y_time, radius)
+                    # st.session_state.data
+                    connectNodes(graph, edge_weight_scale / 100, x_time, y_time, radius)
 
                     # Save the graph object to session state for access in other containers
                     st.session_state.graph = graph
 
                     # [NEW STUFF]
                     # Now, generate and display the visualization
-                    #adj_matrix = graph.get_adjacency_matrix()  # Assuming this is how you get the adjacency matrix
-                    #generate_visualization(graph, adj_matrix)  # This generates the Plotly graph and shows it directly
-                    # st.plotly_chart(fig)  
+                    adj_matrix = np.nan_to_num(graph.adjacency_matrix, nan=0.0)
+                    generate_visualization(graph, adj_matrix)  # This generates the Plotly graph and shows it directly
+                    #st.plotly_chart(fig)  # not sure how to exactly use this...
 
     # Display the graph overview and adjacency matrix in the overview_c container
     with overview_c:
