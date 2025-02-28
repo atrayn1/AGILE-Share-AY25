@@ -106,6 +106,10 @@ class Edge:
     def addOverlapPeriods(self, overlap_periods):
         self.overlap_periods = overlap_periods
     
+    def fixWeight(self):
+        if self.colocation_count is not 0:
+            self.weight = self.overlap_time / self.colocation_count
+
     def __repr__(self):
         return (f"Edge(node1={self.node1.adid}, node2={self.node2.adid}, weight={self.weight}, "
                 f"colocation_count={self.colocation_count}, "
@@ -145,7 +149,14 @@ class Graph:
         self.colocations_matrix = np.zeros((0, 0))  # Colocation matrix
         self.dwell_time_matrix = np.zeros((0, 0))  # Dwell time matrix
         self.relationship_type = None
+        self.grid = None
 
+    def get_edge(self, node1, node2):
+        for edge in self.edges:
+            if edge.node1 is node1 and edge.node2 is node2:
+                return edge
+        return None
+    
     def add_node(self, adid, features=None):
         """
         Adds a new node to the graph with the given ADID and optional features.
@@ -214,6 +225,8 @@ class Graph:
         node1.add_neighbor(node2)
         node2.add_neighbor(node1)
 
+        return edge
+
     def remove_edge(self, node1, node2):
         """
         Removes an edge between two nodes and updates the adjacency matrix.
@@ -280,7 +293,7 @@ class Graph:
         """
         return [node.adid for node in self.nodes]
     
-def createGraph(data):
+def createGraph(data, radius):
     """
     Creates a graph from the given data.
     Each node is identified by its ADID, and features include datetime, latitude, longitude,
@@ -292,9 +305,10 @@ def createGraph(data):
     Returns:
         Graph: A constructed graph with nodes and features.
     """
-    min_lat, max_lat, min_lon, max_lon = preprocess(data)
+    grid, min_lat, max_lat, min_lon, max_lon = preprocess(data, radius)
     
     graph = Graph()
+    graph.grid = grid
     adid_to_node_map = {}
 
     for row in data:
@@ -317,8 +331,12 @@ def createGraph(data):
             node.original_datapoints.append([datetime, coords])
             
             # Assign grid square index to the node
-            grid_index = get_grid_square(coords, (min_lat, min_lon), (max_lat, max_lon), width_meters=100)
-            node.squares.append(grid_index)
+            #print(coords)
+            #print((min_lat, min_lon))
+            #print((max_lat, max_lon))
+            rows, cols = get_grid_square(coords, (min_lat, min_lon), (max_lat, max_lon), width_meters=100)
+            node.squares.append((rows, cols))
+            graph.grid[rows, cols].append(len(graph.nodes)-1)
         
         except (ValueError, IndexError) as e:
             print(f"Skipping row due to invalid data: {row} - Error: {e}")
@@ -358,7 +376,7 @@ def update_graph_with_matrix(graph, adjacency_matrix: np.ndarray, matrix1, matri
         matrix2 (list or np.ndarray): The second matrix (e.g., dwell time data).
     """
     # Update the adjacency matrix in the graph
-    debug_print("Updating graph with matrix...")
+    #debug_print("Updating graph with matrix...")
     graph.adjacency_matrix = np.array(adjacency_matrix, dtype=np.float32)
     graph.colocations_matrix = np.array(matrix1, dtype=np.float32)
     graph.dwell_time_matrix = np.array(matrix2, dtype=np.float32)
@@ -395,11 +413,14 @@ def connectNodes(graph, x, min_time_together, max_time_diff, radius):
     """
     findAllContinuousPeriods(graph, max_time_diff*60, radius)
 
+    matrix1, matrix2 = findAllFrequencyAndDwellTime(graph, min_time_together, radius)
+    """
     # Compute the adjacency matrix based on colocation frequency
-    matrix1 = findAllFrequencyOfColocation(graph, min_time_together)
+    matrix1 = findAllFrequencyOfColocation(graph, min_time_together, radius)
 
     # Clone the first matrix to create a second identical matrix
-    matrix2 = findAllDwellTimeWithinProximity(graph, min_time_together)
+    matrix2 = findAllDwellTimeWithinProximity(graph, min_time_together, radius)
+    """
 
     # Merge the two matrices based on the weighting factor x
     finalMatrix = mergeResults(matrix1, matrix2, x)
@@ -408,7 +429,7 @@ def connectNodes(graph, x, min_time_together, max_time_diff, radius):
     update_graph_with_matrix(graph, finalMatrix, matrix1, matrix2)
 
     return matrix1, matrix2
-
+    
 def findAllContinuousPeriods(graph, max_time_diff, max_distance):
     """
     Computes and sets the continuous periods for every node in the graph.
@@ -474,7 +495,7 @@ def get_continuous_periods(node, max_time_diff, max_distance):
     
     return periods
 
-def frequencyOfColocation(periods1, periods2, x_time) -> int:
+def frequencyOfColocation(periods1, periods2, x_time, radius) -> int:
     """
     Counts the number of times two ADIDs were colocated for at least x_time seconds.
 
@@ -517,13 +538,18 @@ def frequencyOfColocation(periods1, periods2, x_time) -> int:
         if end2 < start1:
             j += 1
             continue
+        
+        lat1, long1 = periods1[i][1]
+        lat2, long2 = periods2[j][1]
+        
+        distance = haversine(lat1, long1, lat2, long2)
 
         # Compute overlap duration only if there is a valid overlap
         overlap_start = max(start1, start2)
         overlap_end = min(end1, end2)
         overlap_duration = (overlap_end - overlap_start).total_seconds()
 
-        if overlap_duration >= x_time:
+        if overlap_duration >= x_time and distance <= radius:
             colocations += 1
 
         # Move the pointer for the period that ends first to continue processing
@@ -534,116 +560,463 @@ def frequencyOfColocation(periods1, periods2, x_time) -> int:
     
     return colocations
 
-def findAllFrequencyOfColocation(graph, x_time: int) -> list:
+def findAllFrequencyOfColocation(graph, x_time: int, radius: float):
     """
-    Computes the colocation frequency between every pair of nodes using precomputed continuous periods.
+    Determines the frequency of colocation between all unique pairs of nodes in the graph,
+    taking into account both temporal overlap and spatial proximity. Spatial proximity is
+    now determined by checking the grid squares in which nodes are located and the prebuilt
+    grid_lookup for adjacent cells.
 
     Parameters:
         graph (Graph): The graph containing nodes.
         x_time (int): The minimum overlap duration (in seconds) required for colocation.
-
+        radius (float): The maximum distance (in meters) within which nodes should be considered.
+    
     Returns:
-        list: A list of lists, where each inner list contains colocation frequencies for a node.
+        list: A colocation matrix (2D list) with frequencies.
     """
     debug_print("Finding frequency of colocations...")
     num_nodes = len(graph.nodes)
-    
-    # Initialize a list of lists to store colocation frequencies
     colocation_matrix = [[0] * num_nodes for _ in range(num_nodes)]
-
-    # Iterate through all unique pairs of nodes
+    
+    # Get the grid boundaries from graph.grid
+    rows = [key[0] for key in graph.grid.keys()]
+    cols = [key[1] for key in graph.grid.keys()]
+    
+    min_row, max_row = min(rows), max(rows)
+    min_col, max_col = min(cols), max(cols)
+    
+    # Iterate through all unique pairs of nodes.
     for i in range(num_nodes):
-        for j in range(i + 1, num_nodes):  # Avoid redundant calculations (matrix is symmetric)
-            node1, node2 = graph.nodes[i], graph.nodes[j]
-            count = frequencyOfColocation(node1.continuous_periods, node2.continuous_periods, x_time)
-            if(count > 0):
-                if(node1.getEdge(node2) == None):
-                    graph.add_edge(node1, node2)
-                edge = node1.getEdge(node2)
+        node1 = graph.nodes[i]
+        
+        # Initialize adjacent nodes set.
+        adjacent_nodes = set()
+
+        # For each square in node1.squares, add adjacent squares and the node itself if valid.
+        for row, col in node1.squares:
+            # Check if the square (row, col) is within bounds.
+            if min_row <= row <= max_row and min_col <= col <= max_col:
+                if (row, col) in graph.grid:
+                    # Add the nodes from this square to adjacent_nodes.
+                    for adj_node in graph.grid[(row, col)]:
+                        #print(adj_node)
+                        #print(graph.nodes[1])
+                        adjacent_nodes.add(graph.nodes[adj_node])
+            
+            # Check and add the nodes from the adjacent squares (top, bottom, left, right, diagonals).
+            # Top
+            if row - 1 >= min_row:
+                if (row - 1, col) in graph.grid:
+                    for adj_node in graph.grid[(row - 1, col)]:
+                        adjacent_nodes.add(graph.nodes[adj_node])
+            # Bottom
+            if row + 1 <= max_row:
+                if (row + 1, col) in graph.grid:
+                    for adj_node in graph.grid[(row + 1, col)]:
+                        adjacent_nodes.add(graph.nodes[adj_node])
+            # Left
+            if col - 1 >= min_col:
+                if (row, col - 1) in graph.grid:
+                    for adj_node in graph.grid[(row, col - 1)]:
+                        adjacent_nodes.add(graph.nodes[adj_node])
+            # Right
+            if col + 1 <= max_col:
+                if (row, col + 1) in graph.grid:
+                    for adj_node in graph.grid[(row, col + 1)]:
+                        adjacent_nodes.add(graph.nodes[adj_node])
+            # Top-left diagonal
+            if row - 1 >= min_row and col - 1 >= min_col:
+                if (row - 1, col - 1) in graph.grid:
+                    for adj_node in graph.grid[(row - 1, col - 1)]:
+                        adjacent_nodes.add(graph.nodes[adj_node])
+            # Top-right diagonal
+            if row - 1 >= min_row and col + 1 <= max_col:
+                if (row - 1, col + 1) in graph.grid:
+                    for adj_node in graph.grid[(row - 1, col + 1)]:
+                        adjacent_nodes.add(graph.nodes[adj_node])
+            # Bottom-left diagonal
+            if row + 1 <= max_row and col - 1 >= min_col:
+                if (row + 1, col - 1) in graph.grid:
+                    for adj_node in graph.grid[(row + 1, col - 1)]:
+                        adjacent_nodes.add(graph.nodes[adj_node])
+            # Bottom-right diagonal
+            if row + 1 <= max_row and col + 1 <= max_col:
+                if (row + 1, col + 1) in graph.grid:
+                    for adj_node in graph.grid[(row + 1, col + 1)]:
+                        adjacent_nodes.add(graph.nodes[adj_node])
+
+        # Now, iterate through the collected adjacent nodes.
+        for node2 in adjacent_nodes:
+            # Skip comparing the node to itself.
+            if node1 == node2:
+                continue
+
+            debug_print(f"Comparing node {node1.adid} ({i}) to {node2.adid} out of {num_nodes} nodes total, {len(adjacent_nodes)} adjacent nodes to check.")
+            
+            # Check for possible temporal overlap.
+            if node1.continuous_periods[-1][0][1] < node2.continuous_periods[0][0][0] or \
+               node2.continuous_periods[-1][0][1] < node1.continuous_periods[0][0][0]:
+                continue  # No overlap in time.
+            
+            # Calculate temporal colocation frequency.
+            count = frequencyOfColocation(node1.continuous_periods, node2.continuous_periods, x_time, radius)
+            if count > 0:
+                edge = node1.getEdge(node2) or graph.add_edge(node1, node2)
                 edge.addColocationCount(count)
-            colocation_matrix[i][j] = count
-            colocation_matrix[j][i] = count  # Mirror the value
+            
+            # Fill in the colocation matrix symmetrically.
+            colocation_matrix[i][graph.nodes.index(node2)] = count
+            colocation_matrix[graph.nodes.index(node2)][i] = count  # No need for redundant computation.
 
     return colocation_matrix
 
-def dwellTimeWithinProximity(periods1, periods2):
+def dwellTimeWithinProximity(periods1, periods2, radius):
     """
     Calculate the total overlap time between two ADIDs based on their continuous time periods,
-    return the total overlap time in minutes and a list of overlap periods.
+    ensuring they are within the specified proximity radius.
     
-    :param periods1: First ADID's continuous periods, list of tuples (start_time, end_time)
-    :param periods2: Second ADID's continuous periods, list of tuples (start_time, end_time)
-    :return: Total overlap time in minutes and a list of overlap periods as tuples (start_time, end_time)
+    :param periods1: First ADID's continuous periods, list of tuples (start_time, end_time, (lat, lon))
+    :param periods2: Second ADID's continuous periods, list of tuples (start_time, end_time, (lat, lon))
+    :param radius: Maximum distance (in meters) within which nodes should be considered.
+    
+    :return: Total overlap time in minutes and a list of overlap periods.
     """    
     total_overlap_time = 0
     overlap_periods = []
+    i, j = 0, 0
     
-    # Compare all pairs of periods from both ADIDs
-    for x in periods1:
-        for y in periods2:
-            start1, end1 = x[0]
-            start2, end2 = y[0]
-            # Check if the periods overlap
-            overlap_start = max(start1, start2)
-            overlap_end = min(end1, end2)
-            
-            if overlap_start < overlap_end:
-                overlap_duration = (overlap_end - overlap_start).total_seconds()
+    while i < len(periods1) and j < len(periods2):
+        time1, loc1 = periods1[i]
+        time2, loc2 = periods2[j]
+
+        start1, end1 = time1
+        start2, end2 = time2
+        lat1, long1 = loc1
+        lat2, long2 = loc2
+
+        # If one period ends before the other starts, move to the next relevant period
+        
+        if end1 < start2:
+            i += 1
+            continue
+        if end2 < start1:
+            j += 1
+            continue
+        
+        # Compute overlap duration
+        overlap_start = max(start1, start2)
+        overlap_end = min(end1, end2)
+        overlap_duration = (overlap_end - overlap_start).total_seconds()
+
+        # Check proximity before adding overlap
+        if overlap_duration > 0:
+            distance = haversine(lat1, long1, lat2, long2)
+            if distance <= radius:
                 total_overlap_time += overlap_duration
-                overlap_periods.append([(overlap_start, overlap_end), x[1]])
-                #print(f"Overlap found: Start: {overlap_start}, End: {overlap_end}, Duration: {overlap_duration}s")
+                overlap_periods.append([(overlap_start, overlap_end), (lat1, long1)])
 
-    
-    #print(f"Total overlap time: {total_overlap_time} seconds")
-    
-    # Return total overlap time in minutes and the list of overlap periods
-    return total_overlap_time / 60, overlap_periods
+        # Move the pointer for the period that ends first
+        if end1 < end2:
+            i += 1
+        else:
+            j += 1
 
-def findAllDwellTimeWithinProximity(graph, min_time_together):
+    return total_overlap_time / 60, overlap_periods  # Return minutes
+
+def findAllDwellTimeWithinProximity(graph, min_time_together, radius):
     """
-    Create an adjacency matrix of overlap times between all nodes in the graph.
+    Create an adjacency matrix of overlap times between all nodes in the graph,
+    considering both temporal and spatial proximity.
     
-    graph: Graph containing nodes with precomputed continuous periods.
-    min_time_together: Minimum amount of time nodes must be colocated to be considered together (in minutes).
+    :param graph: Graph containing nodes with precomputed continuous periods.
+    :param min_time_together: Minimum time (in minutes) required for colocation.
+    :param radius: Maximum distance (in meters) for nodes to be considered colocated.
 
-    :return: Adjacency matrix as a list of lists, where each entry represents the overlap time between two nodes.
+    :return: Adjacency matrix as a list of lists, where each entry represents the dwell time between two nodes.
     """
-    debug_print("Finding dwell time within proximities...")
+    debug_print("Finding dwell time within proximity...")
 
     num_nodes = len(graph.nodes)
-    
-    # Initialize the adjacency matrix with zeros
     adjacency_matrix = [[0] * num_nodes for _ in range(num_nodes)]
 
-    adjacency_matrix_periods = [[0] * num_nodes for _ in range(num_nodes)]
+    # Get the grid boundaries from graph.grid
+    rows = [key[0] for key in graph.grid.keys()]
+    cols = [key[1] for key in graph.grid.keys()]
     
-    # Loop through each unique pair of nodes
+    min_row, max_row = min(rows), max(rows)
+    min_col, max_col = min(cols), max(cols)
+
     for i in range(num_nodes):
-        for j in range(i + 1, num_nodes):  # Start from i + 1 to avoid i == j
-            node1, node2 = graph.nodes[i], graph.nodes[j]
-            overlap_time, overlap_periods = dwellTimeWithinProximity(node1.continuous_periods, node2.continuous_periods)
-            if(overlap_time > 0):
-                if(node1.getEdge(node2) == None):
-                    graph.add_edge(node1, node2)
-                edge = node1.getEdge(node2)
+        node1 = graph.nodes[i]
+        adjacent_nodes = set()
+
+        # For each square in node1.squares, add adjacent squares and the node itself if valid.
+        for row, col in node1.squares:
+            # Check if the square (row, col) is within bounds.
+            if min_row <= row <= max_row and min_col <= col <= max_col:
+                if (row, col) in graph.grid:
+                    # Add the nodes from this square to adjacent_nodes.
+                    for adj_node in graph.grid[(row, col)]:
+                        #print(adj_node)
+                        #print(graph.nodes[1])
+                        adjacent_nodes.add(graph.nodes[adj_node])
+            
+            # Check and add the nodes from the adjacent squares (top, bottom, left, right, diagonals).
+            # Top
+            if row - 1 >= min_row:
+                if (row - 1, col) in graph.grid:
+                    for adj_node in graph.grid[(row - 1, col)]:
+                        adjacent_nodes.add(graph.nodes[adj_node])
+            # Bottom
+            if row + 1 <= max_row:
+                if (row + 1, col) in graph.grid:
+                    for adj_node in graph.grid[(row + 1, col)]:
+                        adjacent_nodes.add(graph.nodes[adj_node])
+            # Left
+            if col - 1 >= min_col:
+                if (row, col - 1) in graph.grid:
+                    for adj_node in graph.grid[(row, col - 1)]:
+                        adjacent_nodes.add(graph.nodes[adj_node])
+            # Right
+            if col + 1 <= max_col:
+                if (row, col + 1) in graph.grid:
+                    for adj_node in graph.grid[(row, col + 1)]:
+                        adjacent_nodes.add(graph.nodes[adj_node])
+            # Top-left diagonal
+            if row - 1 >= min_row and col - 1 >= min_col:
+                if (row - 1, col - 1) in graph.grid:
+                    for adj_node in graph.grid[(row - 1, col - 1)]:
+                        adjacent_nodes.add(graph.nodes[adj_node])
+            # Top-right diagonal
+            if row - 1 >= min_row and col + 1 <= max_col:
+                if (row - 1, col + 1) in graph.grid:
+                    for adj_node in graph.grid[(row - 1, col + 1)]:
+                        adjacent_nodes.add(graph.nodes[adj_node])
+            # Bottom-left diagonal
+            if row + 1 <= max_row and col - 1 >= min_col:
+                if (row + 1, col - 1) in graph.grid:
+                    for adj_node in graph.grid[(row + 1, col - 1)]:
+                        adjacent_nodes.add(graph.nodes[adj_node])
+            # Bottom-right diagonal
+            if row + 1 <= max_row and col + 1 <= max_col:
+                if (row + 1, col + 1) in graph.grid:
+                    for adj_node in graph.grid[(row + 1, col + 1)]:
+                        adjacent_nodes.add(graph.nodes[adj_node])
+
+
+        # Now, iterate through adjacent nodes only
+        for node2 in adjacent_nodes:
+            if node1 == node2:
+                continue  # Skip self comparison
+            
+            overlap_time, overlap_periods = dwellTimeWithinProximity(
+                node1.continuous_periods, node2.continuous_periods, radius
+            )
+
+            if overlap_time > 0:
+                edge = node1.getEdge(node2) or graph.add_edge(node1, node2)
                 edge.addOverlapTime(overlap_time)
                 edge.addOverlapPeriods(overlap_periods)
 
-            #print("overlap, ", overlap_periods)
+            # Apply minimum time threshold
             if overlap_time < min_time_together:
                 overlap_time = 0
-            adjacency_matrix[i][j] = overlap_time
-            adjacency_matrix[j][i] = overlap_time  # Ensure symmetry
-            
+
+            adjacency_matrix[i][graph.nodes.index(node2)] = overlap_time
+            adjacency_matrix[graph.nodes.index(node2)][i] = overlap_time  # Ensure symmetry
+
     return adjacency_matrix
+
+def findFrequencyAndDwellTime(periods1, periods2, min_time_together, radius):
+    """
+    This function calculates two things:
+    1. The frequency of colocations where two ADIDs were colocated for at least `x_time` seconds.
+    2. The total overlap time between the two ADIDs based on their continuous time periods,
+       ensuring they are within the specified proximity radius.
+
+    Parameters:
+        periods1 (list of tuples): Continuous periods for the first ADID [(start1, end1), ...].
+        periods2 (list of tuples): Continuous periods for the second ADID [(start2, end2), ...].
+        x_time (int): The minimum overlap duration (in seconds) required for colocation.
+        radius (float): Maximum distance (in meters) within which nodes should be considered.
+
+    Returns:
+        tuple: A tuple containing three values:
+            - colocations (int): The number of times the two ADIDs were colocated for at least `x_time` seconds.
+            - total_overlap_time (float): The total overlap time in minutes.
+            - overlap_periods (list): A list of overlap periods in the format [(overlap_start, overlap_end), (lat, lon)].
+    """
+    colocations = 0
+    total_overlap_time = 0
+    overlap_periods = []
+    i, j = 0, 0
+    
+    while i < len(periods1) and j < len(periods2):
+        time1, loc1 = periods1[i]
+        time2, loc2 = periods2[j]
+
+        start1, end1 = time1
+        start2, end2 = time2
+        lat1, long1 = loc1
+        lat2, long2 = loc2
+
+        # If one period ends before the other starts, move to the next relevant period
+        if end1 < start2:
+            i += 1
+            continue
+        if end2 < start1:
+            j += 1
+            continue
+        
+        # Compute overlap duration
+        overlap_start = max(start1, start2)
+        overlap_end = min(end1, end2)
+        overlap_duration = (overlap_end - overlap_start).total_seconds()
+
+        # Check proximity before adding overlap
+        if overlap_duration > 0:
+            distance = haversine(lat1, long1, lat2, long2)
+            
+            # For frequency of colocation
+            if overlap_duration >= min_time_together and distance <= radius:
+                colocations += 1
+            
+            # For dwell time within proximity
+            if distance <= radius:
+                total_overlap_time += overlap_duration
+                overlap_periods.append([(overlap_start, overlap_end), (lat1, long1)])
+
+        # Move the pointer for the period that ends first
+        if end1 < end2:
+            i += 1
+        else:
+            j += 1
+
+    return colocations, total_overlap_time / 60, overlap_periods  # Return overlap time in minutes
+
+def findAllFrequencyAndDwellTime(graph, min_time_together, radius):
+    """
+    Create two adjacency matrices:
+    1. One for dwell times between all nodes considering both temporal and spatial proximity.
+    2. One for the frequency of colocations between all unique pairs of nodes based on temporal overlap and spatial proximity.
+
+    Parameters:
+        graph (Graph): The graph containing nodes.
+        min_time_together (int): The minimum time (in minutes) required for colocation.
+        radius (float): The maximum distance (in meters) within which nodes should be considered.
+
+    Returns:
+        tuple: Two adjacency matrices as lists of lists:
+            - The first matrix is for dwell times.
+            - The second matrix is for colocation frequencies.
+    """
+    debug_print("Finding frequency of colocations and dwell time within proximity...")
+
+    num_nodes = len(graph.nodes)
+    dwell_time_matrix = [[0] * num_nodes for _ in range(num_nodes)]
+    colocation_matrix = [[0] * num_nodes for _ in range(num_nodes)]
+    
+    # Get the grid boundaries from graph.grid
+    rows = [key[0] for key in graph.grid.keys()]
+    cols = [key[1] for key in graph.grid.keys()]
+    dwell_time_matrix
+    min_row, max_row = min(rows), max(rows)
+    min_col, max_col = min(cols), max(cols)
+
+    # Iterate through all nodes in the graph
+    for i in range(num_nodes):
+        
+
+        node1 = graph.nodes[i]
+        adjacent_nodes = set()
+
+        # For each square in node1.squares, add adjacent squares and the node itself if valid.
+        for row, col in node1.squares:
+            # Check if the square (row, col) is within bounds.
+            if min_row <= row <= max_row and min_col <= col <= max_col:
+                if (row, col) in graph.grid:
+                    # Add the nodes from this square to adjacent_nodes.
+                    for adj_node in graph.grid[(row, col)]:
+                        adjacent_nodes.add(graph.nodes[adj_node])
+            
+            # Check and add the nodes from the adjacent squares (top, bottom, left, right, diagonals).
+            # Top
+            if row - 1 >= min_row:
+                if (row - 1, col) in graph.grid:
+                    for adj_node in graph.grid[(row - 1, col)]:
+                        adjacent_nodes.add(graph.nodes[adj_node])
+            # Bottom
+            if row + 1 <= max_row:
+                if (row + 1, col) in graph.grid:
+                    for adj_node in graph.grid[(row + 1, col)]:
+                        adjacent_nodes.add(graph.nodes[adj_node])
+            # Left
+            if col - 1 >= min_col:
+                if (row, col - 1) in graph.grid:
+                    for adj_node in graph.grid[(row, col - 1)]:
+                        adjacent_nodes.add(graph.nodes[adj_node])
+            # Right
+            if col + 1 <= max_col:
+                if (row, col + 1) in graph.grid:
+                    for adj_node in graph.grid[(row, col + 1)]:
+                        adjacent_nodes.add(graph.nodes[adj_node])
+            # Top-left diagonal
+            if row - 1 >= min_row and col - 1 >= min_col:
+                if (row - 1, col - 1) in graph.grid:
+                    for adj_node in graph.grid[(row - 1, col - 1)]:
+                        adjacent_nodes.add(graph.nodes[adj_node])
+            # Top-right diagonal
+            if row - 1 >= min_row and col + 1 <= max_col:
+                if (row - 1, col + 1) in graph.grid:
+                    for adj_node in graph.grid[(row - 1, col + 1)]:
+                        adjacent_nodes.add(graph.nodes[adj_node])
+            # Bottom-left diagonal
+            if row + 1 <= max_row and col - 1 >= min_col:
+                if (row + 1, col - 1) in graph.grid:
+                    for adj_node in graph.grid[(row + 1, col - 1)]:
+                        adjacent_nodes.add(graph.nodes[adj_node])
+            # Bottom-right diagonal
+            if row + 1 <= max_row and col + 1 <= max_col:
+                if (row + 1, col + 1) in graph.grid:
+                    for adj_node in graph.grid[(row + 1, col + 1)]:
+                        adjacent_nodes.add(graph.nodes[adj_node])
+        
+        debug_print(f"Finding FOC and DTWP: Looking at index {i} out of range {num_nodes}, comparing {len(adjacent_nodes)}")
+        # Now, iterate through adjacent nodes only
+        for node2 in adjacent_nodes:
+            if node1 == node2:
+                continue  # Skip self comparison
+            
+            colocation_count, overlap_time, overlap_periods = findFrequencyAndDwellTime(node1.continuous_periods, node2.continuous_periods, min_time_together, radius)
+            
+            edge = node1.getEdge(node2) or graph.add_edge(node1, node2)
+
+            # Apply minimum time threshold for dwell time
+            if overlap_time < min_time_together:  # Convert min_time_together to seconds
+                overlap_time = 0
+
+            if overlap_time > 0:
+                edge.addOverlapTime(overlap_time)
+                edge.addOverlapPeriods(overlap_periods)
+            
+            if colocation_count > 0:
+                edge.addColocationCount(colocation_count)
+            
+            edge.fixWeight()
+
+            dwell_time_matrix[i][graph.nodes.index(node2)] = overlap_time
+            dwell_time_matrix[graph.nodes.index(node2)][i] = overlap_time  # Ensure symmetry
+
+            colocation_matrix[i][graph.nodes.index(node2)] = colocation_count
+            colocation_matrix[graph.nodes.index(node2)][i] = colocation_count  # Ensure symmetry
+
+    return colocation_matrix, dwell_time_matrix
 
 def get_grid_square(query, min_point, max_point, width_meters):
     """
-    Determines the grid square index for a given query point within a bounding box,
-    where each grid square represents a physical area of width_meters x width_meters.
-
-    The grid is numbered starting from 0 in the top-left corner, increasing to the right,
-    then wrapping to the next row downward.
+    Determines the grid square for a given query point within a bounding box.
+    Now returns a tuple (row, col) instead of a single index.
 
     Parameters:
     - query: Tuple (lat, lon) for the query point.
@@ -651,48 +1024,38 @@ def get_grid_square(query, min_point, max_point, width_meters):
     - max_point: Tuple (max_lat, max_lon) representing the top-right corner of the bounding box.
     - width_meters: The physical width (and height) of each grid square in meters.
 
-    Assumptions:
-    - The area is small enough that a constant conversion factor from meters to degrees is acceptable.
-    - One degree of latitude is roughly 111,320 meters.
-    - The conversion for longitude uses the average latitude of the bounding box.
-
     Returns:
-    - The grid square index in which the query point falls.
+    - A tuple (row, col) indicating which cell of the grid the query falls into.
     """
     query_lat, query_lon = query
     min_lat, min_lon = min_point
     max_lat, max_lon = max_point
 
-    # Approximate conversion factor for latitude (meters per degree)
+    # Approximate conversion factors (meters per degree)
     meters_per_deg_lat = 111320.0
-    
-    # Use the average latitude of the bounding box to approximate meters per degree longitude
     avg_lat = (min_lat + max_lat) / 2.0
     meters_per_deg_lon = 111320.0 * math.cos(math.radians(avg_lat))
     
-    # Convert the square width from meters to degrees for both latitude and longitude
+    # Convert the square width from meters to degrees
     delta_lat = width_meters / meters_per_deg_lat
     delta_lon = width_meters / meters_per_deg_lon
     
-    # Determine the number of rows and columns needed to cover the bounding box.
-    # Note: max_lat is at the top, min_lat is at the bottom.
+    # Determine the number of rows and columns in the grid.
     num_rows = math.ceil((max_lat - min_lat) / delta_lat)
     num_cols = math.ceil((max_lon - min_lon) / delta_lon)
     
     # Compute the row and column for the query point.
-    # Rows are counted from the top (max_lat) downwards.
+    # Rows are counted from the top (max_lat) downward.
     row = int((max_lat - query_lat) / delta_lat)
     col = int((query_lon - min_lon) / delta_lon)
     
-    # Adjust in case the query point lies exactly on the boundary.
+    # Adjust if the query point lies exactly on the boundary.
     if row >= num_rows:
         row = num_rows - 1
     if col >= num_cols:
         col = num_cols - 1
     
-    # Compute the 1D grid square index in row-major order.
-    grid_index = row * num_cols + col
-    return grid_index
+    return (row, col)
 
 def debug_print(message: str) -> None:
     # Move the cursor up one line and clear that line
@@ -701,7 +1064,7 @@ def debug_print(message: str) -> None:
     # Print the new message
     print(message)
 
-def preprocess(data):
+def preprocess(data, radius):
     """
     Preprocesses the data to determine the minimum and maximum latitude and longitude.
     Also provides real-time updates using debug_print.
@@ -726,6 +1089,53 @@ def preprocess(data):
         except ValueError:
             continue
     
-    debug_print("Preprocessing complete.\n")
-    return min_lat, max_lat, min_lon, max_lon
+    grid = build_grid((min_lat, min_lon), (max_lat, max_lon), radius)
 
+    debug_print("Preprocessing complete.\n")
+
+    return grid, min_lat, max_lat, min_lon, max_lon
+
+def build_grid(min_point, max_point, width_meters):
+    """
+    Builds the grid based on the bounding box and returns a dictionary mapping each cell 
+    (row, col) to a list of its adjacent cells (including diagonals).
+
+    Parameters:
+    - min_point: Tuple (min_lat, min_lon) for the bottom-left of the bounding box.
+    - max_point: Tuple (max_lat, max_lon) for the top-right of the bounding box.
+    - width_meters: The physical width (and height) of each grid square in meters.
+
+    Returns:
+    - grid: Dictionary with keys as (row, col) and values as lists of adjacent (row, col) tuples.
+    - num_rows: Total number of rows in the grid.
+    - num_cols: Total number of columns in the grid.
+    """
+    min_lat, min_lon = min_point
+    max_lat, max_lon = max_point
+
+    # Use the same conversion factors as in get_grid_square.
+    meters_per_deg_lat = 111320.0
+    avg_lat = (min_lat + max_lat) / 2.0
+    meters_per_deg_lon = 111320.0 * math.cos(math.radians(avg_lat))
+    
+    delta_lat = width_meters / meters_per_deg_lat
+    delta_lon = width_meters / meters_per_deg_lon
+
+    num_rows = math.ceil((max_lat - min_lat) / delta_lat)
+    num_cols = math.ceil((max_lon - min_lon) / delta_lon)
+
+    grid = {}
+    for row in range(num_rows):
+        for col in range(num_cols):
+            # For each cell, compute its adjacent cells (neighbors) including diagonals.
+            neighbors = []
+            for r in range(row - 1, row + 2):
+                for c in range(col - 1, col + 2):
+                    # Skip the cell itself.
+                    if (r, c) == (row, col):
+                        continue
+                    # Check grid boundaries.
+                    if 0 <= r < num_rows and 0 <= c < num_cols:
+                        neighbors.append((r, c))
+            grid[(row, col)] = []
+    return grid

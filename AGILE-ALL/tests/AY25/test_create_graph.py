@@ -11,7 +11,7 @@ csv_file = "data/dwelltime_testset.csv"
 def setup_data():
     # Process data and create the graph
     data, df = process_data(csv_file)
-    graph = createGraph(data)
+    graph = createGraph(data, 100)
     
     frequency_result, adjacency_result = connectNodes(graph, 1, 5, 5, 100)
 
@@ -70,5 +70,6 @@ def test_mergeResults(setup_data):
 def test_num_edges(setup_data):
     df, _, adjacency_result, _, graph = setup_data
     
+    result = len(graph.edges)
     # Check if the output matches the expected list of lists
-    assert len(graph.edges) == 4, f"Expected 4, but got {result}"
+    assert result == 6, f"Expected 6, but got {result}"

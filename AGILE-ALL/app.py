@@ -727,7 +727,7 @@ elif nav_bar == 'Graph':
             if st.form_submit_button('Generate Graph'):
                 with st.spinner(text="Generating graph..."):
                     # Create the graph object
-                    graph = createGraph(st.session_state.data.values.tolist())
+                    graph = createGraph(st.session_state.data.values.tolist(), radius)
 
                     # Connect related nodes in the graph with the provided parameters
                     # st.session_state.data
