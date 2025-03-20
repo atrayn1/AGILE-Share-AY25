@@ -13,7 +13,7 @@ def setup_data():
     data, df = process_data(csv_file)
     graph = createGraph(data, 100)
     
-    frequency_result, adjacency_result = connectNodes(graph, 1, 5, 5, 100)
+    frequency_result, adjacency_result = connectNodes(graph, 1, 5, 5, 100, None)
 
     # Run these expensive operations only once
     result = mergeResults(frequency_result, adjacency_result, 0)

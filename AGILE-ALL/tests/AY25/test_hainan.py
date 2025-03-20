@@ -19,7 +19,7 @@ def start_visualization(csv_file, min_time_together, max_time_diff, radius):
     data, df = process_data(csv_file)
     print(df)  # Print dataframe for debugging
     graph = createGraph(data, radius)
-    connectNodes(graph, 1, min_time_together, max_time_diff, radius)
+    connectNodes(graph, 1, min_time_together, max_time_diff, radius, None)
     adj_matrix = np.nan_to_num(graph.adjacency_matrix, nan=0.0)
 
     #generate_visualization(graph, adj_matrix)

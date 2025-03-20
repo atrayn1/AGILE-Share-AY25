@@ -34,7 +34,7 @@ from agile.centrality import compute_top_centrality
 from agile.overview import adid_value_counts
 
 # AY 25 Addition
-from agile.graphing import createGraph, connectNodes
+from agile.graphing import createGraph, connectNodes, connectCurrentNodes, expandNode
 
 from streamlit_option_menu import option_menu
 import pygeohash as gh
@@ -705,6 +705,8 @@ elif nav_bar == 'Graph':
             'Query a graph displaying the relationships of interest for a single advertising ID. '
             'The radius is the circular radius around each point for the advertising ID to search for these points of interest. '
             'The radius is in meters.'
+            'For large datasets, recommend entering a specific ADID to query to speed up computation.'
+            'Expect large datasets to take several minutes to first generate, and be quicker to expand.'
         )
 
         # Form for graph input controls
@@ -712,9 +714,16 @@ elif nav_bar == 'Graph':
         with graph_form:
             # Input fields for querying the graph
             adid = st.text_input('Advertiser ID (currently not functional)')  # Placeholder for ADID query
+            if adid == "":
+                adid = None
             radius = st.number_input('Radius (meters)', min_value=0, value=100)
             x_time = st.number_input('Minimum Time Difference (x_time) in minutes to be together to be considered colocated', min_value=1, value=5)
             y_time = st.number_input('Minimum Time Gap (y_time) in minutes before considering repeated colocation', min_value=1, value=5)
+            num_nodes = st.number_input('Maximum number of nodes to display on the graph (will display the strongest relations)', min_value=1, value=10)
+            st.session_state.radius = radius
+            st.session_state.x_time = x_time
+            st.session_state.y_time = y_time
+            st.session_state.num_nodes = num_nodes
             edge_weight_scale = 100 # st.slider(
                 #'Edge Weight Scale', 
                 #min_value=0, 
@@ -732,45 +741,44 @@ elif nav_bar == 'Graph':
                     # Connect related nodes in the graph with the provided parameters
                     # st.session_state.data
                     # TODO MAKE SURE THE CORRECT DATA IS INPUTTED IN HERE
-                    connectNodes(graph, edge_weight_scale / 100, x_time, y_time, radius)
+
+                    connectNodes(graph, edge_weight_scale / 100, x_time, y_time, radius, adid, False, num_nodes)
 
                     # Save the graph object to session state for access in other containers
                     st.session_state.graph = graph
 
-    # Display the graph overview and adjacency matrix in the overview_c container
-    with overview_c:
+        graph_form_expand = st.form(key='graph_expand_form')
+        with graph_form_expand:
+            if st.form_submit_button('Connect Current Nodes'):
+                with st.spinner(text="Connecting currently displayed nodes..."):
+                    # Create the graph object
+                    #graph = createGraph(st.session_state.data.values.tolist(), radius)
 
-        if 'graph' in st.session_state:
-            graph = st.session_state.graph
+                    # Connect related nodes in the graph with the provided parameters
+                    # st.session_state.data
+                    # TODO MAKE SURE THE CORRECT DATA IS INPUTTED IN HERE
 
-            for node in graph.nodes:
-                # Only create an expander if the node has neighbors
-                neighbors = node.neighbors
-                if neighbors:
-                    with st.expander(f"Node: {node.adid}"):
-                        st.write(f"**ADID:** {node.adid}")
+                    #connectNodes(graph, edge_weight_scale / 100, x_time, y_time, radius, adid)
 
-                        # Retrieve neighbors and relationship strengths
-                        neighbor_info = []
-                        for neighbor in neighbors:
-                            neighbor_index = graph.nodes.index(neighbor)
-                            strength = graph.adjacency_matrix[graph.nodes.index(node), neighbor_index].item()
+                    # Save the graph object to session state for access in other containers
+                    connectCurrentNodes(st.session_state.graph, x_time, radius)
 
-                            # Extract the adjacency matrices for colocations and dwell time
-                            colocations_strength = graph.colocations_matrix[graph.nodes.index(node), neighbor_index].item()
-                            dwell_time_strength = graph.dwell_time_matrix[graph.nodes.index(node), neighbor_index].item()
+        graph_form_expand2 = st.form(key='graph_expand_form2')
+        with graph_form_expand2:
+            adid = st.text_input('Advertiser ID')  # Placeholder for ADID query
+            if adid == "":
+                adid = None
+            if st.form_submit_button('Expand ADID'):
+                with st.spinner(text="Expanding graph..."):
+                    # Create the graph object
+                    #graph = createGraph(st.session_state.data.values.tolist(), radius)
 
-                            # Add colocations and dwell time information to the table
-                            neighbor_info.append({"Neighbor ADID": neighbor.adid, "Relationship Strength (minutes of average dwell time)": strength, "Number of Colocations": colocations_strength, "Total Dwell Time (minutes)": dwell_time_strength})
-
-                        # Convert to DataFrame and display
-                        neighbor_df = pd.DataFrame(neighbor_info)
-                        st.dataframe(neighbor_df, use_container_width=True)
-                else:
-                    pass
-                    # st.write(f"**ADID:** {node.adid} - No neighbors found.")
-        else:
-            st.warning("Please generate a graph using the controls in the sidebar.")
+                    # Connect related nodes in the graph with the provided parameters
+                    # st.session_state.data
+                    # TODO MAKE SURE THE CORRECT DATA IS INPUTTED IN HERE
+                    
+                    #expandNode(st.session_state.graph, st.session_state.x_time, st.session_state.y_time, st.session_state.radius, adid, st.session_state.num_nodes)
+                    expandNode(st.session_state.graph, adid, st.session_state.x_time, radius, num_nodes)
 
     with results_c:
         if 'graph' in st.session_state:
@@ -779,7 +787,7 @@ elif nav_bar == 'Graph':
             # [NEW STUFF]
             # Now, generate and display the visualization
             adj_matrix = np.nan_to_num(graph.adjacency_matrix, nan=0.0)
-            fig = generate_visualization(graph, adj_matrix)  # This generates the Plotly graph and shows it directly
+            fig = generate_visualization(graph, adj_matrix, graph.top_adids)  # This generates the Plotly graph and shows it directly
             st.plotly_chart(fig)  # not sure how to exactly use this...
         else:
             st.warning("Please generate a graph using the controls in the sidebar.")

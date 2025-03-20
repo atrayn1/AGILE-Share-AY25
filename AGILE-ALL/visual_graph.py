@@ -19,56 +19,79 @@ def most_central_node(adj_matrix):
     centrality = nx.betweenness_centrality(G)
     return max(centrality, key=centrality.get)
 
-def generate_visualization(graph, adj_matrix, output_file="interactive_network_graph.html"):
+def generate_visualization(graph, adj_matrix, top_adids, output_file="interactive_network_graph.html"):
     """
-    Generates a visualization of the graph using Plotly.
+    Generates a visualization of the graph using Plotly, filtered by top_adids.
 
     Args:
         graph (Graph): The graph object containing nodes and edges.
         adj_matrix (numpy.ndarray): The adjacency matrix of the graph.
+        top_adids (list): List of specific ADIDs to display.
         output_file (str): The file path to save the visualization as an HTML file.
     """
-    G = nx.from_numpy_array(adj_matrix)  # Convert adjacency matrix to NetworkX graph
-    people = graph.get_node_names()  # Get node names (ADIDs)
+    print("top, ", top_adids)
+    # Create a mapping from ADID to index
+    adid_to_index = {node.adid: i for i, node in enumerate(graph.nodes)}
+
+    # Filter nodes based on top_adids
+    if top_adids:
+        selected_indices = {adid_to_index[adid] for adid in top_adids if adid in adid_to_index}
+    else:
+        selected_indices = set(range(len(graph.nodes)))  # Include all nodes if no filter is applied
+
+    # Create a new NetworkX graph with only selected nodes and edges
+    G = nx.Graph()
     
+    for i in selected_indices:
+        G.add_node(i)  # Add only selected nodes
+
+    for i in selected_indices:
+        for j in selected_indices:
+            if i != j and adj_matrix[i, j] > 0:  # Ensure there's a connection
+                G.add_edge(i, j, weight=adj_matrix[i, j])
+
+    # Identify isolated nodes (nodes with no edges)
+    isolated_nodes = [node for node in G.nodes if G.degree(node) == 0]
+    G.remove_nodes_from(isolated_nodes)  # Remove them from visualization
+
+    # Convert remaining nodes to ADIDs
+    people = [graph.nodes[i].adid for i in G.nodes]
+
     # Center the graph around the most central node
-    center_node = most_central_node(adj_matrix)
-    pos = nx.spring_layout(G, seed=42, k=0.1)  # Set 'k' for more even spacing between nodes
-    pos[center_node] = (0, 0)  # Set center node at (0,0)
-
-    # Adjust node positions relative to the center
-    x_offset, y_offset = pos[center_node]
-    for node in pos:
-        pos[node] = (pos[node][0] - x_offset, pos[node][1] - y_offset)
-
+    if G.nodes:
+        center_node = most_central_node(nx.to_numpy_array(G))
+        pos = nx.spring_layout(G, seed=42, k=0.1)  # Set 'k' for even spacing
+        pos[center_node] = (0, 0)  # Set center node at (0,0)
+    else:
+        pos = {}
 
     # Extract node positions
-    nodes_x = [pos[node][0] for node in G.nodes()]
-    nodes_y = [pos[node][1] for node in G.nodes()]
+    nodes_x = [pos[node][0] for node in G.nodes]
+    nodes_y = [pos[node][1] for node in G.nodes]
 
-    # Prepare hover info with all Node details
+    # Prepare hover info
     hover_info = [
         (
-            f"ADID: {node.adid}<br>"
-            f"Neighbors: {', '.join(n.adid for n in node.neighbors) if node.neighbors else 'None'}<br>"
-            f"Number of Edges: {len(node.edges)}<br>"
-            f"Number of Continuous Periods: {len(node.continuous_periods)}<br>"
+            f"ADID: {graph.nodes[node].adid}<br>"
+            f"Neighbors: {', '.join(n.adid for n in graph.nodes[node].neighbors if n.adid in top_adids) if graph.nodes[node].neighbors else 'None'}<br>"
+            f"Number of Edges: {len([n for n in graph.nodes[node].neighbors if n.adid in top_adids])}<br>"
+            f"Number of Continuous Periods: {len(graph.nodes[node].continuous_periods)}<br>"
             f"Continuous Periods:<br>" + 
             "<br>".join(str(period).replace("Timestamp(", "").replace(")", "").replace("np.float64(", "").strip() 
-                        for period in node.continuous_periods if period is not None)
+                        for period in graph.nodes[node].continuous_periods if period is not None)
         )
-        for node in graph.nodes
+        for node in G.nodes
     ]
 
     nodes = go.Scatter(
         x=nodes_x, y=nodes_y,
         mode='markers+text',
         name='People',
-        text=[node.adid for node in graph.nodes],  # Display ADID as node label
+        text=people,
         textposition='top center',
-        hovertext=hover_info,  # Unique hover text per node
+        hovertext=hover_info,
         marker=dict(
-            size=10,  # Fixed size for all nodes
+            size=10,
             color='blue',
             colorscale='Viridis',
             line=dict(color='black', width=1)
@@ -82,22 +105,22 @@ def generate_visualization(graph, adj_matrix, output_file="interactive_network_g
     edge_hover_y = []
     edge_hover_text = []
     
-    for edge in G.edges():
+    for edge in G.edges:
         x0, y0 = pos[edge[0]]
         x1, y1 = pos[edge[1]]
-        edges_x.extend([x0, x1, None])  # None for line breaks
+        edges_x.extend([x0, x1, None])  
         edges_y.extend([y0, y1, None])
         
-        # Compute midpoint for hover text
         mid_x = (x0 + x1) / 2
         mid_y = (y0 + y1) / 2
         edge_hover_x.append(mid_x)
         edge_hover_y.append(mid_y)
-        
+
         graph_edge = graph.get_edge(graph.nodes[edge[0]], graph.nodes[edge[1]])
         if graph_edge:
             edge_hover_text.append(
                 f"Weight: {graph_edge.weight}<br>"
+                f"Connecting {graph_edge.node1.adid} to {graph_edge.node2.adid}<br>"
                 f"Colocation Count: {graph_edge.colocation_count}<br>"
                 f"Overlap Time: {graph_edge.overlap_time}<br>"
                 f"Overlap Periods:<br>" + "<br>".join(map(str, graph_edge.overlap_periods))
@@ -105,28 +128,25 @@ def generate_visualization(graph, adj_matrix, output_file="interactive_network_g
         else:
             edge_hover_text.append("No data")
 
-    # Create the edges line plot
     edges = go.Scattergl(
         x=edges_x, y=edges_y,
         mode='lines',
         name='Connections',
         line=dict(width=1, color='gray'),
-        hoverinfo='none'  # Disable hover on lines themselves
+        hoverinfo='none'
     )
 
-    # Invisible scatter points for edge hover info
     edge_hover = go.Scatter(
         x=edge_hover_x, y=edge_hover_y,
         mode='markers',
-        marker=dict(size=5, color='rgba(0,0,0,0)'),  # Invisible markers
+        marker=dict(size=5, color='rgba(0,0,0,0)'),
         hoverinfo='text',
         hovertext=edge_hover_text
     )
 
-    # Generate the final plot
     fig = go.Figure(data=[edges, edge_hover, nodes])
     fig.update_layout(
-        title="ADID Dataset Graph",
+        title="Filtered ADID Dataset Graph",
         showlegend=True,
         legend_title="Communities",
         hovermode='closest',
@@ -134,7 +154,5 @@ def generate_visualization(graph, adj_matrix, output_file="interactive_network_g
         yaxis=dict(showgrid=False, zeroline=False, showticklabels=False)
     )
 
-    # Save the interactive plot as an HTML file
     fig.write_html(output_file)
-
     return fig
