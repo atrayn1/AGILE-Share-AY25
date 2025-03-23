@@ -34,7 +34,7 @@ from agile.centrality import compute_top_centrality
 from agile.overview import adid_value_counts
 
 # AY 25 Addition
-from agile.graphing import createGraph, connectNodes, connectCurrentNodes, expandNode
+from agile.graphing import createGraph, connectNodes, connectCurrentNodes, expandNode, addADID
 
 from streamlit_option_menu import option_menu
 import pygeohash as gh
@@ -749,13 +749,16 @@ elif nav_bar == 'Graph':
 
         graph_form_expand = st.form(key='graph_expand_form')
         with graph_form_expand:
+            st.info(
+                'Use this to connect all the nodes currently displayed in the graph with eachother.'
+            )
             if st.form_submit_button('Connect Current Nodes'):
                 with st.spinner(text="Connecting currently displayed nodes..."):
                     # Create the graph object
                     #graph = createGraph(st.session_state.data.values.tolist(), radius)
 
                     # Connect related nodes in the graph with the provided parameters
-                    # st.session_state.data
+                    # st.session_state.datas
                     # TODO MAKE SURE THE CORRECT DATA IS INPUTTED IN HERE
 
                     #connectNodes(graph, edge_weight_scale / 100, x_time, y_time, radius, adid)
@@ -766,6 +769,10 @@ elif nav_bar == 'Graph':
         graph_form_expand2 = st.form(key='graph_expand_form2')
         with graph_form_expand2:
             adid = st.text_input('Advertiser ID')  # Placeholder for ADID query
+            st.info(
+                'Use this when querying an ADID that is currently displayed in the graph.'
+                ' This will find the top neighbors connected to that ADID.'
+            )
             if adid == "":
                 adid = None
             if st.form_submit_button('Expand ADID'):
@@ -779,6 +786,27 @@ elif nav_bar == 'Graph':
                     
                     #expandNode(st.session_state.graph, st.session_state.x_time, st.session_state.y_time, st.session_state.radius, adid, st.session_state.num_nodes)
                     expandNode(st.session_state.graph, adid, st.session_state.x_time, radius, num_nodes)
+        
+        graph_form_expand3 = st.form(key='graph_expand_form3')
+        with graph_form_expand3:
+            adid = st.text_input('Advertiser ID')  # Placeholder for ADID query
+            st.info(
+                'Use this when querying an ADID that is not currently displayed in the graph.'
+                ' This will add the ADID you are querying to the graph.'
+            )
+            if adid == "":
+                adid = None
+            if st.form_submit_button('Explore ADID'):
+                with st.spinner(text="Expanding graph..."):
+                    # Create the graph object
+                    #graph = createGraph(st.session_state.data.values.tolist(), radius)
+
+                    # Connect related nodes in the graph with the provided parameters
+                    # st.session_state.data
+                    # TODO MAKE SURE THE CORRECT DATA IS INPUTTED IN HERE
+                    
+                    #expandNode(st.session_state.graph, st.session_state.x_time, st.session_state.y_time, st.session_state.radius, adid, st.session_state.num_nodes)
+                    addADID(st.session_state.graph, adid, st.session_state.x_time, radius, num_nodes)
 
     with results_c:
         if 'graph' in st.session_state:

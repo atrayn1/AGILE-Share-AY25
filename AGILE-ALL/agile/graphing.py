@@ -1011,7 +1011,6 @@ def connectCurrentNodes(graph, min_time_together, radius):
 
     return colocation_matrix, dwell_time_matrix
 
-
 def expandNode(graph, adid, min_time_together, radius, num_nodes_display):
     debug_print("Expanding node relationships...")
 
@@ -1106,6 +1105,111 @@ def expandNode(graph, adid, min_time_together, radius, num_nodes_display):
     
     # Return the updated matrices
     return colocation_matrix, dwell_time_matrix
+
+def addADID(graph, new_adid, min_time_together, radius, num_nodes_display):
+    debug_print(f"Adding new ADID {new_adid} to the graph...")
+
+    if new_adid in graph.top_adids:
+        debug_print(f"ADID {new_adid} is already in graph.top_adids. No action taken.")
+        return graph.colocations_matrix, graph.dwell_time_matrix
+
+    num_nodes = len(graph.nodes)
+
+    # Use existing matrices and expand them instead of resetting
+    dwell_time_matrix = graph.dwell_time_matrix
+    colocation_matrix = graph.colocations_matrix
+
+    rows = [key[0] for key in graph.grid.keys()]
+    cols = [key[1] for key in graph.grid.keys()]
+    min_row, max_row = min(rows), max(rows)
+    min_col, max_col = min(cols), max(cols)
+
+    node_weights = {node: 0 for node in graph.nodes}
+
+    # Find the node corresponding to the new ADID
+    target_nodes = [node for node in graph.nodes if node.adid == new_adid]
+
+    if not target_nodes:
+        debug_print(f"No node found with ADID {new_adid}. Exiting function.")
+        return graph.colocations_matrix, graph.dwell_time_matrix
+
+    node1 = target_nodes[0]
+    adjacent_nodes = set()
+
+    # Find nearby nodes in the grid
+    for row, col in node1.squares:
+        if min_row <= row <= max_row and min_col <= col <= max_col:
+            if (row, col) in graph.grid:
+                for adj_node in graph.grid[(row, col)]:
+                    adjacent_nodes.add(graph.nodes[adj_node])
+
+        directions = [(-1, 0), (1, 0), (0, -1), (0, 1),
+                      (-1, -1), (-1, 1), (1, -1), (1, 1)]
+
+        for dr, dc in directions:
+            new_row, new_col = row + dr, col + dc
+            if min_row <= new_row <= max_row and min_col <= new_col <= max_col:
+                if (new_row, new_col) in graph.grid:
+                    for adj_node in graph.grid[(new_row, new_col)]:
+                        adjacent_nodes.add(graph.nodes[adj_node])
+
+    debug_print(f"Adding ADID {new_adid}: Comparing {len(adjacent_nodes)} adjacent nodes")
+
+    # Compare the new node with each adjacent node
+    for node2 in adjacent_nodes:
+        if node1 == node2:
+            continue
+
+        colocation_count, overlap_time, overlap_periods = findFrequencyAndDwellTime(
+            node1.continuous_periods, node2.continuous_periods, min_time_together, radius
+        )
+
+        edge = node1.getEdge(node2) or graph.add_edge(node1, node2)
+
+        if overlap_time < min_time_together:
+            overlap_time = 0
+
+        if overlap_time > 0:
+            edge.addOverlapTime(overlap_time)
+            edge.addOverlapPeriods(overlap_periods)
+
+        if colocation_count > 0:
+            edge.addColocationCount(colocation_count)
+
+        weight = edge.fixWeight()
+        node_weights[node2] += weight  # Store weights relative to node1
+
+        i = graph.nodes.index(node1)
+        j = graph.nodes.index(node2)
+
+        # Expand matrices with new data
+        dwell_time_matrix[i][j] = overlap_time
+        dwell_time_matrix[j][i] = overlap_time
+
+        colocation_matrix[i][j] = colocation_count
+        colocation_matrix[j][i] = colocation_count
+
+    # Find the top related nodes
+    relevant_nodes = [node for node in graph.nodes if node.adid != new_adid]
+    top_nodes = sorted(relevant_nodes, key=lambda n: node_weights[n], reverse=True)[:num_nodes_display]
+
+    # Create a unique set of top ADIDs
+    top_adids = {node.adid for node in top_nodes}
+    top_adids.add(new_adid)
+
+    # Merge with graph.top_adids, ensuring uniqueness
+    graph.top_adids = list(set(graph.top_adids).union(top_adids))
+
+    #debug_print("Updated top_adids:" + graph.top_adids)
+
+    # Merge the two matrices based on the weighting factor x
+    finalMatrix = mergeResults(colocation_matrix, dwell_time_matrix, 0)
+    print(finalMatrix)
+    # Update the graph with the final adjacency matrix
+    update_graph_with_matrix(graph, finalMatrix, colocation_matrix, dwell_time_matrix)
+
+    return colocation_matrix, dwell_time_matrix
+
 
 
 def get_grid_square(query, min_point, max_point, width_meters):
