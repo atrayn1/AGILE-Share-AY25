@@ -87,7 +87,7 @@ title_left.markdown("<h3 style='text-align: center; color: black;'>Advertising a
 title_img.image(find('../img/AGILE_Black.png'), width = 180)
 
 
-nav_bar = option_menu(None, ['Data', 'Filtering', 'Locations', 'Algorithms', 'Report', "Graph"],
+nav_bar = option_menu(None, ['Data', 'Graph', 'Filtering', 'Locations', 'Algorithms', 'Report'],
                       icons=['file-earmark-fill', 'funnel-fill', 'pin-map-fill', 'layer-forward', 'stack', 'command'],
                       menu_icon="cast", default_index=0, orientation="horizontal",
                     )
@@ -143,7 +143,7 @@ if nav_bar == 'Data':
         demo_button = st.button('Load Demo Data')
 
         if demo_button:
-            demo_file_path = 'data/hainan2.csv'
+            demo_file_path = 'data/hainan.csv' 
 
             # Check if the demo CSV file exists in the current directory
             if os.path.exists(demo_file_path):
@@ -713,7 +713,7 @@ elif nav_bar == 'Graph':
         graph_form = st.form(key='graph_controls_form')
         with graph_form:
             # Input fields for querying the graph
-            adid = st.text_input('Advertiser ID (currently not functional)')  # Placeholder for ADID query
+            adid = st.text_input('Advertiser ID')  # Placeholder for ADID query
             if adid == "":
                 adid = None
             radius = st.number_input('Radius (meters)', min_value=0, value=100)
