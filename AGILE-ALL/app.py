@@ -807,7 +807,16 @@ elif nav_bar == 'Graph':
                     
                     #expandNode(st.session_state.graph, st.session_state.x_time, st.session_state.y_time, st.session_state.radius, adid, st.session_state.num_nodes)
                     addADID(st.session_state.graph, adid, st.session_state.x_time, radius, num_nodes)
-
+    with overview_c:
+        if 'graph' in st.session_state:
+            graph = st.session_state.graph
+            topAdids = graph.top_adids
+            for adid in topAdids:
+                if st.button(f"Expand {adid}"):
+                    with st.spinner(f"Expanding {adid}..."):
+                        expandNode(graph, adid, st.session_state.x_time, st.session_state.radius, st.session_state.num_nodes)
+    
+    
     with results_c:
         if 'graph' in st.session_state:
             graph = st.session_state.graph
@@ -817,6 +826,7 @@ elif nav_bar == 'Graph':
             adj_matrix = np.nan_to_num(graph.adjacency_matrix, nan=0.0)
             fig = generate_visualization(graph, adj_matrix, graph.top_adids)  # This generates the Plotly graph and shows it directly
             st.plotly_chart(fig)  # not sure how to exactly use this...
+            
         else:
             st.warning("Please generate a graph using the controls in the sidebar.")
 else:
