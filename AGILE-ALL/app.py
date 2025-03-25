@@ -65,6 +65,9 @@ if 'generated_reports' not in st.session_state:
     st.session_state.generated_reports = pd.DataFrame(columns=['ADID', 'Alias','Profile'])
 if 'alias_ids' not in st.session_state:
     st.session_state.alias_ids = {}
+if 'main_adid' not in st.session_state:
+    st.session_state.main_adid = ""       # the adid you want to further explore
+
 
 
 # Replace Sidebar with data options Menu
@@ -123,9 +126,6 @@ results_c.subheader('Analysis')
 
 if not os.path.exists('saved_data'):
     os.makedirs('saved_data')
-    
-
-
 
 # Based on what option is selected on the Nav Bar, a different container/expander will be displayed in the sidebar
 if nav_bar == 'Data':
@@ -190,7 +190,7 @@ if nav_bar == 'Data':
                 st.write("Demo Data Loaded Successfully")
 
             else:
-                st.write("Demo file (hainan2.csv) not found.")
+                st.write("Demo file (hainan.csv) not found.")
 
         # If a file has not yet been uploaded (this allows multiple form requests in unison)
         if raw_data and raw_data.name != st.session_state.file_source:
@@ -280,7 +280,11 @@ if nav_bar == 'Data':
         
         alias_finder_form = st.form('find_alias')
         with alias_finder_form:
-            alias_form_text = st.text_input('Advertiser ID')
+            #alias_form_text = st.text_input('Advertiser ID')
+            if st.session_state.main_adid != '':
+                alias_form_text = st.text_input('Advertiser ID', value=st.session_state.main_adid)
+            else:
+                alias_form_text = st.text_input('Advertiser ID')
             if st.form_submit_button('Find Alias'):
                 try:
                     found_alias = st.session_state.alias_ids[alias_form_text.strip()]
@@ -298,7 +302,11 @@ if nav_bar == 'Data':
         # Creates the form which will hold the text boxes, check box, and button
         rename_form = st.form('rename_adid')
         with rename_form:
-            adid_to_update = st.text_input('Advertiser ID')
+            #adid_to_update = st.text_input('Advertiser ID')
+            if st.session_state.main_adid != '':
+                adid_to_update = st.text_input('Advertiser ID', value=st.session_state.main_adid)
+            else:
+                adid_to_update = st.text_input('Advertiser ID')
             new_name_text = st.text_input('Custom Name')
             
             if st.form_submit_button('Assign Name'):
@@ -321,7 +329,7 @@ if nav_bar == 'Data':
                         #st.session_state.file_source = os.path.abspath('./saved_data/saved_df.pkl')
 
 elif nav_bar == 'Filtering':
-
+    
     sidebar.title('Filtering')
 
     filtering_ex = sidebar.container() #'Filtering'
@@ -340,8 +348,14 @@ elif nav_bar == 'Filtering':
 
             adid_form = st.form(key='adid_filter')
             with adid_form:
+                print("main adid: ", st.session_state.main_adid)
 
-                adid = st.text_input('Advertiser ID')
+                # Pre-fill the value with st.session_state.main_adid if it's not an empty string
+                if st.session_state.main_adid != '':
+                    adid = st.text_input('Advertiser ID', value=st.session_state.main_adid)
+                else:
+                    adid = st.text_input('Advertiser ID')
+
                 if st.form_submit_button('Query'):
                     st.session_state.data = query_adid(adid, st.session_state.data)
                     data_map(results_c, data=st.session_state.data)
@@ -441,7 +455,10 @@ elif nav_bar == 'Locations':
                     circular radius around each point for the advertising ID to search for these points of interest. The radius is in meters.')
             overpass_form = st.form(key='polyline')
             with overpass_form:
-                adid = st.text_input('Advertiser ID')
+                if st.session_state.main_adid != '':
+                    adid = st.text_input('Advertiser ID', value=st.session_state.main_adid)
+                else:
+                    adid = st.text_input('Advertiser ID')
                 radius = st.text_input('Radius (meters)')
                 if st.form_submit_button('Query'):
                     with st.spinner(text="Computing..."):
@@ -469,7 +486,10 @@ elif nav_bar == 'Algorithms':
             cluster_form = st.form(key='cluster_form')
             with cluster_form:
                 loi_data = None
-                adid = st.text_input('Advertiser ID')
+                if st.session_state.main_adid != '':
+                    adid = st.text_input('Advertiser ID', value=st.session_state.main_adid)
+                else:
+                    adid = st.text_input('Advertiser ID')
                 num_clusters = st.slider('Number of Clusters', min_value=1, max_value=10, value=4)
                 if st.form_submit_button('Query'):
                     with st.spinner(text="Computing..."):
@@ -505,7 +525,10 @@ elif nav_bar == 'Algorithms':
             loi_form = st.form(key='loi_form')
             with loi_form:
                 loi_data = None
-                adid = st.text_input('Advertiser ID')
+                if st.session_state.main_adid != '':
+                    adid = st.text_input('Advertiser ID', value=st.session_state.main_adid)
+                else:
+                    adid = st.text_input('Advertiser ID')
                 ext_h = st.slider('Extended Stay Duration', min_value=1, max_value=24, value=7)
                 rep_h = st.slider('Time Between Repeat Visits', min_value=1, max_value=72, value=24)
                 if st.form_submit_button('Query'):
@@ -547,7 +570,10 @@ elif nav_bar == 'Algorithms':
                     algorithms MUST be run before using this module.')
             pred_form = st.form('pred')
             with pred_form:
-                adid = st.text_input('Advertiser ID')
+                if st.session_state.main_adid != '':
+                    adid = st.text_input('Advertiser ID', value=st.session_state.main_adid)
+                else:
+                    adid = st.text_input('Advertiser ID')
                 start_time = st.time_input('Time:', key='time')
                 start_day = st.slider('Day (0 = Saturday, 6 = Sunday):', min_value=0, max_value=6, value=2)
                 if st.form_submit_button('Predict'):
@@ -589,7 +615,10 @@ elif nav_bar == 'Report':
         with report_c:
             report_form = st.form(key='report')
             with report_form:
-                adid = st.text_input('Advertiser ID')
+                if st.session_state.main_adid != '':
+                    adid = st.text_input('Advertiser ID', value=st.session_state.main_adid)
+                else:
+                    adid = st.text_input('Advertiser ID')
                 #exth = st.slider('Extended Stay Duration', min_value=1, max_value=24, value=7)
                 #reph = st.slider('Time Between Repeat Visits', min_value=1, max_value=72, value=24)
                 #colh = st.slider('Colocation Duration', min_value=1, max_value=24, value=2)
@@ -810,13 +839,14 @@ elif nav_bar == 'Graph':
     with overview_c:
         if 'graph' in st.session_state:
             graph = st.session_state.graph
-            topAdids = graph.top_adids
+            graph.top_adids.discard(None)
+            topAdids = sorted(graph.top_adids)
             for adid in topAdids:
-                if st.button(f"Expand {adid}"):
-                    with st.spinner(f"Expanding {adid}..."):
+                if st.button(f"Explore {adid}"):
+                    with st.spinner(f"Exploring {adid}..."):
                         expandNode(graph, adid, st.session_state.x_time, st.session_state.radius, st.session_state.num_nodes)
-    
-    
+                        st.session_state.main_adid = adid
+        print(st.session_state.main_adid)
     with results_c:
         if 'graph' in st.session_state:
             graph = st.session_state.graph
