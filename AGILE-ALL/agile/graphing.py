@@ -1338,3 +1338,99 @@ def build_grid(min_point, max_point, width_meters):
                         neighbors.append((r, c))
             grid[(row, col)] = []
     return grid
+
+def is_valid_clique(clique):
+    """
+    Checks whether a given set of nodes forms a valid clique.
+
+    A valid clique is one where every pair of nodes in the set is connected by an edge.
+
+    Args:
+        clique (set): A set of Node objects representing the potential clique.
+
+    Returns:
+        bool: True if the set of nodes forms a valid clique, False otherwise.
+    """
+    clique_list = list(clique)  # Convert the set to a list for indexing
+    for i in range(len(clique_list)):
+        for j in range(i + 1, len(clique_list)):
+            node1 = clique_list[i]
+            node2 = clique_list[j]
+            if not any(edge.forNode(node2) for edge in node1.edges):  # Check if there's an edge between node1 and node2
+                return False
+    return True
+
+def bron_kerbosch_all(graph, R, P, X, cliques=None):
+    """
+    Implements the Bron-Kerbosch algorithm to find all maximal cliques (groups) in a graph.
+
+    This is a recursive function that explores all possible cliques in the graph by
+    expanding the current set of nodes (R) with nodes from the set P, and recursively
+    eliminating nodes from the set X.
+
+    Args:
+        graph (Graph): The graph containing the nodes and edges.
+        R (set): The current set of nodes being explored as part of a clique.
+        P (set): The set of candidate nodes that can potentially be added to the clique.
+        X (set): The set of nodes that have already been explored and should not be reconsidered.
+        cliques (list, optional): The list where found cliques will be added. Defaults to None.
+
+    Returns:
+        list: A list of all maximal cliques found in the graph.
+    """
+    if cliques is None:
+        cliques = []
+
+    if not P and not X:
+        clique = [node.adid for node in R]
+        # Validate the clique before adding
+        if is_valid_clique(R):
+            cliques.append(clique)
+        return cliques
+
+    P_copy = P.copy()
+    for node in P_copy:
+        R_new = R.copy()
+        R_new.add(node)
+
+        P_new = P.intersection(node.neighbors)
+        X_new = X.intersection(node.neighbors)
+
+        bron_kerbosch_all(graph, R_new, P_new, X_new, cliques)
+
+        P.remove(node)
+        X.add(node)
+
+    return cliques
+
+def find_cliques_for_adid(graph, adid):
+    """
+    Finds all maximal cliques in the graph that contain the node with the specified ADID.
+
+    This function initializes the Bron-Kerbosch algorithm with the node corresponding to
+    the given ADID and finds all cliques that include that node.
+
+    Args:
+        graph (Graph): The graph containing the nodes and edges.
+        adid (str): The ADID of the node to query for cliques.
+
+    Returns:
+        list: A list of cliques that contain the node with the specified ADID.
+    """
+    # Find the node with the given ADID
+    node = graph.get_node_by_adid(adid)
+    if not node:
+        return []  # If the node does not exist, return an empty list
+
+    # Initialize the Bron-Kerbosch algorithm
+    P = set(graph.nodes)  # Use all nodes as starting points
+    R = set([node])  # Start with the specified node
+    X = set()  # The set of nodes already processed
+
+    # Run the Bron-Kerbosch algorithm to find the cliques
+    all_cliques = bron_kerbosch_all(graph, R, P, X)
+
+    # Filter the cliques to include only those that involve the specified ADID
+    cliques_with_adid = [clique for clique in all_cliques if adid in clique]
+
+    return cliques_with_adid

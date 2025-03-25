@@ -34,7 +34,7 @@ from agile.centrality import compute_top_centrality
 from agile.overview import adid_value_counts
 
 # AY 25 Addition
-from agile.graphing import createGraph, connectNodes, connectCurrentNodes, expandNode, addADID
+from agile.graphing import createGraph, connectNodes, connectCurrentNodes, expandNode, addADID, find_cliques_for_adid
 
 from streamlit_option_menu import option_menu
 import pygeohash as gh
@@ -844,6 +844,19 @@ elif nav_bar == 'Graph':
                     
                     #expandNode(st.session_state.graph, st.session_state.x_time, st.session_state.y_time, st.session_state.radius, adid, st.session_state.num_nodes)
                     addADID(st.session_state.graph, adid, st.session_state.x_time, radius, num_nodes)
+        
+        clique_form = st.form(key='clique_query_form')
+        with clique_form:
+            st.subheader("Find groups for ADID")
+            adid_query = st.text_input("Enter ADID to query for groups:")
+            st.info(
+                'Use this when querying for groups that an AdID that is apart of. '
+                'A group is a subset of AdIDs where every AdID is connected to every other AdID in the set. '
+                'Think of it as a group of friends where everyone is friends with everyone else within that group.'
+            )
+            if adid == "":
+                adid = None
+            submit_clique_query = st.form_submit_button("Find Groups")
 
         # Form for filtering edges by weight
         edge_filter_form = st.form(key='edge_weight_filter_form')
@@ -865,8 +878,7 @@ elif nav_bar == 'Graph':
     with overview_c:
         if 'graph' in st.session_state:
             graph = st.session_state.graph
-            topAdids = sorted(graph.top_adids)
-            for adid in topAdids:
+            for adid in graph.top_adids:
                 if st.button(f"Expand {adid}"):
                     with st.spinner(f"Expanding {adid}..."):
                         expandNode(graph, adid, st.session_state.x_time, st.session_state.radius, st.session_state.num_nodes)
@@ -885,6 +897,24 @@ elif nav_bar == 'Graph':
             else:
                 fig = generate_visualization(graph, adj_matrix, graph.top_adids)  # This generates the Plotly graph and shows it directly
             st.plotly_chart(fig)  # not sure how to exactly use this...
+
+            if submit_clique_query and adid_query:
+                cliques = find_cliques_for_adid(st.session_state.graph, adid_query)
+                st.subheader(f"Groups for ADID: {adid_query}")
+
+                if cliques:
+                    # Convert the cliques into a structured DataFrame
+                    clique_dict = {"Group #": [], "Members": []}
+                    for idx, clique in enumerate(cliques, 1):
+                        clique_dict["Group #"].append(f"Group {idx}")
+                        clique_dict["Members"].append(", ".join(clique))  # Keep members as a single column
+
+                    df = pd.DataFrame(clique_dict)
+
+                    # Display as an interactive dataframe
+                    st.dataframe(df, hide_index=True) 
+                else:
+                    st.write(f"No groups found for ADID: {adid_query}")
             
         else:
             st.warning("Please generate a graph using the controls in the sidebar.")
