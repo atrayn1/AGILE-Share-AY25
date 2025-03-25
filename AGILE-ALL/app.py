@@ -730,17 +730,13 @@ elif nav_bar == 'Graph':
 
     with graph_sb:
         st.title('Graph Controls')
-        st.info(
-            'Query a graph displaying the relationships of interest for a single advertising ID. '
-            'The radius is the circular radius around each point for the advertising ID to search for these points of interest. '
-            'The radius is in meters.'
-            'For large datasets, recommend entering a specific ADID to query to speed up computation.'
-            'Expect large datasets to take several minutes to first generate, and be quicker to expand.'
-        )
+        
 
         # Form for graph input controls
         graph_form = st.form(key='graph_controls_form')
         with graph_form:
+
+            st.subheader('Initial Graph Creation')
             # Input fields for querying the graph
             adid = st.text_input('Advertiser ID')  # Placeholder for ADID query
             if adid == "":
@@ -761,6 +757,14 @@ elif nav_bar == 'Graph':
                 #help="0 makes the edge completely based on frequency of colocation, while 100 makes the edge based completely on dwell time within proximity. Otherwise, it is based on a percentage of each."
             #)
 
+            st.info(
+                'Query a graph displaying the relationships of interest for a single advertising ID. '
+                'The radius is the circular radius around each point for the advertising ID to search for these points of interest. '
+                'The radius is in meters.'
+                'For large datasets, recommend entering a specific ADID to query to speed up computation.'
+                'Expect large datasets to take several minutes to first generate, and be quicker to expand.'
+            )
+
             # Submit button for the form
             if st.form_submit_button('Generate Graph'):
                 with st.spinner(text="Generating graph..."):
@@ -778,6 +782,8 @@ elif nav_bar == 'Graph':
 
         graph_form_expand = st.form(key='graph_expand_form')
         with graph_form_expand:
+            st.subheader('Connect Displayed ADIDs')
+
             st.info(
                 'Use this to connect all the nodes currently displayed in the graph with eachother.'
             )
@@ -797,6 +803,7 @@ elif nav_bar == 'Graph':
 
         graph_form_expand2 = st.form(key='graph_expand_form2')
         with graph_form_expand2:
+            st.subheader('Expand Current ADIDs')
             adid = st.text_input('Advertiser ID')  # Placeholder for ADID query
             st.info(
                 'Use this when querying an ADID that is currently displayed in the graph.'
@@ -818,6 +825,7 @@ elif nav_bar == 'Graph':
         
         graph_form_expand3 = st.form(key='graph_expand_form3')
         with graph_form_expand3:
+            st.subheader('Explore New ADIDs')
             adid = st.text_input('Advertiser ID')  # Placeholder for ADID query
             st.info(
                 'Use this when querying an ADID that is not currently displayed in the graph.'
@@ -836,14 +844,31 @@ elif nav_bar == 'Graph':
                     
                     #expandNode(st.session_state.graph, st.session_state.x_time, st.session_state.y_time, st.session_state.radius, adid, st.session_state.num_nodes)
                     addADID(st.session_state.graph, adid, st.session_state.x_time, radius, num_nodes)
+
+        # Form for filtering edges by weight
+        edge_filter_form = st.form(key='edge_weight_filter_form')
+        with edge_filter_form:
+            st.subheader('Filter Edges by Weight')
+
+            # Input fields for setting weight bounds
+            lower_bound = st.number_input('Lower Bound for Edge Weight', min_value=0, value=0)
+            upper_bound = st.number_input('Upper Bound for Edge Weight', min_value=0, value=100)
+            st.session_state.has_bounds = False
+            # Button to apply the filter
+            if st.form_submit_button('Apply Filter'):
+                st.session_state.has_bounds = True
+                with st.spinner("Filtering edges..."):
+                    # Refresh the graph visualization without regenerating it
+                    st.session_state.lower_bound = lower_bound
+                    st.session_state.upper_bound = upper_bound
+
     with overview_c:
         if 'graph' in st.session_state:
             graph = st.session_state.graph
-            graph.top_adids.discard(None)
             topAdids = sorted(graph.top_adids)
             for adid in topAdids:
-                if st.button(f"Explore {adid}"):
-                    with st.spinner(f"Exploring {adid}..."):
+                if st.button(f"Expand {adid}"):
+                    with st.spinner(f"Expanding {adid}..."):
                         expandNode(graph, adid, st.session_state.x_time, st.session_state.radius, st.session_state.num_nodes)
                         st.session_state.main_adid = adid
         print(st.session_state.main_adid)
@@ -854,13 +879,17 @@ elif nav_bar == 'Graph':
             # [NEW STUFF]
             # Now, generate and display the visualization
             adj_matrix = np.nan_to_num(graph.adjacency_matrix, nan=0.0)
-            fig = generate_visualization(graph, adj_matrix, graph.top_adids)  # This generates the Plotly graph and shows it directly
+            fig = None
+            if st.session_state.has_bounds:
+                fig = generate_visualization(graph, adj_matrix, graph.top_adids, min_weight=st.session_state.lower_bound, max_weight=st.session_state.upper_bound)
+            else:
+                fig = generate_visualization(graph, adj_matrix, graph.top_adids)  # This generates the Plotly graph and shows it directly
             st.plotly_chart(fig)  # not sure how to exactly use this...
             
         else:
             st.warning("Please generate a graph using the controls in the sidebar.")
 else:
-    pass #Nothing should happen, it should never be here
+    pass # Nothing should happen, it should never be here
 
 
 # if the button is clicked, reset the data seen by the user to what the user uploaded originally

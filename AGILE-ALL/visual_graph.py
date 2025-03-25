@@ -19,15 +19,17 @@ def most_central_node(adj_matrix):
     centrality = nx.betweenness_centrality(G)
     return max(centrality, key=centrality.get)
 
-def generate_visualization(graph, adj_matrix, top_adids, output_file="interactive_network_graph.html"):
+def generate_visualization(graph, adj_matrix, top_adids, output_file="interactive_network_graph.html", min_weight=None, max_weight=None):
     """
-    Generates a visualization of the graph using Plotly, filtered by top_adids.
+    Generates a visualization of the graph using Plotly, filtered by top_adids and optionally by weight range.
 
     Args:
         graph (Graph): The graph object containing nodes and edges.
         adj_matrix (numpy.ndarray): The adjacency matrix of the graph.
         top_adids (list): List of specific ADIDs to display.
         output_file (str): The file path to save the visualization as an HTML file.
+        min_weight (float, optional): Minimum weight of edges to include. Defaults to None.
+        max_weight (float, optional): Maximum weight of edges to include. Defaults to None.
     """
     print("top, ", top_adids)
     # Create a mapping from ADID to index
@@ -45,10 +47,13 @@ def generate_visualization(graph, adj_matrix, top_adids, output_file="interactiv
     for i in selected_indices:
         G.add_node(i)  # Add only selected nodes
 
+    # Add edges with the weight condition
     for i in selected_indices:
         for j in selected_indices:
-            if i != j and adj_matrix[i, j] > 0:  # Ensure there's a connection
-                G.add_edge(i, j, weight=adj_matrix[i, j])
+            if i != j and adj_matrix[i, j] > 0:
+                weight = adj_matrix[i, j]
+                if (min_weight is None or weight >= min_weight) and (max_weight is None or weight <= max_weight):
+                    G.add_edge(i, j, weight=weight)
 
     # Identify isolated nodes (nodes with no edges)
     isolated_nodes = [node for node in G.nodes if G.degree(node) == 0]
@@ -156,3 +161,4 @@ def generate_visualization(graph, adj_matrix, top_adids, output_file="interactiv
 
     fig.write_html(output_file)
     return fig
+    
