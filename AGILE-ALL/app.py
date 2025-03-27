@@ -804,7 +804,7 @@ elif nav_bar == 'Graph':
         graph_form_expand2 = st.form(key='graph_expand_form2')
         with graph_form_expand2:
             st.subheader('Expand Current ADIDs')
-            adid = st.text_input('Advertiser ID')  # Placeholder for ADID query
+            adid = st.text_input('Advertiser ID')
             st.info(
                 'Use this when querying an ADID that is currently displayed in the graph.'
                 ' This will find the top neighbors connected to that ADID.'
@@ -826,7 +826,7 @@ elif nav_bar == 'Graph':
         graph_form_expand3 = st.form(key='graph_expand_form3')
         with graph_form_expand3:
             st.subheader('Explore New ADIDs')
-            adid = st.text_input('Advertiser ID')  # Placeholder for ADID query
+            adid = st.text_input('Advertiser ID')
             st.info(
                 'Use this when querying an ADID that is not currently displayed in the graph.'
                 ' This will add the ADID you are querying to the graph.'
@@ -848,7 +848,7 @@ elif nav_bar == 'Graph':
         clique_form = st.form(key='clique_query_form')
         with clique_form:
             st.subheader("Find groups for ADID")
-            adid_query = st.text_input("Enter ADID to query for groups:")
+            adid_query = st.text_input('Enter ADID to query for groups:')
             st.info(
                 'Use this when querying for groups that an AdID that is apart of. '
                 'A group is a subset of AdIDs where every AdID is connected to every other AdID in the set. '
@@ -878,7 +878,9 @@ elif nav_bar == 'Graph':
     with overview_c:
         if 'graph' in st.session_state:
             graph = st.session_state.graph
-            for adid in graph.top_adids:
+            graph.top_adids.discard(None)
+            topAdids = sorted(graph.top_adids)
+            for adid in topAdids:
                 if st.button(f"Expand {adid}"):
                     with st.spinner(f"Expanding {adid}..."):
                         expandNode(graph, adid, st.session_state.x_time, st.session_state.radius, st.session_state.num_nodes)
