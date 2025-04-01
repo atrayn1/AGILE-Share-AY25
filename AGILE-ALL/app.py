@@ -878,7 +878,7 @@ elif nav_bar == 'Graph':
     with overview_c:
         if 'graph' in st.session_state:
             graph = st.session_state.graph
-            topAdids = sorted(graph.top_adids)
+            topAdids = sorted([adid for adid in graph.top_adids if adid is not None])
             for adid in topAdids:
                 if st.button(f"Expand {adid}"):
                     with st.spinner(f"Expanding {adid}..."):
