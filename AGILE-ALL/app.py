@@ -143,7 +143,7 @@ if nav_bar == 'Data':
         demo_button = st.button('Load Demo Data')
 
         if demo_button:
-            demo_file_path = 'data/hainan.csv' 
+            demo_file_path = 'data/houthi_adid_dataset.csv' 
 
             # Check if the demo CSV file exists in the current directory
             if os.path.exists(demo_file_path):
@@ -190,7 +190,7 @@ if nav_bar == 'Data':
                 st.write("Demo Data Loaded Successfully")
 
             else:
-                st.write("Demo file (hainan.csv) not found.")
+                st.write("Demo file (houthi_adid_dataset.csv) not found.")
 
         # If a file has not yet been uploaded (this allows multiple form requests in unison)
         if raw_data and raw_data.name != st.session_state.file_source:
