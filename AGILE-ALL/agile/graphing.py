@@ -890,7 +890,8 @@ def findFrequencyAndDwellTime(periods1, periods2, min_time_together, radius):
 
 def findAllFrequencyAndDwellTime(graph, min_time_together, radius, adid, expandSearch, num_nodes_display):
     debug_print("Finding frequency of colocations and dwell time within proximity...")
-
+    print("my adid: ", adid)
+    print(adid)
     num_nodes = len(graph.nodes)
     dwell_time_matrix = [[0] * num_nodes for _ in range(num_nodes)] if not expandSearch else graph.dwell_time_matrix
     colocation_matrix = [[0] * num_nodes for _ in range(num_nodes)] if not expandSearch else graph.colocations_matrix
@@ -907,6 +908,8 @@ def findAllFrequencyAndDwellTime(graph, min_time_together, radius, adid, expandS
     for i in range(num_nodes):
         node1 = graph.nodes[i]
         if (node1.adid == adid) or adid is None:
+            print(f"colocation logic triggered for {adid}.")
+            print()
             adjacent_nodes = set()
 
             for row, col in node1.squares:
@@ -928,11 +931,16 @@ def findAllFrequencyAndDwellTime(graph, min_time_together, radius, adid, expandS
             debug_print(f"Finding FOC and DTWP: Looking at index {i} out of range {num_nodes}, comparing {len(adjacent_nodes)}")
             
             for node2 in adjacent_nodes:
+                print(f"Checking adjacent node {node2.adid}")
                 if node1 == node2:
                     continue
                 
                 colocation_count, overlap_time, overlap_periods = findFrequencyAndDwellTime(node1.continuous_periods, node2.continuous_periods, min_time_together, radius)
-                
+                print(node1.continuous_periods)
+                print(node2.continuous_periods)
+                print(colocation_count)
+                print(overlap_time)
+
                 edge = node1.getEdge(node2) or graph.add_edge(node1, node2)
                 
                 if overlap_time < min_time_together:
