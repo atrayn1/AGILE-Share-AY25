@@ -804,7 +804,7 @@ elif nav_bar == 'Graph':
         graph_form_expand2 = st.form(key='graph_expand_form2')
         with graph_form_expand2:
             st.subheader('Expand Current ADIDs')
-            adid = st.text_input('Advertiser ID')
+            adid = st.text_input('Advertiser ID', value=st.session_state.get("selected_adid", ""))
             st.info(
                 'Use this when querying an ADID that is currently displayed in the graph.'
                 ' This will find the top neighbors connected to that ADID.'
@@ -878,13 +878,29 @@ elif nav_bar == 'Graph':
     with overview_c:
         if 'graph' in st.session_state:
             graph = st.session_state.graph
-            topAdids = sorted([adid for adid in graph.top_adids if adid is not None])
-            for adid in topAdids:
-                if st.button(f"Expand {adid}"):
-                    with st.spinner(f"Expanding {adid}..."):
-                        expandNode(graph, adid, st.session_state.x_time, st.session_state.radius, st.session_state.num_nodes)
-                        st.session_state.main_adid = adid
-        print(st.session_state.main_adid)
+            top_adids = sorted([adid for adid in graph.top_adids if adid is not None])
+
+            st.subheader("Top ADIDs Overview")
+
+            for i, adid in enumerate(top_adids):
+                node = graph.get_node_by_adid(adid)
+                if node is None:
+                    continue
+                
+                col1, col2, col3, col4 = st.columns([1.5, 2, 4, 4])
+
+                with col1:
+                    if st.button("Set ADID", key=f"set_adid_{i}"):
+                        st.session_state.selected_adid = adid
+                        st.rerun()
+
+                with col2:
+                    st.markdown(f"**{adid}**")
+
+                with col3:
+                    st.markdown("**Neighbors:**")
+                    neighbor_ids = ", ".join(neighbor.adid for neighbor in node.neighbors)
+                    st.markdown(neighbor_ids if neighbor_ids else "None")
     with results_c:
         if 'graph' in st.session_state:
             graph = st.session_state.graph
