@@ -1,1 +1,0 @@
-[This is a link to our sprint journal.](https://docs.google.com/spreadsheets/d/1rCeUfulx7t37192ixdblj7Zj-lxZOffMgwe7wTrrIPE/edit)
