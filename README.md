@@ -8,7 +8,7 @@ Our project is AGILE for US Navy/DEVGRU/USSOCOM. This program uses targeted adve
 
 [Proposal](https://docs.google.com/document/d/1V4UjAe2CMdd2DSw9maBQMEpvnar4lvBhqN64I2XJ9v8/edit?tab=t.0)
 
-[Poster](https://drive.google.com/file/d/1dj294S-zXliTWtWwyWAc0gUfLSBMnlvA/view?usp=drive_link)
+[Poster](https://drive.google.com/file/d/1nQ26B_mI8VvGHg7poouZsqekzbQgaZvw/view?usp=sharing)
 
 ## Table of Contents
 
@@ -20,7 +20,7 @@ Our project is AGILE for US Navy/DEVGRU/USSOCOM. This program uses targeted adve
 
 ## Background
 
-The working repository for our 2023 Capstone Project. ADD MORE DESCRIPTION LATER.
+The working repository for our 2025 Capstone Project. 
 
 ## Dependencies
 
